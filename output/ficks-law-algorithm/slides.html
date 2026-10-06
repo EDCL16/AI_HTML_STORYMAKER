@@ -1,0 +1,1680 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fick's Law Algorithm（FLA）</title>
+    <meta
+      name="description"
+      content="菲克定律演算法：背景原理、DO／EO／SSO 三階段演算法、手算例與互動示範"
+    />
+    <meta name="date" content="2026-10-06" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #faf8f4;
+        --fg: #1f1d1a;
+        --muted: #6b665e;
+        --accent: #c2410c;
+        --accent-soft: #fde9dc;
+        --card: #ffffff;
+        --line: #e6e1d8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #17161a;
+          --fg: #f1eee8;
+          --muted: #a39e94;
+          --accent: #fb923c;
+          --accent-soft: #3a2518;
+          --card: #211f24;
+          --line: #34313a;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #17161a;
+        --fg: #f1eee8;
+        --muted: #a39e94;
+        --accent: #fb923c;
+        --accent-soft: #3a2518;
+        --card: #211f24;
+        --line: #34313a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Noto Sans TC', system-ui, sans-serif;
+        line-height: 1.6;
+        overflow: hidden;
+      }
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(24px, 6vw, 96px) clamp(16px, 8vw, 140px);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(12px);
+        transition:
+          opacity 0.35s ease,
+          transform 0.35s ease,
+          visibility 0.35s;
+        overflow-y: auto;
+      }
+      .slide.active {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+
+      .slide h1 {
+        font-size: clamp(32px, 5.5vw, 72px);
+        font-weight: 900;
+        line-height: 1.2;
+      }
+      .slide h2 {
+        font-size: clamp(24px, 3.6vw, 48px);
+        font-weight: 700;
+        line-height: 1.3;
+        margin-bottom: 0.8em;
+      }
+      .slide h2::before {
+        content: '';
+        display: block;
+        width: 48px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 3px;
+        margin-bottom: 0.5em;
+      }
+      .slide p,
+      .slide li {
+        font-size: clamp(17px, 2vw, 26px);
+      }
+      .slide ul,
+      .slide ol {
+        padding-left: 1.2em;
+        display: grid;
+        gap: 0.6em;
+      }
+      .slide li::marker {
+        color: var(--accent);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .cite {
+        color: var(--accent);
+        font-size: 0.6em;
+        font-weight: 700;
+        margin-left: 2px;
+      }
+
+      .cover {
+        background: linear-gradient(135deg, var(--accent-soft), var(--bg) 60%);
+      }
+      .cover .subtitle {
+        font-size: clamp(18px, 2.4vw, 30px);
+        color: var(--muted);
+        margin-top: 1em;
+      }
+      .cover .meta {
+        margin-top: 2.5em;
+        font-size: clamp(14px, 1.5vw, 18px);
+        color: var(--muted);
+      }
+
+      .section {
+        align-items: center;
+        text-align: center;
+      }
+      .section h1 {
+        color: var(--accent);
+      }
+
+      .big-number {
+        font-size: clamp(64px, 12vw, 160px);
+        font-weight: 900;
+        line-height: 1;
+        color: var(--accent);
+        letter-spacing: -0.02em;
+      }
+      .big-label {
+        font-size: clamp(18px, 2.4vw, 30px);
+        margin-top: 0.4em;
+      }
+
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(16px, 3vw, 40px);
+      }
+      .compare .col {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: clamp(16px, 2.5vw, 32px);
+      }
+      .compare .col h3 {
+        font-size: clamp(18px, 2.2vw, 28px);
+        margin-bottom: 0.6em;
+        color: var(--accent);
+      }
+      @media (max-width: 700px) {
+        .compare {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      blockquote {
+        font-size: clamp(22px, 3vw, 40px);
+        font-weight: 500;
+        line-height: 1.5;
+        border-left: 6px solid var(--accent);
+        padding-left: 1em;
+      }
+      blockquote cite {
+        display: block;
+        margin-top: 1em;
+        font-size: 0.5em;
+        color: var(--muted);
+        font-style: normal;
+      }
+
+      .refs {
+        font-size: clamp(13px, 1.4vw, 17px) !important;
+        gap: 0.5em !important;
+      }
+      .refs li {
+        font-size: inherit;
+      }
+      .refs a {
+        color: var(--accent);
+        word-break: break-all;
+      }
+
+      .notes {
+        display: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 48px;
+        max-height: 30vh;
+        overflow-y: auto;
+        background: var(--card);
+        border-top: 2px solid var(--accent);
+        padding: 16px clamp(16px, 8vw, 140px);
+        font-size: 16px;
+        color: var(--muted);
+      }
+      body.show-notes .slide.active .notes {
+        display: block;
+      }
+
+      #hud a {
+        color: var(--accent);
+        text-decoration: none;
+        margin-right: 4px;
+      }
+      #progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 4px;
+        background: var(--accent);
+        transition: width 0.3s;
+      }
+      #hud {
+        position: fixed;
+        bottom: 12px;
+        right: 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      #hud button {
+        background: var(--card);
+        color: var(--fg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      #hud button:hover {
+        border-color: var(--accent);
+      }
+
+      @media print {
+        body {
+          overflow: visible;
+        }
+        .slide {
+          position: relative;
+          opacity: 1;
+          visibility: visible;
+          transform: none;
+          height: 100vh;
+          page-break-after: always;
+          overflow: hidden;
+        }
+        #hud,
+        #progress,
+        .notes {
+          display: none !important;
+        }
+      }
+    </style>
+    <script>
+      try {
+        const t = localStorage.getItem('theme');
+        if (t) document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css"
+    />
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"
+    ></script>
+    <style>
+      /* ---- 本主題配色：實驗室白 / 墨黑，靛藍為主色；兩個區域用青綠與玫紅，最佳解用琥珀 ---- */
+      :root {
+        --bg: #f5f7f9;
+        --fg: #142230;
+        --muted: #5d6b77;
+        --accent: #3d43b4;
+        --accent-soft: #e4e6fa;
+        --card: #ffffff;
+        --line: #dde3e9;
+        --r1: #0a8f87;
+        --r2: #cc4a5c;
+        --best: #c98a00;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #0d131a;
+          --fg: #e5ecf2;
+          --muted: #91a1ae;
+          --accent: #9096ff;
+          --accent-soft: #1d2147;
+          --card: #151d26;
+          --line: #263241;
+          --r1: #39c2b8;
+          --r2: #ff7d8d;
+          --best: #ffc53d;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #0d131a;
+        --fg: #e5ecf2;
+        --muted: #91a1ae;
+        --accent: #9096ff;
+        --accent-soft: #1d2147;
+        --card: #151d26;
+        --line: #263241;
+        --r1: #39c2b8;
+        --r2: #ff7d8d;
+        --best: #ffc53d;
+      }
+
+      .slide h1,
+      .slide h2 {
+        font-family: 'Noto Serif TC', serif;
+      }
+      .cover {
+        background: var(--bg);
+      }
+      .cover h1 {
+        max-width: 16em;
+      }
+      .cover-art {
+        position: absolute;
+        right: clamp(16px, 6vw, 96px);
+        bottom: clamp(24px, 8vh, 80px);
+        width: min(38vw, 420px);
+        opacity: 0.9;
+      }
+      .section .kicker {
+        font-size: clamp(16px, 1.8vw, 22px);
+        color: var(--muted);
+        margin-top: 0.8em;
+      }
+
+      .formula {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--accent);
+        border-radius: 8px;
+        padding: 0.6em 1.2em;
+        margin: 0.4em 0 1em;
+        font-size: clamp(16px, 1.9vw, 24px);
+        overflow-x: auto;
+      }
+      .formula .katex-display {
+        margin: 0.4em 0;
+      }
+      .small li,
+      .small p {
+        font-size: clamp(15px, 1.6vw, 20px);
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: clamp(16px, 3vw, 48px);
+        align-items: start;
+      }
+      @media (max-width: 800px) {
+        .two {
+          grid-template-columns: 1fr;
+        }
+      }
+      .callout {
+        background: var(--accent-soft);
+        border-radius: 8px;
+        padding: 0.8em 1.2em;
+        margin-top: 1em;
+      }
+      .callout strong {
+        color: var(--accent);
+      }
+
+      table.data {
+        border-collapse: collapse;
+        font-size: clamp(14px, 1.7vw, 21px);
+        margin: 0.4em 0 1em;
+        width: 100%;
+      }
+      table.data th,
+      table.data td {
+        padding: 0.45em 0.8em;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        font-variant-numeric: tabular-nums;
+      }
+      table.data th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .wrap-x {
+        overflow-x: auto;
+      }
+      .r1 {
+        color: var(--r1);
+        font-weight: 700;
+      }
+      .r2 {
+        color: var(--r2);
+        font-weight: 700;
+      }
+      .best {
+        color: var(--best);
+        font-weight: 700;
+      }
+      .ok {
+        color: var(--r1);
+        font-weight: 700;
+      }
+      .no {
+        color: var(--r2);
+        font-weight: 700;
+      }
+      .tag {
+        display: inline-block;
+        padding: 0 0.5em;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: 700;
+      }
+      .tag.do {
+        background: color-mix(in srgb, var(--r1) 18%, transparent);
+        color: var(--r1);
+      }
+      .tag.eo {
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        color: var(--accent);
+      }
+      .tag.sso {
+        background: color-mix(in srgb, var(--best) 22%, transparent);
+        color: var(--best);
+      }
+
+      /* 階段比例條 */
+      .phase-bar {
+        display: flex;
+        height: 56px;
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 1.2em 0 0.4em;
+        font-size: clamp(13px, 1.5vw, 18px);
+        font-weight: 700;
+        color: var(--bg);
+      }
+      .phase-bar > div {
+        display: flex;
+        align-items: center;
+        padding: 0 0.8em;
+        white-space: nowrap;
+      }
+      .phase-bar .do {
+        background: var(--r1);
+        flex: 74;
+      }
+      .phase-bar .eo {
+        background: var(--accent);
+        flex: 14;
+      }
+      .phase-bar .sso {
+        background: var(--best);
+        flex: 12;
+      }
+      .phase-scale {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .steps {
+        counter-reset: s;
+        list-style: none;
+        padding: 0 !important;
+      }
+      .steps li {
+        counter-increment: s;
+        display: grid;
+        grid-template-columns: 2.2em 1fr;
+        align-items: baseline;
+      }
+      .steps li::before {
+        content: counter(s);
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 900;
+        color: var(--accent);
+      }
+
+      .calc li {
+        font-size: clamp(14px, 1.6vw, 20px);
+      }
+      .calc .katex {
+        font-size: 1.05em;
+      }
+
+      /* 互動示範 */
+      .demo {
+        display: grid;
+        grid-template-columns: minmax(0, 520px) 1fr;
+        gap: clamp(16px, 3vw, 40px);
+        align-items: start;
+      }
+      @media (max-width: 800px) {
+        .demo {
+          grid-template-columns: 1fr;
+        }
+      }
+      #fla-canvas {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        display: block;
+        touch-action: none;
+      }
+      .demo-panel {
+        display: grid;
+        gap: 0.9em;
+        font-size: clamp(14px, 1.6vw, 19px);
+      }
+      .demo-panel .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .demo-panel button,
+      .demo-panel select {
+        font: inherit;
+        font-size: 15px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .demo-panel button:hover,
+      .demo-panel select:hover {
+        border-color: var(--accent);
+      }
+      .demo-panel button:focus-visible,
+      .demo-panel select:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .stat {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.2em 1em;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat dt {
+        color: var(--muted);
+      }
+      .legend span {
+        margin-right: 1em;
+      }
+      .dot {
+        display: inline-block;
+        width: 0.7em;
+        height: 0.7em;
+        border-radius: 50%;
+        margin-right: 0.3em;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="progress"></div>
+
+    <main id="deck">
+      <!-- 1 封面 -->
+      <section class="slide cover">
+        <h1>讓候選解像分子一樣擴散：Fick's Law Algorithm</h1>
+        <p class="subtitle">以菲克擴散定律為靈感的最佳化演算法：原理、演算法與手算例</p>
+        <p class="meta">
+          Hashim, Mostafa, Hussien, Mirjalili &amp; Sallam（2023）
+          <br />
+          Knowledge-Based Systems 260, 110146
+          <sup class="cite">[1]</sup>
+        </p>
+        <svg class="cover-art" viewBox="0 0 420 220" aria-hidden="true">
+          <g fill="var(--r1)">
+            <circle cx="40" cy="60" r="7" />
+            <circle cx="70" cy="110" r="7" />
+            <circle cx="35" cy="150" r="7" />
+            <circle cx="90" cy="70" r="7" />
+            <circle cx="60" cy="185" r="7" />
+            <circle cx="105" cy="140" r="7" />
+            <circle cx="20" cy="100" r="7" />
+            <circle cx="120" cy="100" r="7" />
+            <circle cx="85" cy="35" r="7" />
+            <circle cx="150" cy="160" r="6" opacity=".7" />
+            <circle cx="175" cy="80" r="6" opacity=".55" />
+            <circle cx="215" cy="125" r="5" opacity=".4" />
+          </g>
+          <g fill="var(--r2)">
+            <circle cx="300" cy="60" r="7" opacity=".4" />
+            <circle cx="345" cy="140" r="7" />
+            <circle cx="390" cy="90" r="7" />
+            <circle cx="370" cy="185" r="7" />
+          </g>
+          <path
+            d="M150 205 H330"
+            stroke="var(--muted)"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="8"
+              markerHeight="8"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10z" fill="var(--muted)" />
+            </marker>
+          </defs>
+        </svg>
+        <aside class="notes">
+          今天介紹的是 2023 年提出的物理型元啟發式演算法
+          FLA。我會分三段：先講菲克定律與它怎麼對應到最佳化，再拆解演算法三個階段，最後用 4
+          個點手算兩步，並現場跑一次互動示範。
+        </aside>
+      </section>
+
+      <!-- 2 章節 -->
+      <section class="slide section">
+        <h1>一、背景知識及原理</h1>
+        <p class="kicker">從一滴墨水在水裡散開說起</p>
+      </section>
+
+      <!-- 3 菲克第一定律 -->
+      <section class="slide">
+        <h2>擴散永遠從濃的地方流向淡的地方</h2>
+        <div class="two">
+          <div>
+            <div class="formula">\[ J = -D\,\frac{d\varphi}{dx} \]</div>
+            <ul class="small">
+              <li>\(J\)：擴散通量，單位時間通過單位面積的物質量</li>
+              <li>\(D\)：擴散係數（m²/s）</li>
+              <li>
+                \(d\varphi/dx\)：濃度梯度；負號代表流向濃度較低的一側
+                <sup class="cite">[6]</sup>
+              </li>
+            </ul>
+          </div>
+          <svg viewBox="0 0 320 200" role="img" aria-label="左側粒子密集、右側稀疏，箭頭由左指向右">
+            <rect
+              x="1"
+              y="1"
+              width="318"
+              height="160"
+              rx="8"
+              fill="var(--card)"
+              stroke="var(--line)"
+            />
+            <line x1="160" y1="10" x2="160" y2="152" stroke="var(--line)" stroke-dasharray="4 4" />
+            <g fill="var(--accent)">
+              <circle cx="30" cy="30" r="6" />
+              <circle cx="60" cy="50" r="6" />
+              <circle cx="35" cy="80" r="6" />
+              <circle cx="90" cy="35" r="6" />
+              <circle cx="75" cy="95" r="6" />
+              <circle cx="120" cy="60" r="6" />
+              <circle cx="40" cy="130" r="6" />
+              <circle cx="100" cy="125" r="6" />
+              <circle cx="130" cy="105" r="6" />
+              <circle cx="70" cy="140" r="6" />
+              <circle cx="115" cy="20" r="6" />
+              <circle cx="210" cy="50" r="6" />
+              <circle cx="260" cy="115" r="6" />
+              <circle cx="290" cy="40" r="6" />
+            </g>
+            <text x="80" y="185" text-anchor="middle" fill="var(--muted)" font-size="14">
+              高濃度
+            </text>
+            <text x="240" y="185" text-anchor="middle" fill="var(--muted)" font-size="14">
+              低濃度
+            </text>
+            <path d="M125 185 H195" stroke="var(--fg)" stroke-width="2" marker-end="url(#ah2)" />
+            <defs>
+              <marker
+                id="ah2"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto"
+              >
+                <path d="M0 0 L10 5 L0 10z" fill="var(--fg)" />
+              </marker>
+            </defs>
+          </svg>
+        </div>
+        <aside class="notes">
+          Adolf Fick 在 1855 年提出。第二定律描述濃度隨時間的變化，但 FLA
+          只用到第一定律的概念：流動方向與濃度差、距離有關。
+        </aside>
+      </section>
+
+      <!-- 4 對應 -->
+      <section class="slide">
+        <h2>FLA 把「分子往低濃度走」改寫成「解往好的位置走」</h2>
+        <div class="wrap-x">
+          <table class="data">
+            <tr>
+              <th>物理</th>
+              <th>FLA 中的對應</th>
+            </tr>
+            <tr>
+              <td>分子</td>
+              <td>候選解（位置向量 \(x\)）</td>
+            </tr>
+            <tr>
+              <td>兩個區域</td>
+              <td>
+                族群平分成
+                <span class="r1">區域 1</span>
+                與
+                <span class="r2">區域 2</span>
+              </td>
+            </tr>
+            <tr>
+              <td>濃度差 \(d\varphi\)</td>
+              <td>兩群平均位置的差 \(\bar x_j - \bar x_i\)</td>
+            </tr>
+            <tr>
+              <td>距離 \(dx\)</td>
+              <td>候選解到最佳解的距離</td>
+            </tr>
+            <tr>
+              <td>擴散 → 平衡 → 穩態</td>
+              <td>
+                探索 → 過渡 → 開發
+                <sup class="cite">[1][4]</sup>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <aside class="notes">
+          對應方式以 mealpy 的實作為準 [3]：距離用歐氏範數；論文重述 [4]
+          中寫成平方差，實作時要留意兩者不同。
+        </aside>
+      </section>
+
+      <!-- 5 TF -->
+      <section class="slide">
+        <h2>一條時間曲線決定現在該探索還是開發</h2>
+        <div class="formula">
+          \[ TF = \sinh\!\left(\tfrac{t}{T}\right)^{C_1},\qquad C_1 = 0.5 \]
+        </div>
+        <div class="phase-bar" role="img" aria-label="擴散 74%、平衡 14%、穩態 12%">
+          <div class="do">擴散 DO　TF &lt; 0.9</div>
+          <div class="eo">平衡</div>
+          <div class="sso">穩態</div>
+        </div>
+        <div class="phase-scale">
+          <span>t = 0</span>
+          <span>0.74T</span>
+          <span>0.88T</span>
+          <span>T</span>
+        </div>
+        <p class="small" style="margin-top: 1em">
+          前約 74% 的迭代在擴散（探索），約 14% 平衡（0.9 ≤ TF ≤ 1），最後約 12% 穩態（TF &gt; 1）
+          <sup class="cite">[3]</sup>
+        </p>
+        <aside class="notes">
+          比例是由 TF 的門檻反推：sinh(t/T) &lt; 0.81 → t/T &lt; 0.7405；sinh(t/T) ≤ 1 → t/T ≤
+          0.8814。注意 [4] 把公式寫成 sinh(t/T)/c1，與 mealpy 程式碼不同，實作請以作者 MATLAB 程式
+          [2] 為準。
+        </aside>
+      </section>
+
+      <!-- 6 章節 -->
+      <section class="slide section">
+        <h1>二、演算法</h1>
+        <p class="kicker">三個階段，一個貪婪選擇</p>
+      </section>
+
+      <!-- 7 流程 -->
+      <section class="slide">
+        <h2>每一代：算 TF、選階段、更新、只留下較好的解</h2>
+        <ol class="steps">
+          <li>隨機初始化 N 個解，平分為區域 1、2，各自找出最佳解</li>
+          <li>計算 \(TF = \sinh(t/T)^{C_1}\)</li>
+          <li>
+            依 TF 執行
+            <span class="tag do">DO</span>
+            <span class="tag eo">EO</span>
+            <span class="tag sso">SSO</span>
+            其中之一，產生新解
+          </li>
+          <li>超出邊界的維度截回 \([L, U]\)</li>
+          <li>貪婪選擇：新解比舊解好才取代</li>
+          <li>
+            更新兩區最佳解與全域最佳解，回到步驟 2
+            <sup class="cite">[3][4]</sup>
+          </li>
+        </ol>
+      </section>
+
+      <!-- 8 DO -->
+      <section class="slide">
+        <h2>擴散階段：少數分子跨區，其餘在本區最佳解附近探索</h2>
+        <div class="two">
+          <div>
+            <div class="formula">\[ DOF = e^{-C_2 (TF - r)},\quad TDO = C_5\,TF - r \]</div>
+            <div class="formula">
+              \[ x' = X_{best,j} + DF\cdot DOF\cdot \vec r \odot \left(J\,X_{best,j} - x\right) \]
+              \[ J = -D\,\frac{\bar x_j - \bar x_i}{\lVert X_{best,j} - x\rVert + \varepsilon} \]
+            </div>
+          </div>
+          <ul class="small">
+            <li>方向：\(TDO &lt;\) 隨機數時區域 1 → 2，否則 2 → 1</li>
+            <li>
+              跨區數量 \(NT_{12} = \mathrm{round}\big(N_1(C_3 + r(C_4 - C_3))\big)\)，約為該區的
+              10–20%
+            </li>
+            <li>留在原區的分子逐維度：80% 取本區最佳、10% 在最佳附近隨機跳、10% 保持原值</li>
+            <li>
+              另一區全部：\(x' = X_{best} + DOF\,(\vec r\,(U-L) + L)\)
+              <sup class="cite">[3][4]</sup>
+            </li>
+          </ul>
+        </div>
+        <aside class="notes">
+          DF 是 ±1 的隨機方向，\(\vec r\) 是每個維度各自的 [0,1] 隨機數，⊙ 表示逐元素相乘。DOF 在 TF
+          小時較大，所以早期步伐大、偏探索。
+        </aside>
+      </section>
+
+      <!-- 9 EO -->
+      <section class="slide">
+        <h2>平衡階段：每個分子向自己區域的最佳解靠攏</h2>
+        <div class="formula">
+          \[ x' = X_{best,g} + Q\odot x + Q\odot\left(MS\cdot X_{best,g} - x\right) \] \[ Q =
+          DF\cdot DRF\cdot \vec r,\quad DRF = e^{-J/TF},\quad MS = e^{-f_{best,g}/(f_x+\varepsilon)}
+          \] \[ J = -D\,\frac{X_{best,g} - \bar x_g}{\lVert X_{best,g} - x\rVert} \]
+        </div>
+        <ul class="small">
+          <li>
+            \(g\) 是分子所在的區域；兩個區域各自收斂、互不交換
+            <sup class="cite">[3][4]</sup>
+          </li>
+          <li>\(MS\) 用適應值比例調整步長：自己越差（\(f_x\) 越大），\(MS\) 越接近 1</li>
+        </ul>
+      </section>
+
+      <!-- 10 SSO -->
+      <section class="slide">
+        <h2>穩態階段：所有分子改向全域最佳解收斂</h2>
+        <div class="formula">
+          \[ x' = X_{ss} + Q\odot x + Q\odot\left(MS\cdot X_{best} - x\right),\quad MS =
+          e^{-f_{ss}/(f_x+\varepsilon)} \] \[ J = -D\,\frac{\bar x - \bar x_g}{\lVert X_{ss} -
+          x\rVert} \]
+        </div>
+        <ul class="small">
+          <li>
+            \(X_{ss}\)：全域最佳解；\(\bar x\)：整個族群的平均位置
+            <sup class="cite">[3][4]</sup>
+          </li>
+        </ul>
+        <p class="callout small">
+          <strong>實作觀察（我的推導）</strong>
+          　展開後 \(Q\odot x\) 與 \(-Q\odot x\) 互相抵銷，得到 \(x' = X_{ss} + Q\odot MS\cdot
+          X_{best}\)。目前位置 \(x\) 只透過 \(J\) 與 \(MS\) 間接影響結果，EO 階段也一樣。
+        </p>
+        <aside class="notes">
+          mealpy 中區域 1 的 X_best 用區域 1 最佳解、區域 2 用全域最佳解，兩區不完全對稱；是否與原
+          MATLAB 一致需對照 [2]。
+        </aside>
+      </section>
+
+      <!-- 11 參數 -->
+      <section class="slide">
+        <h2>六個參數都有預設值，先照預設實作</h2>
+        <div class="wrap-x">
+          <table class="data">
+            <tr>
+              <th>參數</th>
+              <th>預設</th>
+              <th>作用</th>
+            </tr>
+            <tr>
+              <td>\(C_1\)</td>
+              <td>0.5</td>
+              <td>TF 曲線形狀，決定三個階段的長度</td>
+            </tr>
+            <tr>
+              <td>\(C_2\)</td>
+              <td>2</td>
+              <td>DOF 衰減速度（擴散步長）</td>
+            </tr>
+            <tr>
+              <td>\(C_3,\ C_4\)</td>
+              <td>0.1、0.2</td>
+              <td>每代跨區分子比例的下限與上限</td>
+            </tr>
+            <tr>
+              <td>\(C_5\)</td>
+              <td>2</td>
+              <td>TDO：決定擴散方向</td>
+            </tr>
+            <tr>
+              <td>\(D\)</td>
+              <td>0.01</td>
+              <td>
+                擴散係數，縮放通量 \(J\)
+                <sup class="cite">[3]</sup>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p class="small muted">
+          另有 \(\varepsilon\)（極小值）防止除以零。mealpy 的作者認為其中部分參數可能是多餘的
+          <sup class="cite">[3]</sup>
+          。
+        </p>
+      </section>
+
+      <!-- 12 章節 -->
+      <section class="slide section">
+        <h1>三、簡單計算例</h1>
+        <p class="kicker">4 個點、2 個維度、手算兩步</p>
+      </section>
+
+      <!-- 13 設定 -->
+      <section class="slide">
+        <h2>用 4 個點最小化 \(f(x) = x_1^2 + x_2^2\)</h2>
+        <div class="wrap-x">
+          <table class="data">
+            <tr>
+              <th>分子</th>
+              <th>位置</th>
+              <th>\(f\)</th>
+              <th>區域</th>
+            </tr>
+            <tr>
+              <td>A</td>
+              <td>(3, −1)</td>
+              <td>10</td>
+              <td class="r1">1</td>
+            </tr>
+            <tr>
+              <td>B</td>
+              <td>(−2, 2)</td>
+              <td>8</td>
+              <td class="r1">
+                1　
+                <span class="best">區域 1 最佳、全域最佳</span>
+              </td>
+            </tr>
+            <tr>
+              <td>C</td>
+              <td>(1, 4)</td>
+              <td>17</td>
+              <td class="r2">
+                2　
+                <span class="best">區域 2 最佳</span>
+              </td>
+            </tr>
+            <tr>
+              <td>D</td>
+              <td>(−4, −3)</td>
+              <td>25</td>
+              <td class="r2">2</td>
+            </tr>
+          </table>
+        </div>
+        <p class="small">
+          T = 10、邊界 [−5, 5]、參數用預設值。平均位置：\(\bar x_1 = (0.5, 0.5)\)、\(\bar x_2 =
+          (-1.5, 0.5)\)、\(\bar x = (-0.5, 0.5)\)
+        </p>
+        <aside class="notes">
+          這是我設計的示範例子，數字皆以 mealpy 的公式計算；隨機數直接指定，方便手算驗證。
+        </aside>
+      </section>
+
+      <!-- 14 TF 表 -->
+      <section class="slide">
+        <h2>T = 10 時：前 7 代擴散、第 8 代平衡、最後 2 代穩態</h2>
+        <div class="wrap-x">
+          <table class="data">
+            <tr>
+              <th>t</th>
+              <td>1</td>
+              <td>2</td>
+              <td>3</td>
+              <td>4</td>
+              <td>5</td>
+              <td>6</td>
+              <td>7</td>
+              <td>8</td>
+              <td>9</td>
+              <td>10</td>
+            </tr>
+            <tr>
+              <th>TF</th>
+              <td>0.317</td>
+              <td>0.449</td>
+              <td>0.552</td>
+              <td>0.641</td>
+              <td>0.722</td>
+              <td>0.798</td>
+              <td>0.871</td>
+              <td>0.942</td>
+              <td>1.013</td>
+              <td>1.084</td>
+            </tr>
+            <tr>
+              <th>階段</th>
+              <td><span class="tag do">DO</span></td>
+              <td><span class="tag do">DO</span></td>
+              <td><span class="tag do">DO</span></td>
+              <td><span class="tag do">DO</span></td>
+              <td><span class="tag do">DO</span></td>
+              <td><span class="tag do">DO</span></td>
+              <td><span class="tag do">DO</span></td>
+              <td><span class="tag eo">EO</span></td>
+              <td><span class="tag sso">SSO</span></td>
+              <td><span class="tag sso">SSO</span></td>
+            </tr>
+          </table>
+        </div>
+        <p class="small">例：\(TF_1 = \sinh(0.1)^{0.5} = 0.1002^{0.5} = 0.3165\)</p>
+      </section>
+
+      <!-- 15 DO 計算 -->
+      <section class="slide">
+        <h2>第 1 代（擴散）：A 跨到區域 2 的嘗試被淘汰</h2>
+        <ol class="steps calc">
+          <li>取 \(r = 0.6\)：\(DOF = e^{-2(0.3165-0.6)} = 1.7630\)</li>
+          <li>
+            \(TDO = 2(0.3165) - 0.5 = 0.1330 &lt;\) 隨機數 0.4 → 區域 1 → 2，以 \(X_{best,2} = C\)
+            為目標
+          </li>
+          <li>\(J = -0.01\cdot\dfrac{(-2,\ 0)}{\lVert C - A\rVert = 5.3852} = (0.003714,\ 0)\)</li>
+          <li>
+            \(DF = +1,\ \vec r = (0.5, 0.5)\)：\(x' = C + 1.7630\cdot(0.5,0.5)\odot\big((0.0037, 0)
+            - (3,-1)\big) = (-1.6412,\ 4.8815)\)
+          </li>
+          <li>
+            \(f(x') = 26.52 &gt; 10\) →
+            <span class="no">淘汰</span>
+            ，A 維持原位
+          </li>
+        </ol>
+        <aside class="notes">
+          N = 4 時 NT12 = round(2 × 0.1~0.2) = 0，實際上不會有分子跨區；這裡假設 A
+          被選中，只為示範公式。N = 20 時每代約 1–2
+          個分子跨區。擴散階段步伐大，被淘汰很常見，這正是探索的代價。
+        </aside>
+      </section>
+
+      <!-- 16 SSO 計算 -->
+      <section class="slide">
+        <h2>第 10 代（穩態）：A 一步從 f = 10 降到 4.88</h2>
+        <ol class="steps calc">
+          <li>\(TF = 1.0841\)；全域最佳 \(X_{ss} = B = (-2, 2)\)，\(f_{ss} = 8\)</li>
+          <li>
+            \(J = -0.01\cdot\dfrac{\bar x - \bar x_1 = (-1,\ 0)}{\lVert B - A\rVert = 5.8310} =
+            (0.001715,\ 0)\)，\(DRF = e^{-J/TF} = (0.99842,\ 1)\)
+          </li>
+          <li>
+            \(MS = e^{-8/10} = 0.4493\)；取 \(DF = -1,\ \vec r = (0.3, 0.7)\) → \(Q = (-0.2995,\
+            -0.7000)\)
+          </li>
+          <li>
+            \(x' = B + Q\odot A + Q\odot(MS\cdot B - A) = (-2,2) + (-0.8986,\ 0.7) + (1.1677,\
+            -1.3291)\)
+          </li>
+          <li>
+            \(x' = (-1.7308,\ 1.3709)\)，\(f(x') = 4.875 &lt; 10\) →
+            <span class="ok">取代 A</span>
+          </li>
+        </ol>
+        <aside class="notes">
+          驗算捷徑：x' = B + Q ⊙ MS·B = (−2,2) + (−0.2995, −0.7) ⊙ (−0.8987, 0.8987)，結果相同。
+        </aside>
+      </section>
+
+      <!-- 17 互動示範 -->
+      <section class="slide">
+        <h2>動手看：兩群分子如何擴散到最佳解</h2>
+        <div class="demo">
+          <canvas id="fla-canvas" aria-label="FLA 搜尋過程動畫"></canvas>
+          <div class="demo-panel">
+            <div class="row">
+              <button id="fla-play" type="button">播放</button>
+              <button id="fla-step" type="button">單步</button>
+              <button id="fla-reset" type="button">重新開始</button>
+            </div>
+            <div class="row">
+              <label>
+                目標函數
+                <select id="fla-func">
+                  <option value="sphere">Sphere（單峰）</option>
+                  <option value="shifted">位移 Sphere（最佳解在 (2.5, −1.5)）</option>
+                  <option value="rastrigin">Rastrigin（多峰）</option>
+                </select>
+              </label>
+            </div>
+            <dl class="stat">
+              <dt>迭代</dt>
+              <dd id="fla-t">0 / 60</dd>
+              <dt>TF</dt>
+              <dd id="fla-tf">–</dd>
+              <dt>階段</dt>
+              <dd id="fla-phase">–</dd>
+              <dt>最佳 f</dt>
+              <dd id="fla-best">–</dd>
+            </dl>
+            <p class="legend">
+              <span>
+                <i class="dot" style="background: var(--r1)"></i>
+                區域 1
+              </span>
+              <span>
+                <i class="dot" style="background: var(--r2)"></i>
+                區域 2
+              </span>
+              <span>
+                <i class="dot" style="background: var(--best)"></i>
+                全域最佳
+              </span>
+            </p>
+            <p class="muted" style="font-size: 14px">
+              N = 20、T = 60，演算法依 mealpy 實作移植
+              <sup class="cite">[3]</sup>
+              ；底圖越深代表 f 越小，十字為真正的最佳解。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 18 實作注意 -->
+      <section class="slide">
+        <h2>實作前要先知道的五件事</h2>
+        <ul class="small">
+          <li>
+            <strong>容易局部收斂</strong>
+            ，高維、高複雜度問題精度下降；FLAS 等改良版加入變異與學習策略來補強
+            <sup class="cite">[4][8]</sup>
+          </li>
+          <li>
+            <strong>MS 會除以適應值</strong>
+            ，f 為 0 或負數時可能溢位或方向反轉
+            <sup class="cite">[3]</sup>
+            ；我建議先把目標函數平移成正值
+          </li>
+          <li>
+            <strong>TF 公式的寫法不一致</strong>
+            ：\(\sinh(t/T)/c_1\) 與 \(\sinh(t/T)^{C_1}\)，請以作者的 MATLAB 程式為準
+            <sup class="cite">[2][3][4]</sup>
+          </li>
+          <li>
+            <strong>偏好原點（我的實驗）</strong>
+            ：區域最佳即全域最佳時，SSO 化簡為 \(x' = X_{ss}\odot(1 + Q\cdot
+            MS)\)，等於把最佳解往原點縮放。同樣 60 代，Sphere 誤差中位數約 \(10^{-22}\)，最佳解移到
+            (2.5, −1.5) 後只到 \(1.7\times10^{-3}\)。測試時請用位移過的函數
+          </li>
+          <li>
+            <strong>參數多</strong>
+            ，部分可能多餘，先用預設值，再針對問題微調
+            <sup class="cite">[3]</sup>
+          </li>
+        </ul>
+      </section>
+
+      <!-- 19 重點整理 -->
+      <section class="slide">
+        <h2>FLA 的本質：分兩群、按時間從探索切到開發、只留下更好的解</h2>
+        <ul>
+          <li>
+            靈感來自菲克第一定律：物質從濃處流向淡處
+            <sup class="cite">[1][6]</sup>
+          </li>
+          <li>
+            \(TF = \sinh(t/T)^{0.5}\) 把迭代切成約 74% 擴散、14% 平衡、12% 穩態
+            <sup class="cite">[3]</sup>
+          </li>
+          <li>
+            已用於 NMPC 控制器參數調整
+            <sup class="cite">[5]</sup>
+            與機械設計
+            <sup class="cite">[8]</sup>
+          </li>
+          <li>
+            但要看清物理隱喻底下的實際機制
+            <sup class="cite">[7]</sup>
+            ：例如穩態更新其實是對最佳解做縮放，對原點有偏好
+          </li>
+        </ul>
+      </section>
+
+      <!-- 20 參考資料 -->
+      <section class="slide">
+        <h2>參考資料</h2>
+        <ol class="refs">
+          <li>
+            Hashim et al. (2023). Fick's Law Algorithm: A physical law-based algorithm for numerical
+            optimization. Knowledge-Based Systems, 260, 110146.
+            <a href="https://doi.org/10.1016/j.knosys.2022.110146" target="_blank" rel="noopener">
+              https://doi.org/10.1016/j.knosys.2022.110146
+            </a>
+          </li>
+          <li>
+            Hussien, A. Fick's Law Algorithm (FLA), MATLAB Central File Exchange.
+            <a
+              href="https://www.mathworks.com/matlabcentral/fileexchange/121033-fick-s-law-algorithm-fla"
+              target="_blank"
+              rel="noopener"
+            >
+              https://www.mathworks.com/matlabcentral/fileexchange/121033-fick-s-law-algorithm-fla
+            </a>
+          </li>
+          <li>
+            Nguyen Van Thieu. mealpy: physics_based/FLA.py.
+            <a
+              href="https://github.com/thieu1995/mealpy/blob/master/mealpy/physics_based/FLA.py"
+              target="_blank"
+              rel="noopener"
+            >
+              https://github.com/thieu1995/mealpy/blob/master/mealpy/physics_based/FLA.py
+            </a>
+          </li>
+          <li>
+            Yan, Hu &amp; Zhang (2024). Multi-Strategy Boosted Fick's Law Algorithm for Engineering
+            Optimization Problems and Parameter Estimation. Biomimetics, 9(4), 205.
+            <a
+              href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11048509/"
+              target="_blank"
+              rel="noopener"
+            >
+              https://pmc.ncbi.nlm.nih.gov/articles/PMC11048509/
+            </a>
+          </li>
+          <li>
+            Fick's Law Algorithm Based-Nonlinear Model Predictive Control of Twin Rotor MIMO System.
+            ResearchGate.
+            <a
+              href="https://www.researchgate.net/publication/381292767_Fick's_Law_Algorithm_Based-Nonlinear_Model_Predictive_Control_of_Twin_Rotor_MIMO_System"
+              target="_blank"
+              rel="noopener"
+            >
+              https://www.researchgate.net/publication/381292767
+            </a>
+          </li>
+          <li>
+            Fick's laws of diffusion. Wikipedia.
+            <a
+              href="https://en.wikipedia.org/wiki/Fick%27s_laws_of_diffusion"
+              target="_blank"
+              rel="noopener"
+            >
+              https://en.wikipedia.org/wiki/Fick%27s_laws_of_diffusion
+            </a>
+          </li>
+          <li>
+            Sörensen, K. (2015). Metaheuristics — the metaphor exposed. International Transactions
+            in Operational Research, 22(1).
+            <a
+              href="https://www.cs.ubc.ca/~hutter/EARG.shtml/stack/2013_Sorensen_MetaheuristicsTheMetaphorExposed.pdf"
+              target="_blank"
+              rel="noopener"
+            >
+              PDF
+            </a>
+          </li>
+          <li>
+            A novel hybrid Fick's law algorithm–quasi oppositional-based learning algorithm for
+            solving constrained mechanical design problems. Bursa Uludağ University.
+            <a
+              href="https://avesis.uludag.edu.tr/yayin/3f320eaa-f5ea-4c07-8b47-06f71c9dc763/a-novel-hybrid-ficks-law-algorithm-quasi-oppositional-based-learning-algorithm-for-solving-constrained-mechanical-design-problems"
+              target="_blank"
+              rel="noopener"
+            >
+              avesis.uludag.edu.tr
+            </a>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <div id="hud">
+      <a href="../">目錄</a>
+      <a href="research.html">參考資料</a>
+      <span id="counter"></span>
+      <button id="prev" aria-label="上一頁">‹</button>
+      <button id="next" aria-label="下一頁">›</button>
+      <button id="theme" aria-label="切換深淺色">◐</button>
+    </div>
+
+    <script>
+      (() => {
+        const slides = [...document.querySelectorAll('.slide')];
+        const counter = document.getElementById('counter');
+        const progress = document.getElementById('progress');
+        let i = 0;
+
+        function show(n) {
+          i = Math.max(0, Math.min(slides.length - 1, n));
+          slides.forEach((s, k) => s.classList.toggle('active', k === i));
+          counter.textContent = `${i + 1} / ${slides.length}`;
+          progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+          history.replaceState(null, '', `#${i + 1}`);
+        }
+
+        document.addEventListener('keydown', (e) => {
+          // 在按鈕、選單、輸入框上操作時不翻頁
+          if (e.target.closest('button, select, input, textarea, [contenteditable]')) return;
+          if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) {
+            e.preventDefault();
+            show(i + 1);
+          } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+            e.preventDefault();
+            show(i - 1);
+          } else if (e.key === 'Home') show(0);
+          else if (e.key === 'End') show(slides.length - 1);
+          else if (e.key === 'f' || e.key === 'F') {
+            document.fullscreenElement
+              ? document.exitFullscreen()
+              : document.documentElement.requestFullscreen();
+          } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
+        });
+
+        document.getElementById('prev').onclick = () => show(i - 1);
+        document.getElementById('next').onclick = () => show(i + 1);
+        document.getElementById('theme').onclick = () => {
+          const root = document.documentElement;
+          const dark = root.dataset.theme
+            ? root.dataset.theme === 'dark'
+            : matchMedia('(prefers-color-scheme: dark)').matches;
+          root.dataset.theme = dark ? 'light' : 'dark';
+          try {
+            localStorage.setItem('theme', root.dataset.theme);
+          } catch {}
+        };
+
+        let startX = null;
+        document.addEventListener(
+          'touchstart',
+          (e) => {
+            startX = e.touches[0].clientX;
+          },
+          { passive: true },
+        );
+        document.addEventListener('touchend', (e) => {
+          if (startX === null) return;
+          const dx = e.changedTouches[0].clientX - startX;
+          if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+          startX = null;
+        });
+
+        show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+      })();
+    </script>
+    <script>
+      // 數學公式排版
+      window.addEventListener('load', () => {
+        if (window.renderMathInElement) {
+          renderMathInElement(document.getElementById('deck'), {
+            delimiters: [
+              { left: '\\[', right: '\\]', display: true },
+              { left: '\\(', right: '\\)', display: false },
+            ],
+          });
+        }
+      });
+
+      // ---- FLA 互動示範：依 mealpy OriginalFLA 移植（2 維） ----
+      (() => {
+        const canvas = document.getElementById('fla-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const $ = (id) => document.getElementById(id);
+
+        const FUNCS = {
+          sphere: { f: ([x, y]) => x * x + y * y, lb: -5, ub: 5, opt: [0, 0] },
+          shifted: {
+            f: ([x, y]) => (x - 2.5) ** 2 + (y + 1.5) ** 2,
+            lb: -5,
+            ub: 5,
+            opt: [2.5, -1.5],
+          },
+          rastrigin: {
+            f: ([x, y]) =>
+              20 + x * x - 10 * Math.cos(2 * Math.PI * x) + y * y - 10 * Math.cos(2 * Math.PI * y),
+            lb: -5.12,
+            ub: 5.12,
+            opt: [0, 0],
+          },
+        };
+        const N = 20,
+          T = 60,
+          DIM = 2;
+        const C1 = 0.5,
+          C2 = 2,
+          C3 = 0.1,
+          C4 = 0.2,
+          C5 = 2,
+          DD = 0.01,
+          EPS = 2.220446049250313e-16;
+        const PHASES = { DO: '擴散 DO（探索）', EO: '平衡 EO（過渡）', SSO: '穩態 SSO（開發）' };
+
+        let fn, pop, n1, best1, best2, gBest, fsss, t, timer, lastPhase, lastTf;
+
+        const rand = Math.random;
+        const randVec = () => Array.from({ length: DIM }, rand);
+        const sign = () => (rand() < 0.5 ? -1 : 1);
+        const norm = (v) => Math.hypot(...v);
+        const sub = (a, b) => a.map((x, k) => x - b[k]);
+        const mean = (ps) => [0, 1].map((k) => ps.reduce((s, p) => s + p.x[k], 0) / ps.length);
+        const clip = (v) => v.map((x) => Math.min(fn.ub, Math.max(fn.lb, x)));
+        const agent = (x) => {
+          x = clip(x);
+          return { x, f: fn.f(x) };
+        };
+        const bestOf = (ps) => ps.reduce((a, b) => (b.f < a.f ? b : a));
+        const randInBounds = () => randVec().map((r) => r * (fn.ub - fn.lb) + fn.lb);
+
+        function reset() {
+          fn = FUNCS[$('fla-func').value];
+          pop = Array.from({ length: N }, () => agent(randInBounds()));
+          n1 = Math.round(N / 2);
+          refreshBests();
+          gBest = { ...bestOf(pop) };
+          t = 0;
+          lastPhase = lastTf = null;
+          drawField();
+          render();
+        }
+
+        function refreshBests() {
+          best1 = bestOf(pop.slice(0, n1));
+          best2 = bestOf(pop.slice(n1));
+          fsss = Math.min(best1.f, best2.f);
+        }
+
+        // 擴散階段：from 區的前 nt 個分子跨向 to 區最佳解
+        function diffusion(fromPop, toPop, fromBest, toBest, xmFrom, xmTo, dof) {
+          const nFrom = fromPop.length;
+          const nt = Math.round((C4 * nFrom - C3 * nFrom) * rand() + C3 * nFrom);
+          const fromNew = fromPop.map((p, idx) => {
+            if (idx < nt) {
+              const dfg = sign();
+              const d = norm(sub(toBest.x, p.x)) + EPS;
+              const jj = sub(xmTo, xmFrom).map((v) => (-DD * v) / d);
+              const r = randVec();
+              return agent(toBest.x.map((b, k) => b + dfg * dof * r[k] * (jj[k] * b - p.x[k])));
+            }
+            const tt = randInBounds().map((v, k) => fromBest.x[k] + dof * v);
+            const pp = randVec();
+            return agent(pp.map((q, k) => (q < 0.8 ? fromBest.x[k] : q >= 0.9 ? p.x[k] : tt[k])));
+          });
+          const toNew = toPop.map(() => agent(randInBounds().map((v, k) => toBest.x[k] + dof * v)));
+          return [fromNew, toNew];
+        }
+
+        // 平衡 / 穩態階段共用的更新：x' = target + q⊙x + q⊙(ms·ref − x)
+        function converge(p, target, ref, jjNumer, distTo, fRef, tf) {
+          const d = norm(sub(distTo.x, p.x));
+          const jj = d === 0 ? [0, 0] : jjNumer.map((v) => (-DD * v) / d);
+          const drf = jj.map((j) => Math.exp(-j / tf));
+          const ms = Math.exp(-fRef / (p.f + EPS));
+          const dfg = sign();
+          const r = randVec();
+          return agent(
+            target.x.map((g, k) => {
+              const q = dfg * drf[k] * r[k];
+              return g + q * p.x[k] + q * (ms * ref.x[k] - p.x[k]);
+            }),
+          );
+        }
+
+        function step() {
+          if (t >= T) return stop();
+          t += 1;
+          const pop1 = pop.slice(0, n1),
+            pop2 = pop.slice(n1);
+          const xm1 = mean(pop1),
+            xm2 = mean(pop2),
+            xm = mean(pop);
+          const tf = Math.sinh(t / T) ** C1;
+          let new1, new2, phase;
+          if (tf < 0.9) {
+            phase = 'DO';
+            const dof = Math.exp(-C2 * (tf - rand()));
+            const tdo = C5 * tf - rand();
+            if (tdo < rand()) {
+              [new1, new2] = diffusion(pop1, pop2, best1, best2, xm1, xm2, dof);
+            } else {
+              [new2, new1] = diffusion(pop2, pop1, best2, best1, xm2, xm1, dof);
+            }
+          } else if (tf <= 1) {
+            phase = 'EO';
+            new1 = pop1.map((p) =>
+              converge(p, best1, best1, sub(best1.x, xm1), best1, best1.f, tf),
+            );
+            new2 = pop2.map((p) =>
+              converge(p, best2, best2, sub(best2.x, xm2), best2, best2.f, tf),
+            );
+          } else {
+            phase = 'SSO';
+            new1 = pop1.map((p) => converge(p, gBest, best1, sub(xm, xm1), gBest, fsss, tf));
+            new2 = pop2.map((p) => converge(p, gBest, gBest, sub(xm, xm2), gBest, fsss, tf));
+          }
+          // 貪婪選擇
+          pop = [...new1, ...new2].map((a, idx) => (a.f < pop[idx].f ? a : pop[idx]));
+          refreshBests();
+          const cur = bestOf(pop);
+          if (cur.f < gBest.f) gBest = { ...cur };
+          lastPhase = phase;
+          lastTf = tf;
+          render();
+          if (t >= T) stop();
+        }
+
+        // ---- 繪圖 ----
+        const field = document.createElement('canvas');
+        const css = (name) =>
+          getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        const hex = (h) => {
+          const n = parseInt(h.replace('#', ''), 16);
+          return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+        };
+
+        function drawField() {
+          const R = 160;
+          field.width = field.height = R;
+          const fctx = field.getContext('2d');
+          const img = fctx.createImageData(R, R);
+          const bg = hex(css('--bg')),
+            ac = hex(css('--accent'));
+          const vals = [];
+          for (let j = 0; j < R; j++)
+            for (let i = 0; i < R; i++) {
+              const x = fn.lb + ((i + 0.5) / R) * (fn.ub - fn.lb);
+              const y = fn.ub - ((j + 0.5) / R) * (fn.ub - fn.lb);
+              vals.push(Math.log1p(fn.f([x, y])));
+            }
+          const max = Math.max(...vals);
+          vals.forEach((v, idx) => {
+            const w = 0.04 + 0.42 * (1 - v / max) ** 2;
+            for (let c = 0; c < 3; c++) img.data[idx * 4 + c] = bg[c] * (1 - w) + ac[c] * w;
+            img.data[idx * 4 + 3] = 255;
+          });
+          fctx.putImageData(img, 0, 0);
+        }
+
+        function render() {
+          const dpr = window.devicePixelRatio || 1;
+          const size = canvas.clientWidth || 480;
+          if (canvas.width !== Math.round(size * dpr)) {
+            canvas.width = canvas.height = Math.round(size * dpr);
+          }
+          const S = canvas.width;
+          const toPx = ([x, y]) => [
+            ((x - fn.lb) / (fn.ub - fn.lb)) * S,
+            ((fn.ub - y) / (fn.ub - fn.lb)) * S,
+          ];
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(field, 0, 0, S, S);
+
+          // 真正最佳解
+          const [ox, oy] = toPx(fn.opt);
+          ctx.strokeStyle = css('--fg');
+          ctx.lineWidth = 1.5 * dpr;
+          ctx.beginPath();
+          ctx.moveTo(ox - 8 * dpr, oy);
+          ctx.lineTo(ox + 8 * dpr, oy);
+          ctx.moveTo(ox, oy - 8 * dpr);
+          ctx.lineTo(ox, oy + 8 * dpr);
+          ctx.stroke();
+
+          const r1 = css('--r1'),
+            r2 = css('--r2');
+          pop.forEach((p, idx) => {
+            const [px, py] = toPx(p.x);
+            ctx.fillStyle = idx < n1 ? r1 : r2;
+            ctx.beginPath();
+            ctx.arc(px, py, 5 * dpr, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          const [bx, by] = toPx(gBest.x);
+          ctx.strokeStyle = css('--best');
+          ctx.lineWidth = 3 * dpr;
+          ctx.beginPath();
+          ctx.arc(bx, by, 10 * dpr, 0, Math.PI * 2);
+          ctx.stroke();
+
+          $('fla-t').textContent = `${t} / ${T}`;
+          $('fla-tf').textContent = lastTf == null ? '–' : lastTf.toFixed(3);
+          $('fla-phase').textContent = lastPhase ? PHASES[lastPhase] : '–';
+          $('fla-best').textContent = gBest.f.toExponential(3);
+        }
+
+        function stop() {
+          clearInterval(timer);
+          timer = null;
+          $('fla-play').textContent = t >= T ? '再跑一次' : '播放';
+        }
+        function play() {
+          if (timer) return stop();
+          if (t >= T) reset();
+          $('fla-play').textContent = '暫停';
+          timer = setInterval(step, 140);
+        }
+
+        $('fla-play').onclick = play;
+        $('fla-step').onclick = () => {
+          stop();
+          step();
+        };
+        $('fla-reset').onclick = () => {
+          stop();
+          reset();
+        };
+        $('fla-func').onchange = () => {
+          stop();
+          reset();
+        };
+
+        // 主題切換或視窗大小改變時重畫
+        const redraw = () => {
+          drawField();
+          render();
+        };
+        new MutationObserver(redraw).observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['data-theme'],
+        });
+        matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);
+        new ResizeObserver(() => render()).observe(canvas);
+
+        reset();
+      })();
+    </script>
+  </body>
+</html>
