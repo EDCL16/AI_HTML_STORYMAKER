@@ -396,6 +396,38 @@
           grid-template-columns: 1fr;
         }
       }
+      .three {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(12px, 2vw, 28px);
+      }
+      @media (max-width: 800px) {
+        .three {
+          grid-template-columns: 1fr;
+        }
+      }
+      .three .col {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: clamp(14px, 2vw, 26px);
+      }
+      .three .col h3 {
+        font-family: 'Noto Serif TC', serif;
+        font-size: clamp(18px, 2.2vw, 28px);
+        margin-bottom: 0.4em;
+      }
+      .three .col p {
+        font-size: clamp(15px, 1.7vw, 21px);
+      }
+      .three .col.here {
+        border: 2px solid var(--accent);
+      }
+      .timeline td:first-child {
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 900;
+        color: var(--accent);
+      }
       .callout {
         background: var(--accent-soft);
         border-radius: 8px;
@@ -605,8 +637,8 @@
     <main id="deck">
       <!-- 1 封面 -->
       <section class="slide cover">
-        <h1>讓候選解像分子一樣擴散：Fick's Law Algorithm</h1>
-        <p class="subtitle">以菲克擴散定律為靈感的最佳化演算法：原理、演算法與手算例</p>
+        <h1>Fick's Law Algorithm</h1>
+        <p class="subtitle">以物理擴散定律為啟發的找最佳解方法</p>
         <p class="meta">
           Hashim, Mostafa, Hussien, Mirjalili &amp; Sallam（2023）
           <br />
@@ -656,21 +688,272 @@
           </defs>
         </svg>
         <aside class="notes">
-          今天介紹的是 2023 年提出的物理型元啟發式演算法
-          FLA。我會分三段：先講菲克定律與它怎麼對應到最佳化，再拆解演算法三個階段，最後用 4
-          個點手算兩步，並現場跑一次互動示範。
+          今天介紹 2023 年提出的 FLA。先解釋名詞，再講這類演算法為什麼出現；接著說明 FLA
+          其實沒有在模擬擴散，只借用了公式形狀與名稱；最後才是公式、手算例與互動示範。
         </aside>
       </section>
 
-      <!-- 2 章節 -->
+      <!-- ===== 一、名詞 ===== -->
       <section class="slide section">
-        <h1>一、背景知識及原理</h1>
-        <p class="kicker">從一滴墨水在水裡散開說起</p>
+        <h1>名詞介紹</h1>
+      </section>
+
+      <section class="slide">
+        <h2>最佳化的意思</h2>
+        <div class="two">
+          <svg
+            viewBox="0 0 340 260"
+            role="img"
+            aria-label="等高線地圖上有數個點，其中一點標示為最低點"
+          >
+            <rect
+              x="1"
+              y="1"
+              width="338"
+              height="258"
+              rx="10"
+              fill="var(--card)"
+              stroke="var(--line)"
+            />
+            <g fill="none" stroke="var(--accent)" stroke-opacity=".35" stroke-width="1.5">
+              <ellipse cx="200" cy="140" rx="150" ry="105" />
+              <ellipse cx="200" cy="140" rx="110" ry="76" />
+              <ellipse cx="200" cy="140" rx="70" ry="48" />
+              <ellipse cx="200" cy="140" rx="32" ry="22" />
+            </g>
+            <g stroke="var(--fg)" stroke-width="2">
+              <path d="M192 140 H208 M200 132 V148" />
+            </g>
+            <text x="214" y="132" font-size="14" fill="var(--fg)">最低點（要找的答案）</text>
+            <g fill="var(--r1)">
+              <circle cx="70" cy="60" r="7" />
+              <circle cx="110" cy="200" r="7" />
+              <circle cx="150" cy="95" r="7" />
+            </g>
+            <g fill="var(--r2)">
+              <circle cx="290" cy="60" r="7" />
+              <circle cx="300" cy="205" r="7" />
+              <circle cx="245" cy="180" r="7" />
+            </g>
+            <text x="20" y="40" font-size="14" fill="var(--muted)">每個點 = 一個候選解</text>
+            <text x="20" y="245" font-size="14" fill="var(--muted)">
+              圈越內圈，分數越小（越好）
+            </text>
+          </svg>
+          <ul class="small">
+            <li>
+              <strong>地圖</strong>
+              ：所有可能的答案
+            </li>
+            <li>
+              <strong>點</strong>
+              ：一個可能的答案
+            </li>
+            <li>
+              <strong>分數</strong>
+              ：這個答案有多好；在 FLA 裡分數
+              <strong>越小越好</strong>
+            </li>
+            <li>
+              <strong>目標</strong>
+              ：找到分數最小的那一點
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>名詞一覽</h2>
+        <div class="wrap-x">
+          <table class="data">
+            <tr>
+              <th>名詞</th>
+              <th>意思</th>
+              <th>在地圖上</th>
+            </tr>
+            <tr>
+              <td>最佳化</td>
+              <td>在很多選擇裡找出最好的一個</td>
+              <td>找最低點</td>
+            </tr>
+            <tr>
+              <td>目標函數 \(f\)</td>
+              <td>替每個答案打分數的公式；FLA 找最小值</td>
+              <td>每個位置的高度</td>
+            </tr>
+            <tr>
+              <td>候選解</td>
+              <td>一個可能的答案；FLA 把它叫做「分子」</td>
+              <td>地圖上的一個點</td>
+            </tr>
+            <tr>
+              <td>族群</td>
+              <td>同時派很多個候選解一起找；FLA 分成兩群（區域 1、2）</td>
+              <td>一群點</td>
+            </tr>
+            <tr>
+              <td>迭代</td>
+              <td>一輪一輪更新位置；\(t\) 是第幾輪，\(T\) 是總輪數</td>
+              <td>點每走一步</td>
+            </tr>
+            <tr>
+              <td>探索／開發</td>
+              <td>探索：到處看沒去過的地方；開發：在目前最好的地方附近仔細找</td>
+              <td>跳遠／小步走</td>
+            </tr>
+            <tr>
+              <td>元啟發式演算法</td>
+              <td>通用的「聰明猜法」：不保證最好，但能很快找到夠好的答案</td>
+              <td>不必走遍整張地圖</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== 二、由來 ===== -->
+      <section class="slide section">
+        <h1>演算法由來</h1>
+      </section>
+
+      <section class="slide">
+        <h2>窮舉的困難</h2>
+        <div class="big-number">77 年</div>
+        <p class="big-label">
+          20 個城市的拜訪順序有 20! ≈ 2.4×10¹⁸ 種。電腦每秒檢查 10 億種，也要算大約 77
+          年（我的計算）
+        </p>
+        <p class="small muted" style="margin-top: 1.2em">
+          就像要在整片沙灘上找到最漂亮的一顆貝殼，不可能每顆都翻起來看。
+        </p>
+        <aside class="notes">
+          所以人們改用「聰明的猜法」：先到處看看，再往看起來不錯的地方仔細找。不保證找到最好的，但能很快找到夠好的答案。這類方法叫做「元啟發式演算法」（metaheuristics）。
+        </aside>
+      </section>
+
+      <section class="slide">
+        <h2>演算法年表</h2>
+        <div class="wrap-x">
+          <table class="data timeline">
+            <tr>
+              <th>年份</th>
+              <th>演算法</th>
+              <th>靈感來源</th>
+            </tr>
+            <tr>
+              <td>1975</td>
+              <td>遺傳演算法 GA</td>
+              <td>
+                生物演化：好的基因留下來、互相組合
+                <sup class="cite">[9]</sup>
+              </td>
+            </tr>
+            <tr>
+              <td>1983</td>
+              <td>模擬退火 SA</td>
+              <td>
+                金屬加熱後慢慢冷卻，結構會變得更穩定
+                <sup class="cite">[10]</sup>
+              </td>
+            </tr>
+            <tr>
+              <td>1992</td>
+              <td>蟻群演算法 ACO</td>
+              <td>
+                螞蟻沿路留下氣味，越多螞蟻走過的路氣味越濃
+                <sup class="cite">[11]</sup>
+              </td>
+            </tr>
+            <tr>
+              <td>1995</td>
+              <td>粒子群 PSO</td>
+              <td>
+                鳥群一起飛，每隻鳥會跟著鄰居和自己的經驗調整方向
+                <sup class="cite">[12]</sup>
+              </td>
+            </tr>
+            <tr>
+              <td>2009</td>
+              <td>重力搜尋 GSA</td>
+              <td>
+                萬有引力：越好的解越「重」，把別人吸過來
+                <sup class="cite">[13]</sup>
+              </td>
+            </tr>
+            <tr>
+              <td>2023</td>
+              <td><strong>FLA</strong></td>
+              <td>
+                <strong>擴散：物質從濃的地方流向淡的地方</strong>
+                <sup class="cite">[1]</sup>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>演算法分類</h2>
+        <div class="three">
+          <div class="col">
+            <h3>演化型</h3>
+            <p>模仿生物一代代演化</p>
+            <p class="muted">
+              例：遺傳演算法 GA
+              <sup class="cite">[9]</sup>
+            </p>
+          </div>
+          <div class="col">
+            <h3>群體型</h3>
+            <p>模仿動物成群合作</p>
+            <p class="muted">
+              例：蟻群 ACO、粒子群 PSO
+              <sup class="cite">[11][12]</sup>
+            </p>
+          </div>
+          <div class="col here">
+            <h3>物理型</h3>
+            <p>模仿物理定律</p>
+            <p class="muted">
+              例：模擬退火 SA、重力 GSA、
+              <strong>FLA</strong>
+              <sup class="cite">[1][15]</sup>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>沒有免費午餐定理</h2>
+        <ul>
+          <li>
+            「沒有免費午餐定理」：一個演算法在某些題目表現較好，必然在另一些題目表現較差
+            <sup class="cite">[14]</sup>
+          </li>
+          <li>
+            所以研究者不斷提出新方法，FLA 就是其中之一
+            <sup class="cite">[1]</sup>
+          </li>
+          <li>
+            但也有人批評：許多新演算法只是換了比喻，內容和舊方法差不多
+            <sup class="cite">[7]</sup>
+            。例如有研究指出 GSA 其實沒有真的按照重力定律運作
+            <sup class="cite">[13]</sup>
+          </li>
+        </ul>
+        <aside class="notes">
+          所以學習 FLA
+          時，重點是看懂它實際怎麼移動候選解，而不是只記住「擴散」這個比喻。後面的實驗也會看到這一點。
+        </aside>
+      </section>
+
+      <!-- ===== 三、背景知識及原理 ===== -->
+      <section class="slide section">
+        <h1>擴散原理</h1>
       </section>
 
       <!-- 3 菲克第一定律 -->
       <section class="slide">
-        <h2>擴散永遠從濃的地方流向淡的地方</h2>
+        <h2>菲克定律</h2>
         <div class="two">
           <div>
             <div class="formula">\[ J = -D\,\frac{d\varphi}{dx} \]</div>
@@ -682,6 +965,10 @@
                 <sup class="cite">[6]</sup>
               </li>
             </ul>
+            <p class="callout small">
+              <strong>白話</strong>
+              　濃淡差越大、距離越短，流得越快；方向永遠是從濃往淡。這是真實的物理現象，氣體、液體、固體中都會發生。
+            </p>
           </div>
           <svg viewBox="0 0 320 200" role="img" aria-label="左側粒子密集、右側稀疏，箭頭由左指向右">
             <rect
@@ -738,54 +1025,271 @@
         </aside>
       </section>
 
-      <!-- 4 對應 -->
+      <!-- 生活中的例子：肺泡 -->
       <section class="slide">
-        <h2>FLA 把「分子往低濃度走」改寫成「解往好的位置走」</h2>
+        <h2>肺泡氣體交換</h2>
+        <div class="two">
+          <svg
+            viewBox="0 0 340 230"
+            role="img"
+            aria-label="肺泡與微血管之間隔著一層薄膜，氧氣往血液移動，二氧化碳往肺泡移動"
+          >
+            <rect
+              x="1"
+              y="20"
+              width="150"
+              height="180"
+              rx="10"
+              fill="var(--accent-soft)"
+              stroke="var(--line)"
+            />
+            <rect
+              x="189"
+              y="20"
+              width="150"
+              height="180"
+              rx="10"
+              fill="color-mix(in srgb, var(--r2) 14%, transparent)"
+              stroke="var(--line)"
+            />
+            <rect x="160" y="20" width="20" height="180" fill="var(--line)" />
+            <text x="76" y="14" text-anchor="middle" font-size="14" fill="var(--fg)">
+              肺泡（空氣）
+            </text>
+            <text x="264" y="14" text-anchor="middle" font-size="14" fill="var(--fg)">
+              微血管（血液）
+            </text>
+            <text x="170" y="222" text-anchor="middle" font-size="13" fill="var(--muted)">
+              很薄的膜
+            </text>
+            <g fill="var(--accent)">
+              <circle cx="30" cy="50" r="6" />
+              <circle cx="70" cy="70" r="6" />
+              <circle cx="40" cy="105" r="6" />
+              <circle cx="110" cy="55" r="6" />
+              <circle cx="95" cy="110" r="6" />
+              <circle cx="125" cy="90" r="6" />
+              <circle cx="220" cy="80" r="6" />
+              <circle cx="290" cy="60" r="6" />
+            </g>
+            <g fill="var(--r2)">
+              <circle cx="40" cy="170" r="6" />
+              <circle cx="215" cy="150" r="6" />
+              <circle cx="250" cy="175" r="6" />
+              <circle cx="300" cy="140" r="6" />
+              <circle cx="275" cy="185" r="6" />
+              <circle cx="230" cy="120" r="6" />
+            </g>
+            <g stroke-width="2.5" fill="none">
+              <path d="M120 125 H215" stroke="var(--accent)" marker-end="url(#o2)" />
+              <path d="M225 160 H125" stroke="var(--r2)" marker-end="url(#co2)" />
+            </g>
+            <defs>
+              <marker
+                id="o2"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto"
+              >
+                <path d="M0 0 L10 5 L0 10z" fill="var(--accent)" />
+              </marker>
+              <marker
+                id="co2"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto"
+              >
+                <path d="M0 0 L10 5 L0 10z" fill="var(--r2)" />
+              </marker>
+            </defs>
+          </svg>
+          <ul class="small">
+            <li>
+              <span style="color: var(--accent); font-weight: 700">氧氣</span>
+              ：肺泡裡多、血液裡少 → 往血液擴散
+            </li>
+            <li>
+              <span class="r2">二氧化碳</span>
+              ：血液裡多、肺泡裡少 → 往肺泡擴散
+            </li>
+            <li>
+              這是
+              <strong>氣體穿過一層膜、溶進液體</strong>
+              的擴散，不需要任何「推力」，只靠兩邊的濃度差
+              <sup class="cite">[16]</sup>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 五個因素 -->
+      <section class="slide">
+        <h2>影響擴散速率的因素</h2>
+        <div class="formula">
+          \[ \text{擴散速率} \;\propto\; \frac{\Delta P \times A \times S}{\sqrt{MW} \times d} \]
+        </div>
+        <div class="compare">
+          <div class="col">
+            <h3>越大，擴散越快</h3>
+            <ul class="small">
+              <li>\(\Delta P\)：兩邊的濃度（分壓）差</li>
+              <li>\(A\)：膜的面積；像濾網越大，過得越多</li>
+              <li>
+                \(S\)：溶解度；CO₂ 在液體中的溶解度約為 O₂ 的 22 倍
+                <sup class="cite">[16]</sup>
+              </li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>越大，擴散越慢</h3>
+            <ul class="small">
+              <li>\(MW\)：分子量；分子越重跑得越慢（Graham 定律）</li>
+              <li>
+                \(d\)：膜的厚度；像蕾絲窗簾比絨布窗簾容易透氣
+                <sup class="cite">[16]</sup>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <aside class="notes">
+          這是生理學常用的菲克定律寫法，把前一頁的擴散係數 D 拆成溶解度與分子量，距離 dx 對應膜厚度
+          d。前面的 \(J = -D\,d\varphi/dx\) 是同一件事的一般形式 [6]。
+        </aside>
+      </section>
+
+      <!-- FLA 不是在模擬擴散 -->
+      <section class="slide">
+        <h2>擴散與 FLA 的對照</h2>
         <div class="wrap-x">
           <table class="data">
             <tr>
-              <th>物理</th>
-              <th>FLA 中的對應</th>
+              <th></th>
+              <th>真正的擴散</th>
+              <th>FLA 實際在做的事</th>
             </tr>
             <tr>
-              <td>分子</td>
-              <td>候選解（位置向量 \(x\)）</td>
+              <td>誰在動</td>
+              <td>真的分子</td>
+              <td>候選解（地圖上的點）</td>
             </tr>
             <tr>
-              <td>兩個區域</td>
+              <td>往哪裡動</td>
               <td>
-                族群平分成
-                <span class="r1">區域 1</span>
-                與
-                <span class="r2">區域 2</span>
+                從擠的地方
+                <strong>散開</strong>
+                到空的地方
+              </td>
+              <td>
+                往分數比較好的點
+                <strong>靠攏</strong>
               </td>
             </tr>
             <tr>
-              <td>濃度差 \(d\varphi\)</td>
-              <td>兩群平均位置的差 \(\bar x_j - \bar x_i\)</td>
-            </tr>
-            <tr>
-              <td>距離 \(dx\)</td>
-              <td>候選解到最佳解的距離</td>
-            </tr>
-            <tr>
-              <td>擴散 → 平衡 → 穩態</td>
-              <td>
-                探索 → 過渡 → 開發
-                <sup class="cite">[1][4]</sup>
-              </td>
+              <td>由什麼決定方向</td>
+              <td>濃度高低</td>
+              <td>哪個點的分數比較好</td>
             </tr>
           </table>
         </div>
+        <p class="callout small">
+          <strong>FLA 沒有在模擬氣體或液體，只借用了公式的形狀和名稱。</strong>
+          擴散最後是「散開」，最佳化最後卻是「聚集」，兩者方向相反。所以不要用擴散的畫面去想 FLA
+          的每一步，只把它當成名字和靈感來源。
+        </p>
+        <aside class="notes">
+          就我讀到的資料（mealpy 程式碼 [3] 與 [4] 的公式重述），FLA
+          只用「分子在兩個區域之間移動」這個抽象概念，沒有指定是哪一種物質；原論文全文沒能取得。這也呼應了對隱喻型演算法的批評
+          [7]。
+        </aside>
+      </section>
+
+      <!-- 4 對應：五個因素借了哪些 -->
+      <section class="slide">
+        <h2>FLA 借用的因素</h2>
+        <div class="wrap-x">
+          <table class="data">
+            <tr>
+              <th>菲克定律的因素</th>
+              <th>FLA 有沒有用</th>
+              <th>換成了什麼</th>
+            </tr>
+            <tr>
+              <td>濃度差 \(\Delta P\)</td>
+              <td class="ok">有</td>
+              <td>兩群點的平均位置之差 \(\bar x_j - \bar x_i\)</td>
+            </tr>
+            <tr>
+              <td>膜厚度（距離）\(d\)</td>
+              <td class="ok">有</td>
+              <td>一個點到最好的點的距離 \(\lVert X_{best} - x\rVert\)</td>
+            </tr>
+            <tr>
+              <td>擴散係數 \(D\)</td>
+              <td class="ok">有</td>
+              <td>
+                固定常數 0.01
+                <sup class="cite">[3]</sup>
+              </td>
+            </tr>
+            <tr>
+              <td>面積 \(A\)、溶解度 \(S\)、分子量 \(MW\)</td>
+              <td class="no">沒有</td>
+              <td>—</td>
+            </tr>
+          </table>
+        </div>
+        <p class="small muted">
+          另外：「分子」換成候選解，「兩個區域」換成兩群點，「擴散 → 平衡 → 穩態」換成「廣泛找 →
+          開始集中 → 定下來」
+          <sup class="cite">[1][4]</sup>
+          。
+        </p>
         <aside class="notes">
           對應方式以 mealpy 的實作為準 [3]：距離用歐氏範數；論文重述 [4]
           中寫成平方差，實作時要留意兩者不同。
         </aside>
       </section>
 
+      <!-- 一句話說 FLA -->
+      <section class="slide">
+        <h2>FLA 概要</h2>
+        <blockquote>
+          派兩群點去地圖上找最低點：先讓點大範圍亂跳，再讓各群往自己群裡最好的點靠攏，最後全部往整體最好的點收斂；每個點只有在新位置分數更好時才移過去。
+        </blockquote>
+        <div class="three" style="margin-top: 1.4em">
+          <div class="col">
+            <h3><span class="tag do">擴散 DO</span></h3>
+            <p>前約 3/4 輪：廣泛找</p>
+          </div>
+          <div class="col">
+            <h3><span class="tag eo">平衡 EO</span></h3>
+            <p>中間一小段：各群集中</p>
+          </div>
+          <div class="col">
+            <h3><span class="tag sso">穩態 SSO</span></h3>
+            <p>最後一小段：全部收斂</p>
+          </div>
+        </div>
+        <aside class="notes">
+          三個階段的比例由下一頁的 TF 公式決定
+          [3]。「擴散、平衡、穩態」只是名字，用來描述先廣泛找、再集中找的節奏。
+        </aside>
+      </section>
+
+      <!-- 6 章節 -->
+      <section class="slide section">
+        <h1>演算法步驟</h1>
+      </section>
+
       <!-- 5 TF -->
       <section class="slide">
-        <h2>一條時間曲線決定現在該探索還是開發</h2>
+        <h2>時間函數 TF</h2>
         <div class="formula">
           \[ TF = \sinh\!\left(\tfrac{t}{T}\right)^{C_1},\qquad C_1 = 0.5 \]
         </div>
@@ -811,15 +1315,9 @@
         </aside>
       </section>
 
-      <!-- 6 章節 -->
-      <section class="slide section">
-        <h1>二、演算法</h1>
-        <p class="kicker">三個階段，一個貪婪選擇</p>
-      </section>
-
       <!-- 7 流程 -->
       <section class="slide">
-        <h2>每一代：算 TF、選階段、更新、只留下較好的解</h2>
+        <h2>演算法流程</h2>
         <ol class="steps">
           <li>隨機初始化 N 個解，平分為區域 1、2，各自找出最佳解</li>
           <li>計算 \(TF = \sinh(t/T)^{C_1}\)</li>
@@ -841,7 +1339,7 @@
 
       <!-- 8 DO -->
       <section class="slide">
-        <h2>擴散階段：少數分子跨區，其餘在本區最佳解附近探索</h2>
+        <h2>擴散階段 DO</h2>
         <div class="two">
           <div>
             <div class="formula">\[ DOF = e^{-C_2 (TF - r)},\quad TDO = C_5\,TF - r \]</div>
@@ -863,6 +1361,11 @@
             </li>
           </ul>
         </div>
+        <p class="callout small">
+          <strong>白話</strong>
+          　前約 3/4
+          輪：大部分點在自己這群最好的點附近大範圍亂跳；少數點跳到另一群最好的點附近看看。
+        </p>
         <aside class="notes">
           DF 是 ±1 的隨機方向，\(\vec r\) 是每個維度各自的 [0,1] 隨機數，⊙ 表示逐元素相乘。DOF 在 TF
           小時較大，所以早期步伐大、偏探索。
@@ -871,7 +1374,7 @@
 
       <!-- 9 EO -->
       <section class="slide">
-        <h2>平衡階段：每個分子向自己區域的最佳解靠攏</h2>
+        <h2>平衡階段 EO</h2>
         <div class="formula">
           \[ x' = X_{best,g} + Q\odot x + Q\odot\left(MS\cdot X_{best,g} - x\right) \] \[ Q =
           DF\cdot DRF\cdot \vec r,\quad DRF = e^{-J/TF},\quad MS = e^{-f_{best,g}/(f_x+\varepsilon)}
@@ -884,11 +1387,15 @@
           </li>
           <li>\(MS\) 用適應值比例調整步長：自己越差（\(f_x\) 越大），\(MS\) 越接近 1</li>
         </ul>
+        <p class="callout small">
+          <strong>白話</strong>
+          　中間一小段：每群的點往自己群裡最好的點靠攏，兩群不互相交換。
+        </p>
       </section>
 
       <!-- 10 SSO -->
       <section class="slide">
-        <h2>穩態階段：所有分子改向全域最佳解收斂</h2>
+        <h2>穩態階段 SSO</h2>
         <div class="formula">
           \[ x' = X_{ss} + Q\odot x + Q\odot\left(MS\cdot X_{best} - x\right),\quad MS =
           e^{-f_{ss}/(f_x+\varepsilon)} \] \[ J = -D\,\frac{\bar x - \bar x_g}{\lVert X_{ss} -
@@ -898,6 +1405,10 @@
           <li>
             \(X_{ss}\)：全域最佳解；\(\bar x\)：整個族群的平均位置
             <sup class="cite">[3][4]</sup>
+          </li>
+          <li>
+            <strong>白話</strong>
+            　最後一小段：所有點都往整體最好的點收斂，在它附近仔細找。
           </li>
         </ul>
         <p class="callout small">
@@ -913,7 +1424,7 @@
 
       <!-- 11 參數 -->
       <section class="slide">
-        <h2>六個參數都有預設值，先照預設實作</h2>
+        <h2>參數預設值</h2>
         <div class="wrap-x">
           <table class="data">
             <tr>
@@ -960,13 +1471,12 @@
 
       <!-- 12 章節 -->
       <section class="slide section">
-        <h1>三、簡單計算例</h1>
-        <p class="kicker">4 個點、2 個維度、手算兩步</p>
+        <h1>計算案例</h1>
       </section>
 
       <!-- 13 設定 -->
       <section class="slide">
-        <h2>用 4 個點最小化 \(f(x) = x_1^2 + x_2^2\)</h2>
+        <h2>題目設定</h2>
         <div class="wrap-x">
           <table class="data">
             <tr>
@@ -1008,8 +1518,9 @@
           </table>
         </div>
         <p class="small">
-          T = 10、邊界 [−5, 5]、參數用預設值。平均位置：\(\bar x_1 = (0.5, 0.5)\)、\(\bar x_2 =
-          (-1.5, 0.5)\)、\(\bar x = (-0.5, 0.5)\)
+          用 4 個點最小化 \(f(x) = x_1^2 + x_2^2\)。\(f\) 是分數：最低點在 (0, 0)，\(f\) 是點到 (0,
+          0) 距離的平方，越小越好。T = 10、邊界 [−5, 5]、參數用預設值。平均位置：\(\bar x_1 = (0.5,
+          0.5)\)、\(\bar x_2 = (-1.5, 0.5)\)、\(\bar x = (-0.5, 0.5)\)
         </p>
         <aside class="notes">
           這是我設計的示範例子，數字皆以 mealpy 的公式計算；隨機數直接指定，方便手算驗證。
@@ -1018,7 +1529,7 @@
 
       <!-- 14 TF 表 -->
       <section class="slide">
-        <h2>T = 10 時：前 7 代擴散、第 8 代平衡、最後 2 代穩態</h2>
+        <h2>各代所屬階段</h2>
         <div class="wrap-x">
           <table class="data">
             <tr>
@@ -1067,7 +1578,7 @@
 
       <!-- 15 DO 計算 -->
       <section class="slide">
-        <h2>第 1 代（擴散）：A 跨到區域 2 的嘗試被淘汰</h2>
+        <h2>第 1 代擴散計算</h2>
         <ol class="steps calc">
           <li>取 \(r = 0.6\)：\(DOF = e^{-2(0.3165-0.6)} = 1.7630\)</li>
           <li>
@@ -1085,6 +1596,10 @@
             ，A 維持原位
           </li>
         </ol>
+        <p class="callout small">
+          <strong>白話</strong>
+          　A 試著跳到另一群最好的點 C 附近，分數從 10 變成 26.5，變差了，所以留在原地。
+        </p>
         <aside class="notes">
           N = 4 時 NT12 = round(2 × 0.1~0.2) = 0，實際上不會有分子跨區；這裡假設 A
           被選中，只為示範公式。N = 20 時每代約 1–2
@@ -1094,7 +1609,7 @@
 
       <!-- 16 SSO 計算 -->
       <section class="slide">
-        <h2>第 10 代（穩態）：A 一步從 f = 10 降到 4.88</h2>
+        <h2>第 10 代穩態計算</h2>
         <ol class="steps calc">
           <li>\(TF = 1.0841\)；全域最佳 \(X_{ss} = B = (-2, 2)\)，\(f_{ss} = 8\)</li>
           <li>
@@ -1114,6 +1629,10 @@
             <span class="ok">取代 A</span>
           </li>
         </ol>
+        <p class="callout small">
+          <strong>白話</strong>
+          　A 往整體最好的點 B 靠近，分數從 10 降到 4.88，變好了，所以移到新位置。
+        </p>
         <aside class="notes">
           驗算捷徑：x' = B + Q ⊙ MS·B = (−2,2) + (−0.2995, −0.7) ⊙ (−0.8987, 0.8987)，結果相同。
         </aside>
@@ -1121,7 +1640,7 @@
 
       <!-- 17 互動示範 -->
       <section class="slide">
-        <h2>動手看：兩群分子如何擴散到最佳解</h2>
+        <h2>互動示範</h2>
         <div class="demo">
           <canvas id="fla-canvas" aria-label="FLA 搜尋過程動畫"></canvas>
           <div class="demo-panel">
@@ -1137,6 +1656,17 @@
                   <option value="sphere">Sphere（單峰）</option>
                   <option value="shifted">位移 Sphere（最佳解在 (2.5, −1.5)）</option>
                   <option value="rastrigin">Rastrigin（多峰）</option>
+                </select>
+              </label>
+            </div>
+            <div class="row">
+              <label>
+                點的數量
+                <select id="fla-n">
+                  <option value="20">20</option>
+                  <option value="60">60</option>
+                  <option value="150" selected>150</option>
+                  <option value="300">300</option>
                 </select>
               </label>
             </div>
@@ -1161,13 +1691,13 @@
               </span>
               <span>
                 <i class="dot" style="background: var(--best)"></i>
-                全域最佳
+                目前最好的點
               </span>
             </p>
             <p class="muted" style="font-size: 14px">
-              N = 20、T = 60，演算法依 mealpy 實作移植
+              十字是真正的最低點，底圖越深代表分數越小（越好）。T = 60，演算法依 mealpy 實作移植
               <sup class="cite">[3]</sup>
-              ；底圖越深代表 f 越小，十字為真正的最佳解。
+              。
             </p>
           </div>
         </div>
@@ -1175,7 +1705,7 @@
 
       <!-- 18 實作注意 -->
       <section class="slide">
-        <h2>實作前要先知道的五件事</h2>
+        <h2>實作注意事項</h2>
         <ul class="small">
           <li>
             <strong>容易局部收斂</strong>
@@ -1209,8 +1739,16 @@
 
       <!-- 19 重點整理 -->
       <section class="slide">
-        <h2>FLA 的本質：分兩群、按時間從探索切到開發、只留下更好的解</h2>
-        <ul>
+        <h2>重點整理</h2>
+        <p class="callout" style="margin: 0 0 1em">
+          <strong>一句話說 FLA</strong>
+          　兩群點在地圖上找最低點：先廣泛亂跳，再各群集中，最後全部收斂；新位置分數更好才移過去。名字裡的「擴散」只是靈感來源。
+        </p>
+        <ul class="small">
+          <li>
+            屬於物理型元啟發式演算法，這一類方法的源頭可追溯到 1975 年的遺傳演算法
+            <sup class="cite">[9]</sup>
+          </li>
           <li>
             靈感來自菲克第一定律：物質從濃處流向淡處
             <sup class="cite">[1][6]</sup>
@@ -1316,6 +1854,71 @@
               rel="noopener"
             >
               avesis.uludag.edu.tr
+            </a>
+          </li>
+          <li>
+            Sörensen, Sevaux &amp; Glover (2017). A History of Metaheuristics. arXiv:1704.00853.
+            <a href="https://arxiv.org/abs/1704.00853" target="_blank" rel="noopener">
+              https://arxiv.org/abs/1704.00853
+            </a>
+          </li>
+          <li>
+            Kirkpatrick, Gelatt &amp; Vecchi (1983). Optimization by Simulated Annealing. Science,
+            220(4598).
+            <a
+              href="https://zhanggroup.org/teaching/literature/Kirkpatrick_Annealing_Science_1983.pdf"
+              target="_blank"
+              rel="noopener"
+            >
+              PDF
+            </a>
+          </li>
+          <li>
+            Dorigo, M. About Ant Colony Optimization. IRIDIA, Université Libre de Bruxelles.
+            <a href="https://iridia.ulb.ac.be/dorigo/ACO/about.html" target="_blank" rel="noopener">
+              https://iridia.ulb.ac.be/dorigo/ACO/about.html
+            </a>
+          </li>
+          <li>
+            Kennedy &amp; Eberhart (1995). Particle Swarm Optimization. IEEE International
+            Conference on Neural Networks.
+            <a
+              href="https://www.asc.ohio-state.edu/statistics/comp_exp/jour.club/KenEbe1995.pdf"
+              target="_blank"
+              rel="noopener"
+            >
+              PDF
+            </a>
+          </li>
+          <li>
+            Gauci, Dodd &amp; Groß (2011). Why 'GSA: A Gravitational Search Algorithm' Is Not
+            Genuinely Based on the Law of Gravity. arXiv:1106.6223（討論 Rashedi et al., 2009）.
+            <a href="https://arxiv.org/abs/1106.6223" target="_blank" rel="noopener">
+              https://arxiv.org/abs/1106.6223
+            </a>
+          </li>
+          <li>
+            Wolpert &amp; Macready (1997). No free lunch theorems for optimization. IEEE
+            Transactions on Evolutionary Computation, 1(1), 67–82.
+            <a href="https://ieeexplore.ieee.org/document/585893" target="_blank" rel="noopener">
+              https://ieeexplore.ieee.org/document/585893
+            </a>
+          </li>
+          <li>
+            Chattopadhyay, Marik &amp; Pramanik (2022). A Brief Overview of Physics-inspired
+            Metaheuristic Optimization Techniques. arXiv:2201.12810.
+            <a href="https://arxiv.org/abs/2201.12810" target="_blank" rel="noopener">
+              https://arxiv.org/abs/2201.12810
+            </a>
+          </li>
+          <li>
+            tazien. Fick's law（投影片，27 頁）. SlideShare.
+            <a
+              href="https://www.slideshare.net/slideshow/ficks-law/14180620"
+              target="_blank"
+              rel="noopener"
+            >
+              https://www.slideshare.net/slideshow/ficks-law/14180620
             </a>
           </li>
         </ol>
@@ -1431,9 +2034,9 @@
             opt: [0, 0],
           },
         };
-        const N = 20,
-          T = 60,
+        const T = 60,
           DIM = 2;
+        let N;
         const C1 = 0.5,
           C2 = 2,
           C3 = 0.1,
@@ -1461,6 +2064,7 @@
 
         function reset() {
           fn = FUNCS[$('fla-func').value];
+          N = Number($('fla-n').value) || 150;
           pop = Array.from({ length: N }, () => agent(randInBounds()));
           n1 = Math.round(N / 2);
           refreshBests();
@@ -1615,13 +2219,16 @@
 
           const r1 = css('--r1'),
             r2 = css('--r2');
+          const radius = (N > 100 ? 3.5 : 5) * dpr;
+          ctx.globalAlpha = N > 100 ? 0.8 : 1;
           pop.forEach((p, idx) => {
             const [px, py] = toPx(p.x);
             ctx.fillStyle = idx < n1 ? r1 : r2;
             ctx.beginPath();
-            ctx.arc(px, py, 5 * dpr, 0, Math.PI * 2);
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
             ctx.fill();
           });
+          ctx.globalAlpha = 1;
           const [bx, by] = toPx(gBest.x);
           ctx.strokeStyle = css('--best');
           ctx.lineWidth = 3 * dpr;
@@ -1656,7 +2263,7 @@
           stop();
           reset();
         };
-        $('fla-func').onchange = () => {
+        $('fla-func').onchange = $('fla-n').onchange = () => {
           stop();
           reset();
         };

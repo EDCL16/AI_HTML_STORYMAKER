@@ -4,6 +4,7 @@
 
 ## 重點整理
 
+- 由來：問題太大、無法窮舉時，人們改用「聰明的猜法」，也就是元啟發式演算法。這類方法從 1975 年的遺傳演算法開始 [9]，陸續有模擬退火（1983）[10]、蟻群（1992）[11]、粒子群（1995）[12]、重力搜尋（2009）[13]。「沒有免費午餐定理」指出沒有一個演算法能在所有問題上都最好 [14]，新方法因此不斷出現，FLA 屬於其中的物理型 [15]。
 - FLA 是 2023 年發表於 _Knowledge-Based Systems_ 的物理型元啟發式演算法，靈感來自菲克第一定律：分子由高濃度往低濃度擴散 [1][6]。
 - 族群被平分成兩個「區域」，用轉移函數 TF = sinh(t/T)^C1 決定目前處於哪個階段：擴散（探索）→ 平衡（過渡）→ 穩態（開發）[3][4]。
 - 以 C1 = 0.5 推算（推論）：前約 74% 的迭代是擴散階段、約 14% 是平衡階段、最後約 12% 是穩態階段 [3]。
@@ -89,6 +90,80 @@
 - **類型**：研究（改良）
 - **立場**：中立陳述
 - **摘要**：依題名與搜尋摘要：將 FLA 與準對立學習（quasi-oppositional based learning）結合，用來加強搜尋、平衡探索與開發，並應用在有約束的機械設計問題。全文未讀。
+
+### [9] A History of Metaheuristics
+
+- **來源**：Kenneth Sörensen, Marc Sevaux, Fred Glover／arXiv:1704.00853（收錄於 _Handbook of Heuristics_）
+- **連結**：https://arxiv.org/abs/1704.00853
+- **日期**：2017-04-04
+- **類型**：研究（綜述）
+- **立場**：中立陳述
+- **摘要**：把元啟發式演算法的歷史分成五個時期。依搜尋摘要，文中指出演化演算法領域真正的起點是 John Holland 1975 年的著作 _Adaptation in Natural and Artificial Systems_，也就是遺傳演算法的源頭。
+
+### [10] Optimization by Simulated Annealing
+
+- **來源**：S. Kirkpatrick, C. D. Gelatt Jr., M. P. Vecchi／_Science_ 220(4598)
+- **連結**：https://zhanggroup.org/teaching/literature/Kirkpatrick_Annealing_Science_1983.pdf
+- **日期**：1983-05-13
+- **類型**：研究（原始論文）
+- **立場**：中立陳述
+- **摘要**：把統計力學與組合最佳化連結起來，用固體退火（加熱後慢慢冷卻）做類比，提出模擬退火。應用於電腦設計中的分割、元件擺放與佈線，並測試了多達數千個城市的旅行推銷員問題。
+
+### [11] About Ant Colony Optimization
+
+- **來源**：Marco Dorigo／IRIDIA, Université Libre de Bruxelles
+- **連結**：https://iridia.ulb.ac.be/dorigo/ACO/about.html
+- **日期**：未標示
+- **類型**：官方（提出者的說明頁）
+- **立場**：中立陳述
+- **摘要**：依搜尋摘要：蟻群演算法源自 Dorigo 1992 年的博士論文，靈感是螞蟻用費洛蒙（氣味）當訊息，越多螞蟻走過的路徑氣味越濃，引導其他螞蟻找到短路徑。
+
+### [12] Particle Swarm Optimization
+
+- **來源**：James Kennedy, Russell Eberhart／IEEE International Conference on Neural Networks
+- **連結**：https://www.asc.ohio-state.edu/statistics/comp_exp/jour.club/KenEbe1995.pdf
+- **日期**：1995
+- **類型**：研究（原始論文）
+- **立場**：中立陳述
+- **摘要**：依搜尋摘要：社會心理學家 Kennedy 與工程師 Eberhart 原本想模擬鳥群飛行，後來發展成連續非線性函數的最佳化方法，延伸自 Reynolds 1986 年的 Boid 鳥群模型。
+
+### [13] Why 'GSA: A Gravitational Search Algorithm' Is Not Genuinely Based on the Law of Gravity
+
+- **來源**：Melvin Gauci, Tony J. Dodd, Roderich Gross／arXiv:1106.6223
+- **連結**：https://arxiv.org/abs/1106.6223
+- **日期**：2011
+- **類型**：評論
+- **立場**：反對（針對 GSA 的物理宣稱）
+- **摘要**：討論 Rashedi 等人 2009 年發表於 _Information Sciences_ 的重力搜尋演算法 GSA：好的解質量較大、會吸引其他解。作者指出 GSA 的力與距離無關，並不真正符合萬有引力定律。這個例子說明物理比喻和實際演算法可能有落差。
+
+### [14] No free lunch theorems for optimization
+
+- **來源**：David H. Wolpert, William G. Macready／_IEEE Transactions on Evolutionary Computation_ 1(1), 67–82
+- **連結**：https://ieeexplore.ieee.org/document/585893
+- **日期**：1997-04
+- **類型**：研究（理論）
+- **立場**：中立陳述
+- **摘要**：提出一系列「沒有免費午餐」定理：任何演算法在某一類問題上的優勢，必然被它在另一類問題上的劣勢抵銷。
+- **可引用句**："for any algorithm, any elevated performance over one class of problems is offset by performance over another class"
+
+### [15] A Brief Overview of Physics-inspired Metaheuristic Optimization Techniques
+
+- **來源**：Soumitri Chattopadhyay, Aritra Marik, Rishav Pramanik／arXiv:2201.12810
+- **連結**：https://arxiv.org/abs/2201.12810
+- **日期**：2022-01-30
+- **類型**：研究（綜述）
+- **立場**：中立陳述
+- **摘要**：介紹以非線性物理現象為模型的元啟發式演算法，說明幾個常見的物理型方法，以及它們各自對應的物理過程。
+
+### [16] Fick's law（投影片）
+
+- **來源**：tazien／SlideShare（使用者提供）
+- **連結**：https://www.slideshare.net/slideshow/ficks-law/14180620
+- **日期**：未標示
+- **類型**：教學投影片（27 頁）
+- **立場**：中立陳述
+- **摘要**：從呼吸生理學說明菲克定律：氣體擴散進液體的速率，與分壓差、表面積、溶解度成正比，與分子量（Graham 定律）、膜厚度成反比。用肺泡與微血管的氣體交換當例子，並用濾網大小比喻面積、用蕾絲與絨布窗簾比喻膜厚度。指出 CO₂ 的溶解度約為 O₂ 的 22 倍。第 22 頁的具體內容未能讀取。
+- **可引用句**："CO2 dissolves 22 x better than O2 does"
 
 ## 不同觀點
 
