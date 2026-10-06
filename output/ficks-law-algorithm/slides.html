@@ -6,9 +6,10 @@
     <title>Fick's Law Algorithm（FLA）</title>
     <meta
       name="description"
-      content="菲克定律演算法：背景原理、DO／EO／SSO 三階段演算法、手算例與互動示範"
+      content="以物理擴散定律為啟發的找最佳解方法：名詞介紹、演算法由來、擴散原理、演算法步驟、計算案例與互動示範"
     />
     <meta name="date" content="2026-10-06" />
+    <meta name="category" content="最佳化演算法" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
@@ -265,6 +266,46 @@
         border-color: var(--accent);
       }
 
+      /* 點畫面左半部上一頁、右半部下一頁；滑鼠所在那一側顯示提示 */
+      #deck[data-side] {
+        cursor: pointer;
+      }
+      .edge-nav {
+        position: fixed;
+        top: 0;
+        bottom: 64px;
+        width: clamp(48px, 7vw, 120px);
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 40px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .edge-nav.prev {
+        left: 0;
+        background: linear-gradient(to right, var(--line), transparent);
+      }
+      .edge-nav.next {
+        right: 0;
+        background: linear-gradient(to left, var(--line), transparent);
+      }
+      #deck[data-side='prev'] ~ .edge-nav.prev,
+      #deck[data-side='next'] ~ .edge-nav.next {
+        opacity: 1;
+      }
+      .edge-nav[hidden] {
+        display: none;
+      }
+      @media (hover: none) {
+        .edge-nav {
+          display: none;
+        }
+      }
+
       @media print {
         body {
           overflow: visible;
@@ -280,6 +321,7 @@
         }
         #hud,
         #progress,
+        .edge-nav,
         .notes {
           display: none !important;
         }
@@ -427,6 +469,16 @@
         font-family: 'Noto Serif TC', serif;
         font-weight: 900;
         color: var(--accent);
+      }
+      .three .col p.en {
+        font-size: clamp(13px, 1.4vw, 16px);
+        color: var(--muted);
+        margin: -0.2em 0 0.5em;
+      }
+      .en-line {
+        color: var(--muted);
+        font-size: clamp(14px, 1.5vw, 18px);
+        margin: -0.6em 0 0.8em;
       }
       .callout {
         background: var(--accent-soft);
@@ -800,6 +852,14 @@
               <td>探索／開發</td>
               <td>探索：到處看沒去過的地方；開發：在目前最好的地方附近仔細找</td>
               <td>跳遠／小步走</td>
+            </tr>
+            <tr>
+              <td>DO／EO／SSO</td>
+              <td>
+                FLA 三個階段的縮寫：Diffusion Operator（擴散）、Equilibrium
+                Operator（平衡）、Steady-State Operator（穩態）；Operator 指「更新位置的規則」
+              </td>
+              <td>先跳遠、再靠攏、最後收斂</td>
             </tr>
             <tr>
               <td>元啟發式演算法</td>
@@ -1265,14 +1325,20 @@
         <div class="three" style="margin-top: 1.4em">
           <div class="col">
             <h3><span class="tag do">擴散 DO</span></h3>
+            <p class="en">Diffusion Operator</p>
             <p>前約 3/4 輪：廣泛找</p>
           </div>
           <div class="col">
             <h3><span class="tag eo">平衡 EO</span></h3>
+            <p class="en">Equilibrium Operator</p>
             <p>中間一小段：各群集中</p>
           </div>
           <div class="col">
             <h3><span class="tag sso">穩態 SSO</span></h3>
+            <p class="en">
+              Steady-State Operator
+              <sup class="cite">[4]</sup>
+            </p>
             <p>最後一小段：全部收斂</p>
           </div>
         </div>
@@ -1319,27 +1385,293 @@
       <section class="slide">
         <h2>演算法流程</h2>
         <ol class="steps">
-          <li>隨機初始化 N 個解，平分為區域 1、2，各自找出最佳解</li>
-          <li>計算 \(TF = \sinh(t/T)^{C_1}\)</li>
           <li>
-            依 TF 執行
-            <span class="tag do">DO</span>
-            <span class="tag eo">EO</span>
-            <span class="tag sso">SSO</span>
-            其中之一，產生新解
+            隨機產生 N 個解；編號前一半是
+            <span class="r1">區域 1</span>
+            、後一半是
+            <span class="r2">區域 2</span>
+            ，各自找出區域最佳解
           </li>
-          <li>超出邊界的維度截回 \([L, U]\)</li>
-          <li>貪婪選擇：新解比舊解好才取代</li>
+          <li>計算時間函數 TF，決定這一代屬於哪個階段</li>
+          <li>
+            依階段產生新解：
+            <span class="tag do">DO</span>
+            兩區交流、
+            <span class="tag eo">EO</span>
+            各區自己收斂、
+            <span class="tag sso">SSO</span>
+            全部向全域最佳收斂
+          </li>
+          <li>超出邊界的座標截回範圍 \([L, U]\)</li>
+          <li>貪婪選擇：新解比舊解好才取代，否則留在原位</li>
           <li>
             更新兩區最佳解與全域最佳解，回到步驟 2
             <sup class="cite">[3][4]</sup>
           </li>
         </ol>
+        <p class="callout small">
+          <strong>白話</strong>
+          　每一代都做同一件事：看時間決定現在怎麼找 → 每個點試一個新位置 →
+          更好才搬過去。接下來三頁說明兩個區域怎麼分工，以及擴散階段實際怎麼移動。
+        </p>
+      </section>
+
+      <!-- 兩個區域的分工 -->
+      <section class="slide">
+        <h2>兩個區域的分工</h2>
+        <div class="wrap-x">
+          <table class="data">
+            <tr>
+              <th>階段</th>
+              <th>
+                <span class="r1">區域 1</span>
+                ／
+                <span class="r2">區域 2</span>
+                在做什麼
+              </th>
+              <th>兩區關係</th>
+            </tr>
+            <tr>
+              <td>開始</td>
+              <td>
+                族群照編號平分成前、後兩半，都是隨機產生，
+                <strong>本質上沒有差別</strong>
+              </td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><span class="tag do">DO</span></td>
+              <td>
+                每一代隨機決定一區當「送出方」、另一區當「接收方」，兩者的移動方式不同（下一頁）
+              </td>
+              <td>交流</td>
+            </tr>
+            <tr>
+              <td><span class="tag eo">EO</span></td>
+              <td>
+                各自向
+                <strong>自己區域</strong>
+                的最佳解靠攏
+              </td>
+              <td>不交流</td>
+            </tr>
+            <tr>
+              <td><span class="tag sso">SSO</span></td>
+              <td>
+                都向
+                <strong>全域</strong>
+                最佳解收斂
+              </td>
+              <td>
+                合流
+                <sup class="cite">[3]</sup>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <ul class="small">
+          <li>
+            <strong>分子不會真的換區（依程式碼）</strong>
+            ：區域是按編號固定的，「跨區」只是位置跳到對方最佳解附近，下一代它仍屬於原本的區域
+          </li>
+          <li>
+            <strong>為什麼要分兩區（我的推論）</strong>
+            ：兩區各有自己的最佳解，等於同時追蹤兩個可能的好地方，到穩態前不會全部擠在同一處，比較不容易一開始就卡在局部最低點
+          </li>
+        </ul>
+      </section>
+
+      <!-- 擴散階段的三種分子 -->
+      <section class="slide">
+        <h2>擴散階段的三種分子</h2>
+        <div class="two">
+          <svg
+            viewBox="0 0 360 230"
+            role="img"
+            aria-label="左邊區域 1 為送出方，少數分子穿過中間的膜跳到區域 2 的最佳解附近；其餘分子聚在區域 1 最佳解旁；右邊區域 2 為接收方，分子從最佳解向四周大範圍跳開"
+          >
+            <defs>
+              <marker
+                id="mv"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto"
+              >
+                <path d="M0 0 L10 5 L0 10z" fill="var(--muted)" />
+              </marker>
+            </defs>
+            <rect
+              x="1"
+              y="22"
+              width="168"
+              height="186"
+              rx="10"
+              fill="var(--card)"
+              stroke="var(--line)"
+            />
+            <rect
+              x="191"
+              y="22"
+              width="168"
+              height="186"
+              rx="10"
+              fill="var(--card)"
+              stroke="var(--line)"
+            />
+            <line x1="180" y1="22" x2="180" y2="208" stroke="var(--muted)" stroke-dasharray="5 5" />
+            <text
+              x="85"
+              y="15"
+              text-anchor="middle"
+              font-size="13"
+              fill="var(--r1)"
+              font-weight="700"
+            >
+              區域 1（送出方）
+            </text>
+            <text
+              x="275"
+              y="15"
+              text-anchor="middle"
+              font-size="13"
+              fill="var(--r2)"
+              font-weight="700"
+            >
+              區域 2（接收方）
+            </text>
+            <text x="180" y="224" text-anchor="middle" font-size="12" fill="var(--muted)">膜</text>
+            <!-- 區域 1 最佳解與留守分子 -->
+            <path d="M70 120 l5 -12 l5 12 l-12 -7 h14z" fill="var(--best)" />
+            <g fill="var(--r1)">
+              <circle cx="58" cy="105" r="5" />
+              <circle cx="90" cy="102" r="5" />
+              <circle cx="62" cy="135" r="5" />
+              <circle cx="92" cy="132" r="5" />
+              <circle cx="45" cy="120" r="5" />
+              <circle cx="78" cy="148" r="5" />
+            </g>
+            <!-- 跨區分子 -->
+            <circle cx="120" cy="60" r="5" fill="var(--r1)" />
+            <path
+              d="M126 60 C 180 40, 240 60, 266 88"
+              stroke="var(--r1)"
+              stroke-width="2"
+              fill="none"
+              marker-end="url(#mv)"
+            />
+            <circle cx="270" cy="96" r="5" fill="var(--r1)" stroke="var(--bg)" stroke-width="1.5" />
+            <!-- 區域 2 最佳解與大範圍亂跳 -->
+            <path d="M285 125 l5 -12 l5 12 l-12 -7 h14z" fill="var(--best)" />
+            <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#mv)">
+              <path d="M290 122 L222 60" />
+              <path d="M290 122 L340 52" />
+              <path d="M290 122 L215 185" />
+              <path d="M290 122 L345 190" />
+            </g>
+            <g fill="var(--r2)">
+              <circle cx="218" cy="56" r="5" />
+              <circle cx="344" cy="48" r="5" />
+              <circle cx="211" cy="189" r="5" />
+              <circle cx="349" cy="194" r="5" />
+            </g>
+            <text x="30" y="198" font-size="12" fill="var(--muted)">★ 區域最佳解</text>
+          </svg>
+          <div class="small">
+            <p>
+              <strong class="r1">① 跨區分子</strong>
+              （送出方的 10–20%）
+              <br />
+              跳到對方區域最佳解附近。N = 20 時每代 1–2 個，N = 150 時 8–15 個
+            </p>
+            <p style="margin-top: 0.6em">
+              <strong class="r1">② 留守分子</strong>
+              （送出方其餘）
+              <br />
+              每個座標：80% 直接用本區最佳解的值、10% 在最佳解附近大範圍亂跳、10% 保持原值
+            </p>
+            <p style="margin-top: 0.6em">
+              <strong class="r2">③ 接收方全部分子</strong>
+              <br />
+              以本區最佳解為中心，隨機跳到範圍內任何地方（步伐乘上 DOF）
+              <sup class="cite">[3]</sup>
+            </p>
+          </div>
+        </div>
+        <p class="callout small">
+          <strong>和物理的對應</strong>
+          　兩區之間像隔著一層膜，少數分子穿過膜到另一邊，其餘分子在自己這一側翻動。
+        </p>
+      </section>
+
+      <!-- 擴散方向與步伐 -->
+      <section class="slide">
+        <h2>擴散方向與步伐</h2>
+        <div class="formula">
+          \[ TDO = C_5\,TF - r \;\;\begin{cases} < \text{隨機數} & \Rightarrow \text{區域 1 送出} \\
+          \ge \text{隨機數} & \Rightarrow \text{區域 2 送出} \end{cases} \qquad DOF = e^{-C_2 (TF -
+          r)} \]
+        </div>
+        <div class="wrap-x">
+          <table class="data">
+            <tr>
+              <th>進度 t/T</th>
+              <th>TF</th>
+              <th>區域 1 當送出方的機率</th>
+              <th>步伐倍數 DOF 範圍</th>
+            </tr>
+            <tr>
+              <td>0.1</td>
+              <td>0.316</td>
+              <td>80%</td>
+              <td>0.53 – 3.92</td>
+            </tr>
+            <tr>
+              <td>0.3</td>
+              <td>0.552</td>
+              <td>40%</td>
+              <td>0.33 – 2.45</td>
+            </tr>
+            <tr>
+              <td>0.5</td>
+              <td>0.722</td>
+              <td>15%</td>
+              <td>0.24 – 1.74</td>
+            </tr>
+            <tr>
+              <td>0.7</td>
+              <td>0.871</td>
+              <td>3%</td>
+              <td>0.18 – 1.29</td>
+            </tr>
+          </table>
+        </div>
+        <ul class="small">
+          <li>
+            <strong>方向會反轉</strong>
+            ：前期多半是區域 1 送出，後期幾乎都是區域 2 送出（我依公式計算，並用模擬驗證）
+          </li>
+          <li>
+            <strong>步伐越來越小</strong>
+            ：DOF 隨 TF 變大而變小，從大範圍亂跳逐漸變成小範圍調整
+          </li>
+          <li>
+            <strong>擴散通量 J 的影響很小（我的觀察）</strong>
+            ：D = 0.01，計算案例中 \(J \cdot X_{best}\) 只有 0.0037；真正決定移動的是 DOF 與隨機數
+          </li>
+        </ul>
+        <aside class="notes">
+          機率算法：TDO &lt; 隨機數 ⇔ r₁ + r₂ &gt; 2TF（r₁、r₂ 為 [0,1] 均勻隨機數）。2TF ≤ 1
+          時機率為 1 − (2TF)²/2；2TF &gt; 1 時為 (2 − 2TF)²/2。DOF 範圍是 r 取 0 與 1 的結果。
+        </aside>
       </section>
 
       <!-- 8 DO -->
       <section class="slide">
         <h2>擴散階段 DO</h2>
+        <p class="en-line">DO = Diffusion Operator（擴散算子）</p>
         <div class="two">
           <div>
             <div class="formula">\[ DOF = e^{-C_2 (TF - r)},\quad TDO = C_5\,TF - r \]</div>
@@ -1375,6 +1707,7 @@
       <!-- 9 EO -->
       <section class="slide">
         <h2>平衡階段 EO</h2>
+        <p class="en-line">EO = Equilibrium Operator（平衡算子）</p>
         <div class="formula">
           \[ x' = X_{best,g} + Q\odot x + Q\odot\left(MS\cdot X_{best,g} - x\right) \] \[ Q =
           DF\cdot DRF\cdot \vec r,\quad DRF = e^{-J/TF},\quad MS = e^{-f_{best,g}/(f_x+\varepsilon)}
@@ -1396,6 +1729,7 @@
       <!-- 10 SSO -->
       <section class="slide">
         <h2>穩態階段 SSO</h2>
+        <p class="en-line">SSO = Steady-State Operator（穩態算子）</p>
         <div class="formula">
           \[ x' = X_{ss} + Q\odot x + Q\odot\left(MS\cdot X_{best} - x\right),\quad MS =
           e^{-f_{ss}/(f_x+\varepsilon)} \] \[ J = -D\,\frac{\bar x - \bar x_g}{\lVert X_{ss} -
@@ -1641,7 +1975,7 @@
       <!-- 17 互動示範 -->
       <section class="slide">
         <h2>互動示範</h2>
-        <div class="demo">
+        <div class="demo no-flip">
           <canvas id="fla-canvas" aria-label="FLA 搜尋過程動畫"></canvas>
           <div class="demo-panel">
             <div class="row">
@@ -1925,9 +2259,12 @@
       </section>
     </main>
 
+    <div class="edge-nav prev" id="edge-prev" aria-hidden="true">‹</div>
+    <div class="edge-nav next" id="edge-next" aria-hidden="true">›</div>
+
     <div id="hud">
-      <a href="../">目錄</a>
-      <a href="research.html">參考資料</a>
+      <a href="../" target="_top">目錄</a>
+      <a href="research.html" target="_top">參考資料</a>
       <span id="counter"></span>
       <button id="prev" aria-label="上一頁">‹</button>
       <button id="next" aria-label="下一頁">›</button>
@@ -1939,6 +2276,8 @@
         const slides = [...document.querySelectorAll('.slide')];
         const counter = document.getElementById('counter');
         const progress = document.getElementById('progress');
+        const edgePrev = document.getElementById('edge-prev');
+        const edgeNext = document.getElementById('edge-next');
         let i = 0;
 
         function show(n) {
@@ -1947,11 +2286,13 @@
           counter.textContent = `${i + 1} / ${slides.length}`;
           progress.style.width = `${((i + 1) / slides.length) * 100}%`;
           history.replaceState(null, '', `#${i + 1}`);
+          edgePrev.hidden = i === 0;
+          edgeNext.hidden = i === slides.length - 1;
         }
 
         document.addEventListener('keydown', (e) => {
           // 在按鈕、選單、輸入框上操作時不翻頁
-          if (e.target.closest('button, select, input, textarea, [contenteditable]')) return;
+          if (e.target.closest?.('button, select, input, textarea, [contenteditable]')) return;
           if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) {
             e.preventDefault();
             show(i + 1);
@@ -1967,8 +2308,39 @@
           } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
         });
 
+        // 首頁或其他分頁切換主題時同步
+        addEventListener('storage', (e) => {
+          if (e.key === 'theme' && e.newValue) document.documentElement.dataset.theme = e.newValue;
+        });
+
+        // 滑鼠翻頁：右下角按鈕
         document.getElementById('prev').onclick = () => show(i - 1);
         document.getElementById('next').onclick = () => show(i + 1);
+
+        // 滑鼠翻頁：點投影片左半部上一頁、右半部下一頁
+        // 點連結、按鈕、選單、畫布等互動元件，或剛選取文字時不翻頁
+        const deck = document.getElementById('deck');
+        const NO_FLIP =
+          'a, button, select, input, textarea, label, canvas, summary, [contenteditable], .no-flip';
+        const sideOf = (e) => (e.clientX < innerWidth / 2 ? 'prev' : 'next');
+        deck.addEventListener('click', (e) => {
+          if (e.button !== 0 || e.target.closest(NO_FLIP)) return;
+          if (String(getSelection?.() ?? '').trim()) return;
+          show(i + (sideOf(e) === 'prev' ? -1 : 1));
+        });
+        deck.addEventListener('mousemove', (e) => {
+          if (e.target.closest(NO_FLIP)) delete deck.dataset.side;
+          else deck.dataset.side = sideOf(e);
+        });
+        deck.addEventListener('mouseleave', () => delete deck.dataset.side);
+
+        // 用滑鼠點過按鈕、改過選單後移開焦點，鍵盤左右鍵才能繼續翻頁
+        document.addEventListener('click', (e) => {
+          if (e.detail > 0) e.target.closest('button')?.blur();
+        });
+        document.addEventListener('change', (e) => {
+          if (e.target.matches('select')) e.target.blur();
+        });
         document.getElementById('theme').onclick = () => {
           const root = document.documentElement;
           const dark = root.dataset.theme
@@ -2044,7 +2416,11 @@
           C5 = 2,
           DD = 0.01,
           EPS = 2.220446049250313e-16;
-        const PHASES = { DO: '擴散 DO（探索）', EO: '平衡 EO（過渡）', SSO: '穩態 SSO（開發）' };
+        const PHASES = {
+          DO: '擴散 DO（Diffusion Operator）',
+          EO: '平衡 EO（Equilibrium Operator）',
+          SSO: '穩態 SSO（Steady-State Operator）',
+        };
 
         let fn, pop, n1, best1, best2, gBest, fsss, t, timer, lastPhase, lastTf;
 

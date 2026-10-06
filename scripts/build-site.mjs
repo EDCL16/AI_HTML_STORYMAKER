@@ -46,6 +46,8 @@ const themeScript = `
     label();
   };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', label);
+  // 其他頁面（例如首頁或預覽中的簡報）切換主題時同步
+  addEventListener('storage', (e) => { if (e.key === 'theme' && e.newValue) { root.dataset.theme = e.newValue; label(); } });
   label();
 })();
 </script>`;
@@ -143,14 +145,15 @@ for (const dir of dirs) {
     page({
       title,
       css: researchCss,
-      back: `<a href="../">← 所有簡報</a>${hasSlides ? ` ・ <a href="slides.html">看簡報</a>` : ''}`,
+      back: `<a href="../" target="_top">← 所有簡報</a>${hasSlides ? ` ・ <a href="slides.html">看簡報</a>` : ''}`,
       body: `<article>${renderResearch(md)}</article>`,
     }),
   );
   console.log(`已產生 output/${dir}/research.html`);
 }
 
-// ---- 首頁目錄 ----
+// ---- 首頁：左側分類清單 + 右側簡報預覽 ----
+const UNCATEGORIZED = '未分類';
 const decks = dirs
   .filter((dir) => existsSync(join(root, dir, 'slides.html')))
   .map((dir) => {
@@ -160,54 +163,202 @@ const decks = dirs
       dir,
       title: html.match(/<title>([^<]*)<\/title>/i)?.[1].trim() || dir,
       description: meta(html, 'description'),
+      category: meta(html, 'category') || UNCATEGORIZED,
       date: meta(html, 'date') || statSync(file).mtime.toISOString().slice(0, 10),
+      slides: (html.match(/<section class="slide/g) || []).length,
       hasResearch: existsSync(join(root, dir, 'research.md')),
     };
   })
   .sort((a, b) => b.date.localeCompare(a.date));
 
 const indexCss = `
-  main { max-width:880px; margin:0 auto; padding:48px 16px 96px; }
-  h1 { font-size:clamp(32px,6vw,52px); font-weight:900; }
-  .sub { color:var(--muted); margin:.4em 0 2.5em; }
-  ul { list-style:none; display:grid; gap:16px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; transition:border-color .2s; }
-  .card:hover { border-color:var(--accent); }
-  .main { display:block; padding:24px 24px 12px; color:inherit; text-decoration:none; }
-  .date { font-size:14px; color:var(--muted); }
-  h2 { font-size:22px; margin:.2em 0; }
-  .card p { color:var(--muted); }
-  .links { display:flex; gap:16px; padding:0 24px 20px; font-size:15px; }
-  .links a { color:var(--accent); }
-  .empty { color:var(--muted); }`;
+  body { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+  .brand { font-weight:900; font-size:17px; color:var(--fg); }
+  .layout { flex:1; min-height:0; display:grid; grid-template-columns:minmax(280px, 340px) 1fr; }
+  .sidebar { border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
+  .tools { padding:16px 16px 8px; display:grid; gap:12px; }
+  #search { width:100%; font:inherit; font-size:15px; padding:8px 12px; border-radius:8px;
+            border:1px solid var(--line); background:var(--card); color:var(--fg); }
+  #search:focus-visible, .chip:focus-visible, .item:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font:inherit; font-size:14px; padding:3px 12px; border-radius:999px; cursor:pointer;
+          border:1px solid var(--line); background:var(--card); color:var(--fg); }
+  .chip[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--bg); }
+  .chip .n { opacity:.7; margin-left:.3em; }
+  .list { flex:1; overflow-y:auto; padding:0 8px 24px; }
+  .group { font-size:13px; font-weight:700; color:var(--muted); padding:14px 8px 6px; }
+  .item { display:block; width:100%; text-align:left; font:inherit; color:inherit; cursor:pointer;
+          background:none; border:1px solid transparent; border-radius:10px; padding:10px 12px; margin-bottom:4px; }
+  .item:hover { background:var(--card); border-color:var(--line); }
+  .item[aria-current="true"] { background:var(--card); border-color:var(--accent); }
+  .item .t { font-weight:700; line-height:1.4; }
+  .item .m { font-size:13px; color:var(--muted); }
+  .item .d { font-size:14px; color:var(--muted); display:-webkit-box; -webkit-line-clamp:2;
+             -webkit-box-orient:vertical; overflow:hidden; }
+  .empty { color:var(--muted); padding:16px 8px; }
+  .viewer { display:flex; flex-direction:column; min-width:0; min-height:0; }
+  .viewer-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+                 padding:14px 20px; border-bottom:1px solid var(--line); }
+  .viewer-head h1 { font-size:20px; line-height:1.4; }
+  .viewer-head p { font-size:14px; color:var(--muted); }
+  .actions { display:flex; gap:8px; flex-shrink:0; }
+  .actions a { font-size:14px; padding:6px 12px; border-radius:8px; border:1px solid var(--line);
+               background:var(--card); color:var(--fg); text-decoration:none; white-space:nowrap; }
+  .actions a:hover { border-color:var(--accent); }
+  .frame-wrap { flex:1; min-height:0; padding:16px 20px 20px; }
+  #frame { width:100%; height:100%; border:1px solid var(--line); border-radius:12px; background:var(--bg); }
+  .placeholder { margin:auto; color:var(--muted); }
+  #viewer-body { display:contents; }
+  #viewer-body[hidden], .actions a[hidden] { display:none; }
+  @media (max-width: 860px) {
+    body { height:auto; overflow:auto; }
+    .layout { display:block; }
+    .sidebar { border-right:none; }
+    .list { overflow:visible; }
+    .viewer { display:none; }
+  }`;
 
-const cards = decks
-  .map(
-    (d) => `
-    <li class="card">
-      <a class="main" href="${encodeURI(d.dir)}/slides.html">
-        <span class="date">${escape(d.date)}</span>
-        <h2>${escape(d.title)}</h2>
-        ${d.description ? `<p>${escape(d.description)}</p>` : ''}
-      </a>
-      <div class="links">
-        <a href="${encodeURI(d.dir)}/slides.html">看簡報</a>
-        ${d.hasResearch ? `<a href="${encodeURI(d.dir)}/research.html">參考資料</a>` : ''}
-      </div>
-    </li>`,
-  )
-  .join('');
+const json = JSON.stringify(decks).replace(/</g, '\\u003c');
+const indexScript = `
+<script>
+(() => {
+  const decks = ${json};
+  const ALL = '全部';
+  const $ = (id) => document.getElementById(id);
+  const mobile = matchMedia('(max-width: 860px)');
+  const frame = $('frame');
+  let cat = ALL, current = null;
+
+  const categories = [...new Set(decks.map((d) => d.category))].sort((a, b) =>
+    a === '${UNCATEGORIZED}' ? 1 : b === '${UNCATEGORIZED}' ? -1 : a.localeCompare(b, 'zh-Hant'));
+  const query = () => $('search').value.trim().toLowerCase();
+  const matches = (d, q) => !q || [d.title, d.description, d.category].join(' ').toLowerCase().includes(q);
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  function renderChips() {
+    const q = query();
+    const count = (c) => decks.filter((d) => (c === ALL || d.category === c) && matches(d, q)).length;
+    $('chips').innerHTML = [ALL, ...categories]
+      .map((c) => \`<button type="button" class="chip" data-cat="\${esc(c)}" aria-pressed="\${c === cat}">\${esc(c)}<span class="n">\${count(c)}</span></button>\`)
+      .join('');
+  }
+
+  function renderList() {
+    const q = query();
+    const shown = decks.filter((d) => (cat === ALL || d.category === cat) && matches(d, q));
+    if (!shown.length) {
+      $('list').innerHTML = \`<p class="empty">\${q ? \`沒有符合「\${esc(q)}」的簡報。\` : '這個分類還沒有簡報。'}</p>\`;
+      return;
+    }
+    const groups = cat === ALL ? categories : [cat];
+    $('list').innerHTML = groups
+      .map((g) => {
+        const items = shown.filter((d) => d.category === g);
+        if (!items.length) return '';
+        return (cat === ALL ? \`<div class="group">\${esc(g)}</div>\` : '') + items.map((d) => \`
+          <button type="button" class="item" data-dir="\${esc(d.dir)}" aria-current="\${d.dir === current}">
+            <div class="t">\${esc(d.title)}</div>
+            <div class="m">\${esc(d.date)} ・ \${d.slides} 頁</div>
+            \${d.description ? \`<div class="d">\${esc(d.description)}</div>\` : ''}
+          </button>\`).join('');
+      })
+      .join('');
+  }
+
+  function saveHash() {
+    const p = new URLSearchParams();
+    if (current) p.set('deck', current);
+    if (cat !== ALL) p.set('cat', cat);
+    history.replaceState(null, '', p.toString() ? '#' + p : location.pathname);
+  }
+
+  function select(dir) {
+    const d = decks.find((x) => x.dir === dir);
+    if (!d) return;
+    current = dir;
+    const url = encodeURIComponent(dir) + '/slides.html';
+    $('v-title').textContent = d.title;
+    $('v-desc').textContent = [d.category, d.date, d.description].filter(Boolean).join(' ・ ');
+    $('v-open').href = url;
+    $('v-refs').hidden = !d.hasResearch;
+    $('v-refs').href = encodeURIComponent(dir) + '/research.html';
+    $('viewer-body').hidden = false;
+    $('placeholder').hidden = true;
+    if (frame.getAttribute('src') !== url) frame.src = url;
+    document.querySelectorAll('.item').forEach((el) => el.setAttribute('aria-current', el.dataset.dir === dir));
+    saveHash();
+  }
+
+  $('chips').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (!b) return;
+    cat = b.dataset.cat;
+    renderChips();
+    renderList();
+    saveHash();
+  });
+  $('list').addEventListener('click', (e) => {
+    const b = e.target.closest('.item');
+    if (!b) return;
+    if (mobile.matches) location.href = encodeURIComponent(b.dataset.dir) + '/slides.html';
+    else select(b.dataset.dir);
+  });
+  $('search').addEventListener('input', () => {
+    renderChips();
+    renderList();
+  });
+
+  // 焦點在首頁時，← → 也能翻右側的簡報
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest?.('input, textarea, select')) return;
+    if (!['ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown'].includes(e.key) || !frame.contentWindow) return;
+    e.preventDefault();
+    const w = frame.contentWindow;
+    w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: e.key, bubbles: true }));
+  });
+
+  // 從網址還原：#deck=<資料夾>&cat=<分類>
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (categories.includes(p.get('cat'))) cat = p.get('cat');
+  renderChips();
+  renderList();
+  const first = decks.find((d) => cat === ALL || d.category === cat);
+  const start = decks.some((d) => d.dir === p.get('deck')) ? p.get('deck') : first?.dir;
+  if (start && !mobile.matches) select(start);
+})();
+</script>`;
 
 writeFileSync(
   join(root, 'index.html'),
   page({
     title: '我的簡報',
     css: indexCss,
-    body: `<main>
-  <h1>我的簡報</h1>
-  <p class="sub">共 ${decks.length} 份</p>
-  ${decks.length ? `<ul>${cards}\n  </ul>` : '<p class="empty">還沒有簡報。</p>'}
-</main>`,
+    back: `<span class="brand">我的簡報</span>`,
+    body: `<div class="layout">
+  <aside class="sidebar">
+    <div class="tools">
+      <input id="search" type="search" placeholder="搜尋標題、說明或分類" aria-label="搜尋簡報">
+      <div class="chips" id="chips" role="group" aria-label="分類"></div>
+    </div>
+    <nav class="list" id="list" aria-label="簡報清單"></nav>
+  </aside>
+  <section class="viewer" aria-label="簡報預覽">
+    <p class="placeholder" id="placeholder">${decks.length ? '從左側選一份簡報' : '還沒有簡報。'}</p>
+    <div id="viewer-body" hidden>
+      <header class="viewer-head">
+        <div><h1 id="v-title"></h1><p id="v-desc"></p></div>
+        <div class="actions">
+          <a id="v-open" target="_blank" rel="noopener">開新分頁</a>
+          <a id="v-refs" target="_blank" rel="noopener">參考資料</a>
+        </div>
+      </header>
+      <div class="frame-wrap"><iframe id="frame" title="簡報預覽"></iframe></div>
+    </div>
+  </section>
+</div>
+${indexScript}`,
   }),
 );
-console.log(`已產生 output/index.html（${decks.length} 份簡報）`);
+console.log(
+  `已產生 output/index.html（${decks.length} 份簡報，${new Set(decks.map((d) => d.category)).size} 個分類）`,
+);

@@ -6,6 +6,7 @@
     <title>簡報標題</title>
     <meta name="description" content="一句話說明這份簡報" />
     <meta name="date" content="2026-01-01" />
+    <meta name="category" content="分類名稱" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
@@ -262,6 +263,46 @@
         border-color: var(--accent);
       }
 
+      /* 點畫面左半部上一頁、右半部下一頁；滑鼠所在那一側顯示提示 */
+      #deck[data-side] {
+        cursor: pointer;
+      }
+      .edge-nav {
+        position: fixed;
+        top: 0;
+        bottom: 64px;
+        width: clamp(48px, 7vw, 120px);
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 40px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .edge-nav.prev {
+        left: 0;
+        background: linear-gradient(to right, var(--line), transparent);
+      }
+      .edge-nav.next {
+        right: 0;
+        background: linear-gradient(to left, var(--line), transparent);
+      }
+      #deck[data-side='prev'] ~ .edge-nav.prev,
+      #deck[data-side='next'] ~ .edge-nav.next {
+        opacity: 1;
+      }
+      .edge-nav[hidden] {
+        display: none;
+      }
+      @media (hover: none) {
+        .edge-nav {
+          display: none;
+        }
+      }
+
       @media print {
         body {
           overflow: visible;
@@ -277,6 +318,7 @@
         }
         #hud,
         #progress,
+        .edge-nav,
         .notes {
           display: none !important;
         }
@@ -370,9 +412,12 @@
       </section>
     </main>
 
+    <div class="edge-nav prev" id="edge-prev" aria-hidden="true">‹</div>
+    <div class="edge-nav next" id="edge-next" aria-hidden="true">›</div>
+
     <div id="hud">
-      <a href="../">目錄</a>
-      <a href="research.html">參考資料</a>
+      <a href="../" target="_top">目錄</a>
+      <a href="research.html" target="_top">參考資料</a>
       <span id="counter"></span>
       <button id="prev" aria-label="上一頁">‹</button>
       <button id="next" aria-label="下一頁">›</button>
@@ -384,6 +429,8 @@
         const slides = [...document.querySelectorAll('.slide')];
         const counter = document.getElementById('counter');
         const progress = document.getElementById('progress');
+        const edgePrev = document.getElementById('edge-prev');
+        const edgeNext = document.getElementById('edge-next');
         let i = 0;
 
         function show(n) {
@@ -392,11 +439,13 @@
           counter.textContent = `${i + 1} / ${slides.length}`;
           progress.style.width = `${((i + 1) / slides.length) * 100}%`;
           history.replaceState(null, '', `#${i + 1}`);
+          edgePrev.hidden = i === 0;
+          edgeNext.hidden = i === slides.length - 1;
         }
 
         document.addEventListener('keydown', (e) => {
           // 在按鈕、選單、輸入框上操作時不翻頁
-          if (e.target.closest('button, select, input, textarea, [contenteditable]')) return;
+          if (e.target.closest?.('button, select, input, textarea, [contenteditable]')) return;
           if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) {
             e.preventDefault();
             show(i + 1);
@@ -412,8 +461,39 @@
           } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
         });
 
+        // 首頁或其他分頁切換主題時同步
+        addEventListener('storage', (e) => {
+          if (e.key === 'theme' && e.newValue) document.documentElement.dataset.theme = e.newValue;
+        });
+
+        // 滑鼠翻頁：右下角按鈕
         document.getElementById('prev').onclick = () => show(i - 1);
         document.getElementById('next').onclick = () => show(i + 1);
+
+        // 滑鼠翻頁：點投影片左半部上一頁、右半部下一頁
+        // 點連結、按鈕、選單、畫布等互動元件，或剛選取文字時不翻頁
+        const deck = document.getElementById('deck');
+        const NO_FLIP =
+          'a, button, select, input, textarea, label, canvas, summary, [contenteditable], .no-flip';
+        const sideOf = (e) => (e.clientX < innerWidth / 2 ? 'prev' : 'next');
+        deck.addEventListener('click', (e) => {
+          if (e.button !== 0 || e.target.closest(NO_FLIP)) return;
+          if (String(getSelection?.() ?? '').trim()) return;
+          show(i + (sideOf(e) === 'prev' ? -1 : 1));
+        });
+        deck.addEventListener('mousemove', (e) => {
+          if (e.target.closest(NO_FLIP)) delete deck.dataset.side;
+          else deck.dataset.side = sideOf(e);
+        });
+        deck.addEventListener('mouseleave', () => delete deck.dataset.side);
+
+        // 用滑鼠點過按鈕、改過選單後移開焦點，鍵盤左右鍵才能繼續翻頁
+        document.addEventListener('click', (e) => {
+          if (e.detail > 0) e.target.closest('button')?.blur();
+        });
+        document.addEventListener('change', (e) => {
+          if (e.target.matches('select')) e.target.blur();
+        });
         document.getElementById('theme').onclick = () => {
           const root = document.documentElement;
           const dark = root.dataset.theme

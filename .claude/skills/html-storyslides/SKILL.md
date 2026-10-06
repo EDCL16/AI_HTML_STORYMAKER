@@ -50,6 +50,7 @@ description: 把一個主題或使用者的看法做成單一 HTML 檔的簡報�
 **讓人看得懂**
 
 - **先解釋名詞，再講其他內容**。後面用到的專有名詞都要能在名詞一覽表中找到。
+- **英文縮寫要顯示全名**：縮寫（例如 DO、EO、SSO）列入名詞一覽表並寫出英文全名與中文意思；在概要卡片、該縮寫的專屬頁面第一行、互動示範的狀態文字中也要顯示全名，例如「DO = Diffusion Operator（擴散算子）」。全名要有出處。
 - 用一個貫穿全場的具體圖像說明抽象概念，例如最佳化就是「在地圖上找最低點」。
 - **類比必須與實際機制方向一致**。如果靈感來源和實際做法不同（例如擴散是散開、最佳化是聚集），要直接用一頁對照表說清楚「它不是在模擬什麼、只借用了什麼」，不要硬套比喻。
 - 介紹真實現象時，用生活中的具體例子和影響因素說明（例如肺泡的氣體交換、濾網大小、窗簾厚薄）。
@@ -66,13 +67,14 @@ description: 把一個主題或使用者的看法做成單一 HTML 檔的簡報�
 
 ### 4. 產生檔案
 
-1. 複製 `assets/template.html`（與本 SKILL.md 同目錄）作為基底，**保留其 CSS 與 JS**，只替換 `<main id="deck">` 內的 `<section class="slide">`，並改 `<title>`、`<meta name="description">`（一句話簡介）與 `<meta name="date">`（今天日期）——首頁目錄會讀這三個欄位。
+1. 複製 `assets/template.html`（與本 SKILL.md 同目錄）作為基底，**保留其 CSS 與 JS**，只替換 `<main id="deck">` 內的 `<section class="slide">`，並改 `<title>`、`<meta name="description">`（一句話簡介）、`<meta name="date">`（今天日期）與 `<meta name="category">`（分類）——首頁會讀這四個欄位。
+   - **分類**：用主題領域命名，例如「最佳化演算法」「機器學習」「物理」。先看其他簡報用過哪些分類（`grep -h 'name="category"' output/*/slides.html`），能沿用就沿用，避免同義的分類各自分散；不確定時問使用者。沒寫分類的簡報會歸到「未分類」。
 2. 輸出到 `output/<主題>/slides.html`，與 research.md 放在同一個主題資料夾（目錄不存在就建立）。`<主題>` 用簡短的英文 kebab-case（會成為網址），與 research-sources 用的資料夾名稱一致。
 3. 範本右下角有「目錄」與「參考資料」連結；該主題沒有 research.md 時，刪掉「參考資料」那個連結。
 4. 每頁可加講者備註：`<aside class="notes">...</aside>`（按 `N` 顯示 / 隱藏）。
 5. **依主題調整外觀**：範本的米白加橘色只是預設值。製作前先參考 `frontend-design` skill，為主題定出配色與字體（可從 `theme-factory` 挑選）。做法是在範本的 `<style>` 之後再加一段 `<style>`，覆蓋 `:root` 的色票（淺色與深色兩組都要寫），不要改動範本原本的 CSS。
 6. 有數學式時，從 cdnjs 載入 KaTeX（`katex.min.css`、`katex.min.js`、`contrib/auto-render.min.js`），用 `\( \)` 與 `\[ \]` 標記。
-7. 互動元件（按鈕、選單）的按鍵不會觸發翻頁，範本已經處理好。範例可參考 `output/ficks-law-algorithm/slides.html`。
+7. 範本已處理好翻頁操作：鍵盤 ← →、滑鼠點投影片任何地方（左半部上一頁、右半部下一頁，滑鼠所在那側會出現 ‹ › 提示）、手機滑動、右下角按鈕。點連結、按鈕、選單、畫布或剛選取文字時不翻頁；互動示範等整塊不該翻頁的區域加上 `class="no-flip"`。點過按鈕或改過選單後鍵盤仍可翻頁。範例可參考 `output/ficks-law-algorithm/slides.html`。
 
 範本提供的版型 class：
 
@@ -90,11 +92,11 @@ description: 把一個主題或使用者的看法做成單一 HTML 檔的簡報�
 - 用 Bash 確認檔案存在、`<section class="slide"` 數量符合預期。
 - 確認每個 `[n]` 都能在參考資料頁找到。
 - 列出所有 `<h1>`、`<h2>` 標題，逐一檢查是否符合第 3 節的標題規則。
-- 告訴使用者：檔案位置、頁數、操作方式（← → / 空白鍵翻頁、`F` 全螢幕、`N` 備註、`Ctrl+P` 存成 PDF），並用 2–3 句說明故事線。
+- 告訴使用者：檔案位置、頁數、操作方式（鍵盤 ← → / 空白鍵翻頁、滑鼠點畫面左半部／右半部翻頁、`F` 全螢幕、`N` 備註、`Ctrl+P` 存成 PDF），並用 2–3 句說明故事線。
 
 ### 6. 發布（使用者同意後才做）
 
-`output/` 會透過 `.github/workflows/pages.yml` 自動發布到 GitHub Pages，部署時 `scripts/build-site.mjs` 會自動產生首頁目錄 `output/index.html`，並把每個 `research.md` 轉成閱讀版的 `research.html`（兩者都不進 git）。本機預覽：`npm install`（第一次）→ `npm run build` → 開 `output/index.html`。
+`output/` 會透過 `.github/workflows/pages.yml` 自動發布到 GitHub Pages，部署時 `scripts/build-site.mjs` 會自動產生首頁目錄 `output/index.html`（左側依分類列出所有簡報並可搜尋，右側直接預覽，網址 `#deck=<資料夾>&cat=<分類>` 可分享），並把每個 `research.md` 轉成閱讀版的 `research.html`（兩者都不進 git）。本機預覽：`npm install`（第一次）→ `npm run build` → 開 `output/index.html`。
 
 詢問使用者是否要發布；同意後：
 
