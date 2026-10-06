@@ -9,7 +9,8 @@ import { marked } from 'marked';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'output');
 
-const escape = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const escape = (s) =>
+  s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const meta = (html, name) =>
   html.match(new RegExp(`<meta\\s+name="${name}"\\s+content="([^"]*)"`, 'i'))?.[1] ?? '';
 
@@ -108,22 +109,28 @@ function renderResearch(md) {
   html = html.replace(
     /<h3>\[(\d+)\]\s*([\s\S]*?)<\/h3>\s*(<ul>[\s\S]*?<\/ul>)?/g,
     (_, n, title, list = '') =>
-      `<section class="source" id="ref-${n}"><h3><span class="num">${n}</span>${title}</h3>${list}</section>`
+      `<section class="source" id="ref-${n}"><h3><span class="num">${n}</span>${title}</h3>${list}</section>`,
   );
 
   // 內文中的 [n] → 跳到對應來源的連結（不動標籤內的文字）
-  html = html.replace(/(<[^>]+>)|\[(\d+)\]/g, (m, tag, n) => tag ?? `<a class="cite" href="#ref-${n}">[${n}]</a>`);
+  html = html.replace(
+    /(<[^>]+>)|\[(\d+)\]/g,
+    (m, tag, n) => tag ?? `<a class="cite" href="#ref-${n}">[${n}]</a>`,
+  );
 
   // 立場標籤
-  html = html.replace(/(<strong>立場<\/strong>：)\s*(支持|反對|中立[^<]*)/g, (_, label, s) =>
-    `${label}<span class="badge ${s === '支持' ? 'pro' : s === '反對' ? 'con' : ''}">${s}</span>`);
+  html = html.replace(
+    /(<strong>立場<\/strong>：)\s*(支持|反對|中立[^<]*)/g,
+    (_, label, s) =>
+      `${label}<span class="badge ${s === '支持' ? 'pro' : s === '反對' ? 'con' : ''}">${s}</span>`,
+  );
 
   // 外部連結開新分頁
   html = html.replace(/<a href="(https?:)/g, '<a target="_blank" rel="noopener" href="$1');
   return html;
 }
 
-const dirs = readdirSync(root).filter(d => statSync(join(root, d)).isDirectory());
+const dirs = readdirSync(root).filter((d) => statSync(join(root, d)).isDirectory());
 
 for (const dir of dirs) {
   const mdFile = join(root, dir, 'research.md');
@@ -131,19 +138,22 @@ for (const dir of dirs) {
   const md = readFileSync(mdFile, 'utf8');
   const title = md.match(/^#\s+(.+)$/m)?.[1].trim() || `參考資料：${dir}`;
   const hasSlides = existsSync(join(root, dir, 'slides.html'));
-  writeFileSync(join(root, dir, 'research.html'), page({
-    title,
-    css: researchCss,
-    back: `<a href="../">← 所有簡報</a>${hasSlides ? ` ・ <a href="slides.html">看簡報</a>` : ''}`,
-    body: `<article>${renderResearch(md)}</article>`,
-  }));
+  writeFileSync(
+    join(root, dir, 'research.html'),
+    page({
+      title,
+      css: researchCss,
+      back: `<a href="../">← 所有簡報</a>${hasSlides ? ` ・ <a href="slides.html">看簡報</a>` : ''}`,
+      body: `<article>${renderResearch(md)}</article>`,
+    }),
+  );
   console.log(`已產生 output/${dir}/research.html`);
 }
 
 // ---- 首頁目錄 ----
 const decks = dirs
-  .filter(dir => existsSync(join(root, dir, 'slides.html')))
-  .map(dir => {
+  .filter((dir) => existsSync(join(root, dir, 'slides.html')))
+  .map((dir) => {
     const file = join(root, dir, 'slides.html');
     const html = readFileSync(file, 'utf8');
     return {
@@ -171,7 +181,9 @@ const indexCss = `
   .links a { color:var(--accent); }
   .empty { color:var(--muted); }`;
 
-const cards = decks.map(d => `
+const cards = decks
+  .map(
+    (d) => `
     <li class="card">
       <a class="main" href="${encodeURI(d.dir)}/slides.html">
         <span class="date">${escape(d.date)}</span>
@@ -182,15 +194,20 @@ const cards = decks.map(d => `
         <a href="${encodeURI(d.dir)}/slides.html">看簡報</a>
         ${d.hasResearch ? `<a href="${encodeURI(d.dir)}/research.html">參考資料</a>` : ''}
       </div>
-    </li>`).join('');
+    </li>`,
+  )
+  .join('');
 
-writeFileSync(join(root, 'index.html'), page({
-  title: '我的簡報',
-  css: indexCss,
-  body: `<main>
+writeFileSync(
+  join(root, 'index.html'),
+  page({
+    title: '我的簡報',
+    css: indexCss,
+    body: `<main>
   <h1>我的簡報</h1>
   <p class="sub">共 ${decks.length} 份</p>
   ${decks.length ? `<ul>${cards}\n  </ul>` : '<p class="empty">還沒有簡報。</p>'}
 </main>`,
-}));
+  }),
+);
 console.log(`已產生 output/index.html（${decks.length} 份簡報）`);

@@ -3,9 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build-site.mjs"
+    "build": "node scripts/build-site.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "marked": "^18.1.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.9"
   }
 }

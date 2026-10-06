@@ -1,244 +1,448 @@
 <!doctype html>
 <html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>簡報標題</title>
-<meta name="description" content="一句話說明這份簡報">
-<meta name="date" content="2026-01-01">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #faf8f4;
-    --fg: #1f1d1a;
-    --muted: #6b665e;
-    --accent: #c2410c;
-    --accent-soft: #fde9dc;
-    --card: #ffffff;
-    --line: #e6e1d8;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #17161a; --fg: #f1eee8; --muted: #a39e94;
-      --accent: #fb923c; --accent-soft: #3a2518; --card: #211f24; --line: #34313a;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #17161a; --fg: #f1eee8; --muted: #a39e94;
-    --accent: #fb923c; --accent-soft: #3a2518; --card: #211f24; --line: #34313a;
-  }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>簡報標題</title>
+    <meta name="description" content="一句話說明這份簡報" />
+    <meta name="date" content="2026-01-01" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #faf8f4;
+        --fg: #1f1d1a;
+        --muted: #6b665e;
+        --accent: #c2410c;
+        --accent-soft: #fde9dc;
+        --card: #ffffff;
+        --line: #e6e1d8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #17161a;
+          --fg: #f1eee8;
+          --muted: #a39e94;
+          --accent: #fb923c;
+          --accent-soft: #3a2518;
+          --card: #211f24;
+          --line: #34313a;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #17161a;
+        --fg: #f1eee8;
+        --muted: #a39e94;
+        --accent: #fb923c;
+        --accent-soft: #3a2518;
+        --card: #211f24;
+        --line: #34313a;
+      }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
-  body {
-    background: var(--bg); color: var(--fg);
-    font-family: "Noto Sans TC", system-ui, sans-serif;
-    line-height: 1.6; overflow: hidden;
-  }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Noto Sans TC', system-ui, sans-serif;
+        line-height: 1.6;
+        overflow: hidden;
+      }
 
-  .slide {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; justify-content: center;
-    padding: clamp(24px, 6vw, 96px) clamp(16px, 8vw, 140px);
-    opacity: 0; visibility: hidden; transform: translateY(12px);
-    transition: opacity .35s ease, transform .35s ease, visibility .35s;
-    overflow-y: auto;
-  }
-  .slide.active { opacity: 1; visibility: visible; transform: none; }
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(24px, 6vw, 96px) clamp(16px, 8vw, 140px);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(12px);
+        transition:
+          opacity 0.35s ease,
+          transform 0.35s ease,
+          visibility 0.35s;
+        overflow-y: auto;
+      }
+      .slide.active {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
 
-  .slide h1 { font-size: clamp(32px, 5.5vw, 72px); font-weight: 900; line-height: 1.2; }
-  .slide h2 { font-size: clamp(24px, 3.6vw, 48px); font-weight: 700; line-height: 1.3; margin-bottom: .8em; }
-  .slide h2::before {
-    content: ""; display: block; width: 48px; height: 6px;
-    background: var(--accent); border-radius: 3px; margin-bottom: .5em;
-  }
-  .slide p, .slide li { font-size: clamp(17px, 2vw, 26px); }
-  .slide ul, .slide ol { padding-left: 1.2em; display: grid; gap: .6em; }
-  .slide li::marker { color: var(--accent); }
-  .muted { color: var(--muted); }
-  .cite { color: var(--accent); font-size: .6em; font-weight: 700; margin-left: 2px; }
+      .slide h1 {
+        font-size: clamp(32px, 5.5vw, 72px);
+        font-weight: 900;
+        line-height: 1.2;
+      }
+      .slide h2 {
+        font-size: clamp(24px, 3.6vw, 48px);
+        font-weight: 700;
+        line-height: 1.3;
+        margin-bottom: 0.8em;
+      }
+      .slide h2::before {
+        content: '';
+        display: block;
+        width: 48px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 3px;
+        margin-bottom: 0.5em;
+      }
+      .slide p,
+      .slide li {
+        font-size: clamp(17px, 2vw, 26px);
+      }
+      .slide ul,
+      .slide ol {
+        padding-left: 1.2em;
+        display: grid;
+        gap: 0.6em;
+      }
+      .slide li::marker {
+        color: var(--accent);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .cite {
+        color: var(--accent);
+        font-size: 0.6em;
+        font-weight: 700;
+        margin-left: 2px;
+      }
 
-  .cover { background: linear-gradient(135deg, var(--accent-soft), var(--bg) 60%); }
-  .cover .subtitle { font-size: clamp(18px, 2.4vw, 30px); color: var(--muted); margin-top: 1em; }
-  .cover .meta { margin-top: 2.5em; font-size: clamp(14px, 1.5vw, 18px); color: var(--muted); }
+      .cover {
+        background: linear-gradient(135deg, var(--accent-soft), var(--bg) 60%);
+      }
+      .cover .subtitle {
+        font-size: clamp(18px, 2.4vw, 30px);
+        color: var(--muted);
+        margin-top: 1em;
+      }
+      .cover .meta {
+        margin-top: 2.5em;
+        font-size: clamp(14px, 1.5vw, 18px);
+        color: var(--muted);
+      }
 
-  .section { align-items: center; text-align: center; }
-  .section h1 { color: var(--accent); }
+      .section {
+        align-items: center;
+        text-align: center;
+      }
+      .section h1 {
+        color: var(--accent);
+      }
 
-  .big-number {
-    font-size: clamp(64px, 12vw, 160px); font-weight: 900; line-height: 1;
-    color: var(--accent); letter-spacing: -.02em;
-  }
-  .big-label { font-size: clamp(18px, 2.4vw, 30px); margin-top: .4em; }
+      .big-number {
+        font-size: clamp(64px, 12vw, 160px);
+        font-weight: 900;
+        line-height: 1;
+        color: var(--accent);
+        letter-spacing: -0.02em;
+      }
+      .big-label {
+        font-size: clamp(18px, 2.4vw, 30px);
+        margin-top: 0.4em;
+      }
 
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 3vw, 40px); }
-  .compare .col {
-    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-    padding: clamp(16px, 2.5vw, 32px);
-  }
-  .compare .col h3 { font-size: clamp(18px, 2.2vw, 28px); margin-bottom: .6em; color: var(--accent); }
-  @media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(16px, 3vw, 40px);
+      }
+      .compare .col {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: clamp(16px, 2.5vw, 32px);
+      }
+      .compare .col h3 {
+        font-size: clamp(18px, 2.2vw, 28px);
+        margin-bottom: 0.6em;
+        color: var(--accent);
+      }
+      @media (max-width: 700px) {
+        .compare {
+          grid-template-columns: 1fr;
+        }
+      }
 
-  blockquote {
-    font-size: clamp(22px, 3vw, 40px); font-weight: 500; line-height: 1.5;
-    border-left: 6px solid var(--accent); padding-left: 1em;
-  }
-  blockquote cite { display: block; margin-top: 1em; font-size: .5em; color: var(--muted); font-style: normal; }
+      blockquote {
+        font-size: clamp(22px, 3vw, 40px);
+        font-weight: 500;
+        line-height: 1.5;
+        border-left: 6px solid var(--accent);
+        padding-left: 1em;
+      }
+      blockquote cite {
+        display: block;
+        margin-top: 1em;
+        font-size: 0.5em;
+        color: var(--muted);
+        font-style: normal;
+      }
 
-  .refs { font-size: clamp(13px, 1.4vw, 17px) !important; gap: .5em !important; }
-  .refs li { font-size: inherit; }
-  .refs a { color: var(--accent); word-break: break-all; }
+      .refs {
+        font-size: clamp(13px, 1.4vw, 17px) !important;
+        gap: 0.5em !important;
+      }
+      .refs li {
+        font-size: inherit;
+      }
+      .refs a {
+        color: var(--accent);
+        word-break: break-all;
+      }
 
-  .notes {
-    display: none; position: fixed; left: 0; right: 0; bottom: 48px;
-    max-height: 30vh; overflow-y: auto;
-    background: var(--card); border-top: 2px solid var(--accent);
-    padding: 16px clamp(16px, 8vw, 140px); font-size: 16px; color: var(--muted);
-  }
-  body.show-notes .slide.active .notes { display: block; }
+      .notes {
+        display: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 48px;
+        max-height: 30vh;
+        overflow-y: auto;
+        background: var(--card);
+        border-top: 2px solid var(--accent);
+        padding: 16px clamp(16px, 8vw, 140px);
+        font-size: 16px;
+        color: var(--muted);
+      }
+      body.show-notes .slide.active .notes {
+        display: block;
+      }
 
-  #hud a { color: var(--accent); text-decoration: none; margin-right: 4px; }
-  #progress { position: fixed; top: 0; left: 0; height: 4px; background: var(--accent); transition: width .3s; }
-  #hud {
-    position: fixed; bottom: 12px; right: 16px; display: flex; gap: 8px; align-items: center;
-    font-size: 14px; color: var(--muted);
-  }
-  #hud button {
-    background: var(--card); color: var(--fg); border: 1px solid var(--line);
-    border-radius: 8px; width: 36px; height: 36px; cursor: pointer; font-size: 16px;
-  }
-  #hud button:hover { border-color: var(--accent); }
+      #hud a {
+        color: var(--accent);
+        text-decoration: none;
+        margin-right: 4px;
+      }
+      #progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 4px;
+        background: var(--accent);
+        transition: width 0.3s;
+      }
+      #hud {
+        position: fixed;
+        bottom: 12px;
+        right: 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      #hud button {
+        background: var(--card);
+        color: var(--fg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      #hud button:hover {
+        border-color: var(--accent);
+      }
 
-  @media print {
-    body { overflow: visible; }
-    .slide {
-      position: relative; opacity: 1; visibility: visible; transform: none;
-      height: 100vh; page-break-after: always; overflow: hidden;
-    }
-    #hud, #progress, .notes { display: none !important; }
-  }
-</style>
-<script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
-</head>
-<body>
-<div id="progress"></div>
+      @media print {
+        body {
+          overflow: visible;
+        }
+        .slide {
+          position: relative;
+          opacity: 1;
+          visibility: visible;
+          transform: none;
+          height: 100vh;
+          page-break-after: always;
+          overflow: hidden;
+        }
+        #hud,
+        #progress,
+        .notes {
+          display: none !important;
+        }
+      }
+    </style>
+    <script>
+      try {
+        const t = localStorage.getItem('theme');
+        if (t) document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="progress"></div>
 
-<main id="deck">
-  <!-- 封面 -->
-  <section class="slide cover">
-    <h1>一句話說出你的主張</h1>
-    <p class="subtitle">副標：補充背景或範圍</p>
-    <p class="meta">講者姓名 ・ 2026-01-01</p>
-    <aside class="notes">開場白：先自我介紹，再說今天想讓大家相信什麼。</aside>
-  </section>
+    <main id="deck">
+      <!-- 封面 -->
+      <section class="slide cover">
+        <h1>一句話說出你的主張</h1>
+        <p class="subtitle">副標：補充背景或範圍</p>
+        <p class="meta">講者姓名 ・ 2026-01-01</p>
+        <aside class="notes">開場白：先自我介紹，再說今天想讓大家相信什麼。</aside>
+      </section>
 
-  <!-- 開場：數據 -->
-  <section class="slide">
-    <div class="big-number">68%</div>
-    <p class="big-label">用一個驚人的數字開場<sup class="cite">[1]</sup></p>
-  </section>
+      <!-- 開場：數據 -->
+      <section class="slide">
+        <div class="big-number">68%</div>
+        <p class="big-label">
+          用一個驚人的數字開場
+          <sup class="cite">[1]</sup>
+        </p>
+      </section>
 
-  <!-- 一般內容頁 -->
-  <section class="slide">
-    <h2>標題就是這頁的結論</h2>
-    <ul>
-      <li>重點一，附上證據<sup class="cite">[1]</sup></li>
-      <li>重點二，不超過兩行</li>
-      <li>重點三</li>
-    </ul>
-  </section>
+      <!-- 一般內容頁 -->
+      <section class="slide">
+        <h2>標題就是這頁的結論</h2>
+        <ul>
+          <li>
+            重點一，附上證據
+            <sup class="cite">[1]</sup>
+          </li>
+          <li>重點二，不超過兩行</li>
+          <li>重點三</li>
+        </ul>
+      </section>
 
-  <!-- 對照 -->
-  <section class="slide">
-    <h2>另一種看法</h2>
-    <div class="compare">
-      <div class="col"><h3>反方認為</h3><p>反方最強的論點<sup class="cite">[2]</sup></p></div>
-      <div class="col"><h3>我的回應</h3><p>針對性的回應</p></div>
+      <!-- 對照 -->
+      <section class="slide">
+        <h2>另一種看法</h2>
+        <div class="compare">
+          <div class="col">
+            <h3>反方認為</h3>
+            <p>
+              反方最強的論點
+              <sup class="cite">[2]</sup>
+            </p>
+          </div>
+          <div class="col">
+            <h3>我的回應</h3>
+            <p>針對性的回應</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 引用 -->
+      <section class="slide">
+        <blockquote>
+          一句有力量的引用。
+          <cite>— 出處 [1]</cite>
+        </blockquote>
+      </section>
+
+      <!-- 章節 / 結論 -->
+      <section class="slide section">
+        <h1>我的結論</h1>
+        <p class="muted" style="margin-top: 1em">希望觀眾帶走的一句話</p>
+      </section>
+
+      <!-- 參考資料 -->
+      <section class="slide">
+        <h2>參考資料</h2>
+        <ol class="refs">
+          <li>
+            文章標題 — 來源
+            <a href="https://example.com" target="_blank" rel="noopener">https://example.com</a>
+          </li>
+          <li>
+            文章標題 — 來源
+            <a href="https://example.com" target="_blank" rel="noopener">https://example.com</a>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <div id="hud">
+      <a href="../">目錄</a>
+      <a href="research.html">參考資料</a>
+      <span id="counter"></span>
+      <button id="prev" aria-label="上一頁">‹</button>
+      <button id="next" aria-label="下一頁">›</button>
+      <button id="theme" aria-label="切換深淺色">◐</button>
     </div>
-  </section>
 
-  <!-- 引用 -->
-  <section class="slide">
-    <blockquote>
-      一句有力量的引用。
-      <cite>— 出處 [1]</cite>
-    </blockquote>
-  </section>
+    <script>
+      (() => {
+        const slides = [...document.querySelectorAll('.slide')];
+        const counter = document.getElementById('counter');
+        const progress = document.getElementById('progress');
+        let i = 0;
 
-  <!-- 章節 / 結論 -->
-  <section class="slide section">
-    <h1>我的結論</h1>
-    <p class="muted" style="margin-top:1em">希望觀眾帶走的一句話</p>
-  </section>
+        function show(n) {
+          i = Math.max(0, Math.min(slides.length - 1, n));
+          slides.forEach((s, k) => s.classList.toggle('active', k === i));
+          counter.textContent = `${i + 1} / ${slides.length}`;
+          progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+          history.replaceState(null, '', `#${i + 1}`);
+        }
 
-  <!-- 參考資料 -->
-  <section class="slide">
-    <h2>參考資料</h2>
-    <ol class="refs">
-      <li>文章標題 — 來源 <a href="https://example.com" target="_blank" rel="noopener">https://example.com</a></li>
-      <li>文章標題 — 來源 <a href="https://example.com" target="_blank" rel="noopener">https://example.com</a></li>
-    </ol>
-  </section>
-</main>
+        document.addEventListener('keydown', (e) => {
+          // 在按鈕、選單、輸入框上操作時不翻頁
+          if (e.target.closest('button, select, input, textarea, [contenteditable]')) return;
+          if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) {
+            e.preventDefault();
+            show(i + 1);
+          } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+            e.preventDefault();
+            show(i - 1);
+          } else if (e.key === 'Home') show(0);
+          else if (e.key === 'End') show(slides.length - 1);
+          else if (e.key === 'f' || e.key === 'F') {
+            document.fullscreenElement
+              ? document.exitFullscreen()
+              : document.documentElement.requestFullscreen();
+          } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
+        });
 
-<div id="hud">
-  <a href="../">目錄</a>
-  <a href="research.html">參考資料</a>
-  <span id="counter"></span>
-  <button id="prev" aria-label="上一頁">‹</button>
-  <button id="next" aria-label="下一頁">›</button>
-  <button id="theme" aria-label="切換深淺色">◐</button>
-</div>
+        document.getElementById('prev').onclick = () => show(i - 1);
+        document.getElementById('next').onclick = () => show(i + 1);
+        document.getElementById('theme').onclick = () => {
+          const root = document.documentElement;
+          const dark = root.dataset.theme
+            ? root.dataset.theme === 'dark'
+            : matchMedia('(prefers-color-scheme: dark)').matches;
+          root.dataset.theme = dark ? 'light' : 'dark';
+          try {
+            localStorage.setItem('theme', root.dataset.theme);
+          } catch {}
+        };
 
-<script>
-(() => {
-  const slides = [...document.querySelectorAll('.slide')];
-  const counter = document.getElementById('counter');
-  const progress = document.getElementById('progress');
-  let i = 0;
+        let startX = null;
+        document.addEventListener(
+          'touchstart',
+          (e) => {
+            startX = e.touches[0].clientX;
+          },
+          { passive: true },
+        );
+        document.addEventListener('touchend', (e) => {
+          if (startX === null) return;
+          const dx = e.changedTouches[0].clientX - startX;
+          if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+          startX = null;
+        });
 
-  function show(n) {
-    i = Math.max(0, Math.min(slides.length - 1, n));
-    slides.forEach((s, k) => s.classList.toggle('active', k === i));
-    counter.textContent = `${i + 1} / ${slides.length}`;
-    progress.style.width = `${((i + 1) / slides.length) * 100}%`;
-    history.replaceState(null, '', `#${i + 1}`);
-  }
-
-  document.addEventListener('keydown', e => {
-    if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(i + 1); }
-    else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1); }
-    else if (e.key === 'Home') show(0);
-    else if (e.key === 'End') show(slides.length - 1);
-    else if (e.key === 'f' || e.key === 'F') {
-      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
-    }
-    else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
-  });
-
-  document.getElementById('prev').onclick = () => show(i - 1);
-  document.getElementById('next').onclick = () => show(i + 1);
-  document.getElementById('theme').onclick = () => {
-    const root = document.documentElement;
-    const dark = root.dataset.theme
-      ? root.dataset.theme === 'dark'
-      : matchMedia('(prefers-color-scheme: dark)').matches;
-    root.dataset.theme = dark ? 'light' : 'dark';
-    try { localStorage.setItem('theme', root.dataset.theme); } catch {}
-  };
-
-  let startX = null;
-  document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
-  document.addEventListener('touchend', e => {
-    if (startX === null) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
-    startX = null;
-  });
-
-  show((parseInt(location.hash.slice(1), 10) || 1) - 1);
-})();
-</script>
-</body>
+        show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+      })();
+    </script>
+  </body>
 </html>

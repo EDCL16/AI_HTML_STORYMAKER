@@ -3,7 +3,14 @@ name: 發布簡報到 GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['output/**', 'scripts/**', 'package.json', 'package-lock.json', '.github/workflows/pages.yml']
+    paths:
+      [
+        'output/**',
+        'scripts/**',
+        'package.json',
+        'package-lock.json',
+        '.github/workflows/pages.yml',
+      ]
   workflow_dispatch:
 
 permissions:

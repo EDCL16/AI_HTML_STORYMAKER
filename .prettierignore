@@ -1,0 +1,8 @@
+node_modules/
+package-lock.json
+# 第三方 skill 保持原樣，方便日後更新
+.claude/skills/frontend-design/
+.claude/skills/theme-factory/
+# 建置產物
+output/index.html
+output/*/research.html
