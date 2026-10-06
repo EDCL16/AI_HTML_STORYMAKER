@@ -12,6 +12,10 @@
 ```
 
 ## 發布
-push 到 `main` 後，GitHub Actions 會把 `output/` 發布到 GitHub Pages，並自動產生簡報目錄首頁。
+push 到 `main` 後，GitHub Actions 會執行 `npm run build`，然後把 `output/` 發布到 GitHub Pages：
+- 產生簡報目錄首頁 `output/index.html`
+- 把每個 `research.md` 轉成閱讀版 `research.html`（可切換白天 / 夜晚模式，引用編號可點擊跳到來源）
 
-本機預覽首頁：`node scripts/build-index.mjs`，再打開 `output/index.html`。
+網址：https://edcl16.github.io/AI_HTML_STORYMAKER/
+
+本機預覽：`npm install` → `npm run build` → 打開 `output/index.html`。

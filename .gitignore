@@ -1,1 +1,4 @@
+node_modules/
+# 由 npm run build 產生
 output/index.html
+output/*/research.html

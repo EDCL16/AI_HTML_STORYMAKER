@@ -98,6 +98,7 @@
   }
   body.show-notes .slide.active .notes { display: block; }
 
+  #hud a { color: var(--accent); text-decoration: none; margin-right: 4px; }
   #progress { position: fixed; top: 0; left: 0; height: 4px; background: var(--accent); transition: width .3s; }
   #hud {
     position: fixed; bottom: 12px; right: 16px; display: flex; gap: 8px; align-items: center;
@@ -118,6 +119,7 @@
     #hud, #progress, .notes { display: none !important; }
   }
 </style>
+<script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
 </head>
 <body>
 <div id="progress"></div>
@@ -181,6 +183,8 @@
 </main>
 
 <div id="hud">
+  <a href="../">目錄</a>
+  <a href="research.html">參考資料</a>
   <span id="counter"></span>
   <button id="prev" aria-label="上一頁">‹</button>
   <button id="next" aria-label="下一頁">›</button>
@@ -221,6 +225,7 @@
       ? root.dataset.theme === 'dark'
       : matchMedia('(prefers-color-scheme: dark)').matches;
     root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('theme', root.dataset.theme); } catch {}
   };
 
   let startX = null;

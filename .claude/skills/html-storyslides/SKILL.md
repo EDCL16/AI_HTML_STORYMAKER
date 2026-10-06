@@ -40,7 +40,8 @@ description: 把一個主題或使用者的看法做成單一 HTML 檔的簡報�
 ### 4. 產生檔案
 1. 複製 `assets/template.html`（與本 SKILL.md 同目錄）作為基底，**保留其 CSS 與 JS**，只替換 `<main id="deck">` 內的 `<section class="slide">`，並改 `<title>`、`<meta name="description">`（一句話簡介）與 `<meta name="date">`（今天日期）——首頁目錄會讀這三個欄位。
 2. 輸出到 `output/<主題>/slides.html`，與 research.md 放在同一個主題資料夾（目錄不存在就建立）。`<主題>` 用簡短的英文 kebab-case（會成為網址），與 research-sources 用的資料夾名稱一致。
-3. 每頁可加講者備註：`<aside class="notes">...</aside>`（按 `N` 顯示 / 隱藏）。
+3. 範本右下角有「目錄」與「參考資料」連結；該主題沒有 research.md 時，刪掉「參考資料」那個連結。
+4. 每頁可加講者備註：`<aside class="notes">...</aside>`（按 `N` 顯示 / 隱藏）。
 
 範本提供的版型 class：
 - `slide cover`：封面
@@ -57,7 +58,7 @@ description: 把一個主題或使用者的看法做成單一 HTML 檔的簡報�
 - 告訴使用者：檔案位置、頁數、操作方式（← → / 空白鍵翻頁、`F` 全螢幕、`N` 備註、`Ctrl+P` 存成 PDF），並用 2–3 句說明故事線。
 
 ### 6. 發布（使用者同意後才做）
-`output/` 會透過 `.github/workflows/pages.yml` 自動發布到 GitHub Pages，首頁目錄由 `scripts/build-index.mjs` 自動產生（本機預覽可執行 `node scripts/build-index.mjs` 後開 `output/index.html`）。
+`output/` 會透過 `.github/workflows/pages.yml` 自動發布到 GitHub Pages，部署時 `scripts/build-site.mjs` 會自動產生首頁目錄 `output/index.html`，並把每個 `research.md` 轉成閱讀版的 `research.html`（兩者都不進 git）。本機預覽：`npm install`（第一次）→ `npm run build` → 開 `output/index.html`。
 
 詢問使用者是否要發布；同意後：
 1. `git add output/<主題>` 並 commit（訊息如 `新增簡報：<標題>`）。

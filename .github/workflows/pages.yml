@@ -3,7 +3,7 @@ name: 發布簡報到 GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['output/**', 'scripts/build-index.mjs', '.github/workflows/pages.yml']
+    paths: ['output/**', 'scripts/**', 'package.json', 'package-lock.json', '.github/workflows/pages.yml']
   workflow_dispatch:
 
 permissions:
@@ -26,7 +26,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/build-index.mjs
+          cache: npm
+      - run: npm ci
+      - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
