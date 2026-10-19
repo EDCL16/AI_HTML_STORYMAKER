@@ -1,0 +1,2134 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reciprocal Latent Fields</title>
+    <meta name="description" content="遊戲聲音傳播的預計算資料如何用 3D 潛在網格與黎曼度量，從 182 GB 壓到 14 MB：從基礎觀念、DSP 流程到公式逐步詳解" />
+    <meta name="date" content="2026-10-19" />
+    <meta name="category" content="數位訊號處理" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #faf8f4;
+        --fg: #1f1d1a;
+        --muted: #6b665e;
+        --accent: #c2410c;
+        --accent-soft: #fde9dc;
+        --card: #ffffff;
+        --line: #e6e1d8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #17161a;
+          --fg: #f1eee8;
+          --muted: #a39e94;
+          --accent: #fb923c;
+          --accent-soft: #3a2518;
+          --card: #211f24;
+          --line: #34313a;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #17161a;
+        --fg: #f1eee8;
+        --muted: #a39e94;
+        --accent: #fb923c;
+        --accent-soft: #3a2518;
+        --card: #211f24;
+        --line: #34313a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Noto Sans TC', system-ui, sans-serif;
+        line-height: 1.6;
+        overflow: hidden;
+      }
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(24px, 6vw, 96px) clamp(16px, 8vw, 140px);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(12px);
+        transition:
+          opacity 0.35s ease,
+          transform 0.35s ease,
+          visibility 0.35s;
+        overflow-y: auto;
+      }
+      .slide.active {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+
+      .slide h1 {
+        font-size: clamp(32px, 5.5vw, 72px);
+        font-weight: 900;
+        line-height: 1.2;
+      }
+      .slide h2 {
+        font-size: clamp(24px, 3.6vw, 48px);
+        font-weight: 700;
+        line-height: 1.3;
+        margin-bottom: 0.8em;
+      }
+      .slide h2::before {
+        content: '';
+        display: block;
+        width: 48px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 3px;
+        margin-bottom: 0.5em;
+      }
+      .slide p,
+      .slide li {
+        font-size: clamp(17px, 2vw, 26px);
+      }
+      .slide ul,
+      .slide ol {
+        padding-left: 1.2em;
+        display: grid;
+        gap: 0.6em;
+      }
+      .slide li::marker {
+        color: var(--accent);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .cite {
+        color: var(--accent);
+        font-size: 0.6em;
+        font-weight: 700;
+        margin-left: 2px;
+      }
+
+      .cover {
+        background: linear-gradient(135deg, var(--accent-soft), var(--bg) 60%);
+      }
+      .cover .subtitle {
+        font-size: clamp(18px, 2.4vw, 30px);
+        color: var(--muted);
+        margin-top: 1em;
+      }
+      .cover .meta {
+        margin-top: 2.5em;
+        font-size: clamp(14px, 1.5vw, 18px);
+        color: var(--muted);
+      }
+
+      .section {
+        align-items: center;
+        text-align: center;
+      }
+      .section h1 {
+        color: var(--accent);
+      }
+
+      .big-number {
+        font-size: clamp(64px, 12vw, 160px);
+        font-weight: 900;
+        line-height: 1;
+        color: var(--accent);
+        letter-spacing: -0.02em;
+      }
+      .big-label {
+        font-size: clamp(18px, 2.4vw, 30px);
+        margin-top: 0.4em;
+      }
+
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(16px, 3vw, 40px);
+      }
+      .compare .col {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: clamp(16px, 2.5vw, 32px);
+      }
+      .compare .col h3 {
+        font-size: clamp(18px, 2.2vw, 28px);
+        margin-bottom: 0.6em;
+        color: var(--accent);
+      }
+      @media (max-width: 700px) {
+        .compare {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      blockquote {
+        font-size: clamp(22px, 3vw, 40px);
+        font-weight: 500;
+        line-height: 1.5;
+        border-left: 6px solid var(--accent);
+        padding-left: 1em;
+      }
+      blockquote cite {
+        display: block;
+        margin-top: 1em;
+        font-size: 0.5em;
+        color: var(--muted);
+        font-style: normal;
+      }
+
+      .refs {
+        font-size: clamp(13px, 1.4vw, 17px) !important;
+        gap: 0.5em !important;
+      }
+      .refs li {
+        font-size: inherit;
+      }
+      .refs a {
+        color: var(--accent);
+        word-break: break-all;
+      }
+
+      .notes {
+        display: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 48px;
+        max-height: 30vh;
+        overflow-y: auto;
+        background: var(--card);
+        border-top: 2px solid var(--accent);
+        padding: 16px clamp(16px, 8vw, 140px);
+        font-size: 16px;
+        color: var(--muted);
+      }
+      body.show-notes .slide.active .notes {
+        display: block;
+      }
+
+      #hud a {
+        color: var(--accent);
+        text-decoration: none;
+        margin-right: 4px;
+      }
+      #progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 4px;
+        background: var(--accent);
+        transition: width 0.3s;
+      }
+      #hud {
+        position: fixed;
+        bottom: 12px;
+        right: 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      #hud button {
+        background: var(--card);
+        color: var(--fg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      #hud button:hover {
+        border-color: var(--accent);
+      }
+
+      /* 點畫面左半部上一頁、右半部下一頁；滑鼠所在那一側顯示提示 */
+      #deck[data-side] {
+        cursor: pointer;
+      }
+      .edge-nav {
+        position: fixed;
+        top: 0;
+        bottom: 64px;
+        width: clamp(48px, 7vw, 120px);
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 40px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .edge-nav.prev {
+        left: 0;
+        background: linear-gradient(to right, var(--line), transparent);
+      }
+      .edge-nav.next {
+        right: 0;
+        background: linear-gradient(to left, var(--line), transparent);
+      }
+      #deck[data-side='prev'] ~ .edge-nav.prev,
+      #deck[data-side='next'] ~ .edge-nav.next {
+        opacity: 1;
+      }
+      .edge-nav[hidden] {
+        display: none;
+      }
+      @media (hover: none) {
+        .edge-nav {
+          display: none;
+        }
+      }
+
+      @media print {
+        body {
+          overflow: visible;
+        }
+        .slide {
+          position: relative;
+          opacity: 1;
+          visibility: visible;
+          transform: none;
+          height: 100vh;
+          page-break-after: always;
+          overflow: hidden;
+        }
+        #hud,
+        #progress,
+        .edge-nav,
+        .notes {
+          display: none !important;
+        }
+      }
+    </style>
+    <script>
+      try {
+        const t = localStorage.getItem('theme');
+        if (t) document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css"
+    />
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"
+    ></script>
+    <style>
+      /* ---- 本主題配色：聲學實驗室的灰綠底，青綠為主色；音源用紅、聽者用藍（與原論文圖一致） ---- */
+      :root {
+        --bg: #f3f5f4;
+        --fg: #13201e;
+        --muted: #5b6967;
+        --accent: #0e7c74;
+        --accent-soft: #dcefec;
+        --card: #ffffff;
+        --line: #d9e2e0;
+        --src: #d6452f;
+        --rcv: #2c55c9;
+        --warn: #b7791f;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #0e1514;
+          --fg: #e3ecea;
+          --muted: #93a5a2;
+          --accent: #3cc4b6;
+          --accent-soft: #143330;
+          --card: #152020;
+          --line: #24312f;
+          --src: #ff7a63;
+          --rcv: #7c9cff;
+          --warn: #f2b84b;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #0e1514;
+        --fg: #e3ecea;
+        --muted: #93a5a2;
+        --accent: #3cc4b6;
+        --accent-soft: #143330;
+        --card: #152020;
+        --line: #24312f;
+        --src: #ff7a63;
+        --rcv: #7c9cff;
+        --warn: #f2b84b;
+      }
+
+      .slide {
+        justify-content: flex-start;
+        padding-top: clamp(28px, 6vh, 72px);
+      }
+      .slide.cover,
+      .slide.section,
+      .slide.center {
+        justify-content: center;
+      }
+      .cover {
+        background:
+          radial-gradient(circle at 82% 70%, var(--accent-soft) 0 18%, transparent 18.2%),
+          radial-gradient(circle at 82% 70%, transparent 0 26%, var(--accent-soft) 26.2% 26.8%, transparent 27%),
+          radial-gradient(circle at 82% 70%, transparent 0 35%, var(--accent-soft) 35.2% 35.8%, transparent 36%),
+          var(--bg);
+      }
+      .cover h1 {
+        max-width: 15em;
+      }
+      .cover .en {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--accent);
+        font-size: clamp(14px, 1.6vw, 20px);
+        margin-bottom: 0.8em;
+      }
+      .mono {
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .src {
+        color: var(--src);
+        font-weight: 700;
+      }
+      .rcv {
+        color: var(--rcv);
+        font-weight: 700;
+      }
+
+      figure.paper {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px;
+        margin: 0.2em 0 0.6em;
+        text-align: center;
+      }
+      figure.paper img {
+        max-width: 100%;
+        max-height: 52vh;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+      }
+      figure.paper.tall img {
+        max-height: 62vh;
+      }
+      figure.paper figcaption {
+        color: #5b6967;
+        font-size: clamp(12px, 1.3vw, 15px);
+        margin-top: 6px;
+      }
+
+      .formula {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--accent);
+        border-radius: 8px;
+        padding: 0.4em 1.2em;
+        margin: 0.3em 0 0.8em;
+        font-size: clamp(15px, 1.8vw, 23px);
+        overflow-x: auto;
+      }
+      .formula .katex-display {
+        margin: 0.35em 0;
+      }
+      .formula .eq-no {
+        float: right;
+        color: var(--muted);
+        font-size: 0.7em;
+        margin-top: 0.4em;
+      }
+      .small li,
+      .small p {
+        font-size: clamp(14px, 1.6vw, 20px);
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: clamp(16px, 3vw, 44px);
+        align-items: start;
+      }
+      @media (max-width: 800px) {
+        .two {
+          grid-template-columns: 1fr;
+        }
+      }
+      .three {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(12px, 2vw, 28px);
+      }
+      @media (max-width: 800px) {
+        .three {
+          grid-template-columns: 1fr;
+        }
+      }
+      .three .col {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: clamp(14px, 2vw, 26px);
+      }
+      .three .col h3 {
+        font-size: clamp(18px, 2.1vw, 26px);
+        margin-bottom: 0.4em;
+      }
+      .three .col p {
+        font-size: clamp(14px, 1.6vw, 20px);
+      }
+      .three .col.here {
+        border: 2px solid var(--accent);
+      }
+      .callout {
+        background: var(--accent-soft);
+        border-radius: 8px;
+        padding: 0.7em 1.2em;
+        margin-top: 0.8em;
+        font-size: clamp(15px, 1.8vw, 22px);
+      }
+      .callout strong {
+        color: var(--accent);
+      }
+      .callout.warn {
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .callout.warn strong {
+        color: var(--warn);
+      }
+
+      table.data {
+        border-collapse: collapse;
+        font-size: clamp(13px, 1.55vw, 20px);
+        margin: 0.3em 0 0.8em;
+        width: 100%;
+      }
+      table.data th,
+      table.data td {
+        padding: 0.4em 0.7em;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        font-variant-numeric: tabular-nums;
+        vertical-align: top;
+      }
+      table.data th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      table.data tr.hl td {
+        background: var(--accent-soft);
+      }
+      table.data td.num {
+        font-family: 'JetBrains Mono', monospace;
+        white-space: nowrap;
+      }
+      .wrap-x {
+        overflow-x: auto;
+      }
+      .steps {
+        counter-reset: s;
+        list-style: none;
+        padding: 0 !important;
+      }
+      .steps li {
+        counter-increment: s;
+        display: grid;
+        grid-template-columns: 2em 1fr;
+        align-items: baseline;
+      }
+      .steps li::before {
+        content: counter(s);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      /* 時間窗示意 */
+      .timeline-bar {
+        position: relative;
+        height: 64px;
+        margin: 1.4em 0 2.2em;
+        border-bottom: 2px solid var(--fg);
+      }
+      .timeline-bar .w {
+        position: absolute;
+        bottom: 0;
+        height: 48px;
+        border-radius: 6px 6px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: clamp(12px, 1.4vw, 17px);
+        white-space: nowrap;
+      }
+      .timeline-bar .tick {
+        position: absolute;
+        top: 70px;
+        transform: translateX(-50%);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: clamp(11px, 1.2vw, 14px);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .big-row {
+        display: flex;
+        gap: clamp(24px, 6vw, 96px);
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+      .big-row .arrow {
+        font-size: clamp(40px, 7vw, 96px);
+        color: var(--muted);
+        line-height: 1;
+      }
+      .big-number.old {
+        color: var(--muted);
+        text-decoration: line-through;
+        text-decoration-thickness: 6px;
+      }
+
+      /* 互動示範 */
+      .demo {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+        gap: clamp(16px, 3vw, 40px);
+        align-items: start;
+      }
+      @media (max-width: 800px) {
+        .demo {
+          grid-template-columns: 1fr;
+        }
+      }
+      #ir-canvas {
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        display: block;
+      }
+      .demo-panel {
+        display: grid;
+        gap: 0.7em;
+        font-size: clamp(14px, 1.5vw, 18px);
+      }
+      .demo-panel label {
+        display: grid;
+        gap: 2px;
+      }
+      .demo-panel input[type='range'] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+      .demo-panel button {
+        font: inherit;
+        font-size: 15px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .demo-panel button:hover {
+        border-color: var(--accent);
+      }
+      .demo-panel table.data {
+        font-size: clamp(13px, 1.4vw, 17px);
+        margin: 0;
+      }
+      .legend span {
+        display: inline-block;
+        margin-right: 1em;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 14px;
+        height: 4px;
+        vertical-align: middle;
+        margin-right: 4px;
+        border-radius: 2px;
+      }
+      .slide p.small,
+      .slide p.note {
+        font-size: clamp(13px, 1.4vw, 17px);
+      }
+      table.data.compact {
+        font-size: clamp(12px, 1.35vw, 17px);
+      }
+      table.data.compact th,
+      table.data.compact td {
+        padding: 0.3em 0.6em;
+      }
+      figure.paper.fig4 img {
+        max-height: 55vh;
+      }
+      .dsp-tag {
+        display: inline-block;
+        align-self: flex-start;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 700;
+        font-size: clamp(13px, 1.4vw, 17px) !important;
+        padding: 0.15em 0.8em;
+        border-radius: 999px;
+        margin-bottom: 0.6em;
+      }
+      svg.diagram {
+        width: 100%;
+        height: auto;
+        max-height: 48vh;
+      }
+      svg.diagram .room {
+        fill: var(--card);
+        stroke: var(--line);
+        stroke-width: 2;
+      }
+      svg.diagram .wall {
+        fill: var(--muted);
+      }
+      svg.diagram path {
+        fill: none;
+        stroke-width: 4;
+      }
+      svg.diagram .p-direct {
+        stroke: var(--muted);
+        stroke-dasharray: 10 8;
+      }
+      svg.diagram .p-reflect {
+        stroke: var(--rcv);
+      }
+      svg.diagram .p-diffract {
+        stroke: var(--accent);
+      }
+      svg.diagram .dot-src {
+        fill: var(--src);
+      }
+      svg.diagram .dot-rcv {
+        fill: var(--rcv);
+      }
+      svg.diagram .lbl {
+        fill: var(--fg);
+        font-size: 22px;
+        font-weight: 700;
+      }
+      svg.diagram .lbl.s {
+        font-size: 17px;
+        font-weight: 500;
+      }
+      svg.diagram .axis {
+        stroke: var(--fg);
+        stroke-width: 2;
+      }
+      svg.diagram .stem-ds {
+        stroke: var(--src);
+        stroke-width: 5;
+      }
+      svg.diagram .stem-er {
+        stroke: var(--accent);
+        stroke-width: 4;
+      }
+      svg.diagram .stem-lr {
+        stroke: var(--rcv);
+        stroke-width: 2;
+      }
+      svg.diagram .curve {
+        stroke: var(--accent);
+        stroke-width: 4;
+      }
+      svg.diagram .grid-l {
+        stroke: var(--line);
+        stroke-width: 1;
+      }
+      svg.diagram .cell {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+        stroke-width: 2;
+      }
+      svg.diagram .corner {
+        fill: var(--accent);
+      }
+      svg.diagram .mid {
+        fill: var(--rcv);
+      }
+      svg.diagram .guide {
+        stroke: var(--muted);
+        stroke-dasharray: 6 6;
+        stroke-width: 2;
+      }
+      figure.paper.short img {
+        max-height: 40vh;
+      }
+      .dsp-tag + h2::before {
+        display: none;
+      }
+      .slide ol.steps li {
+        display: block;
+        padding-left: 2em;
+        text-indent: -2em;
+      }
+      .slide ol.steps li::before {
+        display: inline-block;
+        width: 2em;
+        text-indent: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="progress"></div>
+
+    <main id="deck">
+      <!-- 封面 -->
+      <section class="slide cover">
+        <p class="en">Reciprocal Latent Fields for Precomputed Sound Propagation</p>
+        <h1>Reciprocal Latent Fields（RLF）</h1>
+        <p class="subtitle">把遊戲地圖的聲音傳播資料，從 182 GB 壓成 14 MB 的方法</p>
+        <p class="meta">
+          論文：Seuté（Ubisoft La Forge）、Vasudev、Richan、Buffoni（Audiokinetic）・SIGGRAPH 2026
+          <sup class="cite">[1]</sup><br />
+          報告日期 2026-10-19
+        </p>
+        <aside class="notes">
+          今天介紹一篇 SIGGRAPH 2026 的論文，作者來自 Ubisoft 和做 Wwise 音效引擎的 Audiokinetic。它處理的是遊戲裡「聲音怎麼繞過牆、在房間裡迴盪」這件事。我會先補基礎觀念，再講論文用到的 DSP，最後講它的新方法與實驗結果。
+        </aside>
+      </section>
+
+      <!-- 記憶體對比 -->
+      <section class="slide">
+        <h2>聲音資料的記憶體大小</h2>
+        <p class="small">
+          遊戲要讓聲音有真實的回音與遮擋，得事先算好一大堆「聲學參數」存起來。下面是<strong>同一張遊戲地圖</strong>（Wwise Audio Lab，208 × 10 × 185 m）存一組參數需要的記憶體 <sup class="cite">[1]</sup>：
+        </p>
+        <div class="big-row">
+          <div>
+            <p class="big-label muted">舊方法（wave coding）需要</p>
+            <div class="big-number old">182 GB</div>
+          </div>
+          <div class="arrow">→</div>
+          <div>
+            <p class="big-label">本篇方法（RLF）只需要</p>
+            <div class="big-number">14 MB</div>
+          </div>
+        </div>
+        <p class="callout">
+          <strong>意思是：</strong>182 GB ≈ 186,000 MB，約小 <strong>13,000 倍</strong>。舊方法比一般電腦、遊戲主機的整個記憶體還大，放不進遊戲；新方法則很輕鬆。聽測中，玩家也聽不出兩者的差別 <sup class="cite">[1]</sup>
+        </p>
+        <aside class="notes">
+          先給結論：同一張地圖，舊方法要 182 GB，新方法只要 14 MB，差了一萬多倍，而且 28 位遊戲音訊從業者聽不出和原始模擬的差別。接下來說明這些「聲學參數」是什麼、怎麼算、以及新方法怎麼把它變小。
+        </aside>
+      </section>
+
+      <!-- DSP 在哪裡 -->
+      <section class="slide">
+        <h2>本篇的 DSP 位置</h2>
+        <p class="small">整個系統分成兩半：<strong>DSP 負責「把聲音的物理變成幾個數字、再把數字變回聲音」</strong>；機器學習負責「把這些數字存得很小」</p>
+        <div class="wrap-x">
+          <table class="data compact">
+            <tr><th>DSP 概念</th><th>在流程中做什麼</th><th>頁碼</th></tr>
+            <tr><td>取樣（空間、時間）與穩定條件</td><td>FDTD 模擬：把空間切格子、時間切小步</td><td class="num">16</td></tr>
+            <tr><td>分貝、能量</td><td>把「多大聲」變成 dB 數字</td><td class="num">15</td></tr>
+            <tr><td>脈衝響應、時間窗</td><td>把一條回音切成直達 / 早期 / 晚期三段</td><td class="num">17</td></tr>
+            <tr><td>Schroeder 積分、線性迴歸</td><td>算殘響的衰減時間</td><td class="num">18–19</td></tr>
+            <tr><td>梯度（有限差分）</td><td>算聲音從哪個方向來</td><td class="num">20</td></tr>
+            <tr><td>增益、卷積、VBAP</td><td>遊戲裡把乾聲變成有空間感的聲音</td><td class="num">22–23</td></tr>
+            <tr><td>線性 / 三線性內插</td><td>查格子和格子之間的值</td><td class="num">26</td></tr>
+          </table>
+        </div>
+        <p class="callout">
+          <strong>不是 DSP 的部分：</strong>潛在網格、度量學習、訓練（第 27–35 頁）屬於機器學習，是這篇論文真正的新貢獻。有 DSP 的頁面，標題上方都有「DSP｜…」標籤
+        </p>
+        <aside class="notes">
+          先回答「DSP 在哪裡」。這篇論文的創新是機器學習的壓縮方法，但它要先用 DSP 把聲音變成參數，遊戲執行時又用 DSP 把參數變回聲音。
+        </aside>
+      </section>
+
+      <section class="slide section">
+        <h1>名詞介紹</h1>
+      </section>
+
+      <!-- 聲音怎麼到耳朵 -->
+      <section class="slide">
+        <h2>聲音傳到耳朵的三條路</h2>
+        <div class="two">
+          <svg viewBox="0 0 600 340" class="diagram" role="img" aria-label="音源經直達、反射、繞射三條路徑到聽者">
+            <rect x="10" y="10" width="580" height="320" rx="8" class="room" />
+            <rect x="280" y="150" width="24" height="180" class="wall" />
+            <path d="M90 250 L500 250" class="p-direct" />
+            <path d="M90 250 L300 22 L500 250" class="p-reflect" />
+            <path d="M90 250 Q 292 110 304 150 Q 330 200 500 250" class="p-diffract" />
+            <circle cx="90" cy="250" r="16" class="dot-src" />
+            <circle cx="500" cy="250" r="16" class="dot-rcv" />
+            <text x="62" y="300" class="lbl">音源 a</text>
+            <text x="468" y="300" class="lbl">聽者 b</text>
+            <text x="315" y="285" class="lbl s">① 直達（被牆擋）</text>
+            <text x="310" y="60" class="lbl s">② 反射</text>
+            <text x="320" y="135" class="lbl s">③ 繞射</text>
+            <text x="250" y="320" class="lbl s">牆</text>
+          </svg>
+          <ul class="small">
+            <li><strong>直達聲</strong>：沿直線最先到，被牆擋住就變小聲</li>
+            <li><strong>反射</strong>：撞到牆、天花板再彈過來，晚一點到</li>
+            <li><strong>繞射</strong>：聲音波長很長（100 Hz 約 3.4 m），會「彎過」牆角，所以躲在牆後還是聽得到</li>
+            <li>無數次反射疊在一起，就是房間的<strong>殘響</strong>（回音拖尾）</li>
+          </ul>
+        </div>
+        <p class="callout">
+          <strong>重點：</strong>遊戲要讓玩家「聽出」自己在哪裡，就要算出這三條路各帶來多少聲音、多晚到、從哪個方向來
+        </p>
+        <aside class="notes">
+          先建立直覺。光的波長很短，被牆擋住就看不到；但聲音波長從幾公分到十幾公尺，會繞過障礙物。這也是為什麼遊戲用「射線追蹤」處理聲音會有困難，射線只會直線走。
+        </aside>
+      </section>
+
+      <!-- 脈衝響應 -->
+      <section class="slide">
+        <h2>脈衝響應的概念</h2>
+        <div class="two">
+          <div>
+            <svg viewBox="0 0 600 320" class="diagram" role="img" aria-label="脈衝響應示意：直達聲、早期反射、晚期殘響"><line x1="50" y1="250" x2="570" y2="250" class="axis"/><line x1="60" y1="250" x2="60" y2="40" class="stem-ds"/><line x1="90" y1="250" x2="90" y2="135" class="stem-er"/><line x1="112" y1="250" x2="112" y2="162" class="stem-er"/><line x1="128" y1="250" x2="128" y2="151" class="stem-er"/><line x1="151" y1="250" x2="151" y2="181" class="stem-er"/><line x1="168" y1="250" x2="168" y2="187" class="stem-er"/><line x1="185" y1="250" x2="185" y2="218.0" class="stem-lr"/><line x1="191" y1="250" x2="191" y2="218.4" class="stem-lr"/><line x1="197" y1="250" x2="197" y2="217.5" class="stem-lr"/><line x1="203" y1="250" x2="203" y2="227.5" class="stem-lr"/><line x1="209" y1="250" x2="209" y2="210.1" class="stem-lr"/><line x1="215" y1="250" x2="215" y2="208.4" class="stem-lr"/><line x1="221" y1="250" x2="221" y2="230.4" class="stem-lr"/><line x1="227" y1="250" x2="227" y2="215.6" class="stem-lr"/><line x1="233" y1="250" x2="233" y2="231.8" class="stem-lr"/><line x1="239" y1="250" x2="239" y2="230.2" class="stem-lr"/><line x1="245" y1="250" x2="245" y2="218.9" class="stem-lr"/><line x1="251" y1="250" x2="251" y2="230.9" class="stem-lr"/><line x1="257" y1="250" x2="257" y2="230.1" class="stem-lr"/><line x1="263" y1="250" x2="263" y2="231.2" class="stem-lr"/><line x1="269" y1="250" x2="269" y2="229.2" class="stem-lr"/><line x1="275" y1="250" x2="275" y2="228.2" class="stem-lr"/><line x1="281" y1="250" x2="281" y2="233.2" class="stem-lr"/><line x1="287" y1="250" x2="287" y2="232.7" class="stem-lr"/><line x1="293" y1="250" x2="293" y2="230.8" class="stem-lr"/><line x1="299" y1="250" x2="299" y2="235.5" class="stem-lr"/><line x1="305" y1="250" x2="305" y2="239.7" class="stem-lr"/><line x1="311" y1="250" x2="311" y2="232.7" class="stem-lr"/><line x1="317" y1="250" x2="317" y2="233.1" class="stem-lr"/><line x1="323" y1="250" x2="323" y2="242.2" class="stem-lr"/><line x1="329" y1="250" x2="329" y2="239.7" class="stem-lr"/><line x1="335" y1="250" x2="335" y2="242.0" class="stem-lr"/><line x1="341" y1="250" x2="341" y2="238.1" class="stem-lr"/><line x1="347" y1="250" x2="347" y2="243.4" class="stem-lr"/><line x1="353" y1="250" x2="353" y2="241.1" class="stem-lr"/><line x1="359" y1="250" x2="359" y2="236.8" class="stem-lr"/><line x1="365" y1="250" x2="365" y2="238.4" class="stem-lr"/><line x1="371" y1="250" x2="371" y2="239.6" class="stem-lr"/><line x1="377" y1="250" x2="377" y2="238.4" class="stem-lr"/><line x1="383" y1="250" x2="383" y2="245.2" class="stem-lr"/><line x1="389" y1="250" x2="389" y2="243.4" class="stem-lr"/><line x1="395" y1="250" x2="395" y2="241.2" class="stem-lr"/><line x1="401" y1="250" x2="401" y2="245.9" class="stem-lr"/><line x1="407" y1="250" x2="407" y2="245.1" class="stem-lr"/><line x1="413" y1="250" x2="413" y2="241.9" class="stem-lr"/><line x1="419" y1="250" x2="419" y2="245.8" class="stem-lr"/><line x1="425" y1="250" x2="425" y2="245.5" class="stem-lr"/><line x1="431" y1="250" x2="431" y2="243.0" class="stem-lr"/><line x1="437" y1="250" x2="437" y2="243.9" class="stem-lr"/><line x1="443" y1="250" x2="443" y2="243.4" class="stem-lr"/><line x1="449" y1="250" x2="449" y2="244.6" class="stem-lr"/><line x1="455" y1="250" x2="455" y2="246.9" class="stem-lr"/><line x1="461" y1="250" x2="461" y2="246.0" class="stem-lr"/><line x1="467" y1="250" x2="467" y2="245.8" class="stem-lr"/><line x1="473" y1="250" x2="473" y2="246.0" class="stem-lr"/><line x1="479" y1="250" x2="479" y2="246.7" class="stem-lr"/><line x1="485" y1="250" x2="485" y2="247.3" class="stem-lr"/><line x1="491" y1="250" x2="491" y2="246.5" class="stem-lr"/><line x1="497" y1="250" x2="497" y2="247.1" class="stem-lr"/><line x1="503" y1="250" x2="503" y2="248.2" class="stem-lr"/><line x1="509" y1="250" x2="509" y2="246.6" class="stem-lr"/><line x1="515" y1="250" x2="515" y2="248.2" class="stem-lr"/><line x1="521" y1="250" x2="521" y2="248.5" class="stem-lr"/><line x1="527" y1="250" x2="527" y2="247.2" class="stem-lr"/><line x1="533" y1="250" x2="533" y2="247.9" class="stem-lr"/><line x1="539" y1="250" x2="539" y2="247.7" class="stem-lr"/><line x1="545" y1="250" x2="545" y2="248.3" class="stem-lr"/><line x1="551" y1="250" x2="551" y2="247.2" class="stem-lr"/><line x1="557" y1="250" x2="557" y2="248.7" class="stem-lr"/><line x1="563" y1="250" x2="563" y2="248.7" class="stem-lr"/><line x1="569" y1="250" x2="569" y2="249.0" class="stem-lr"/>
+<text x="50" y="28" class="lbl s">① 直達聲</text><text x="110" y="140" class="lbl s">② 早期反射</text><text x="300" y="170" class="lbl s">③ 晚期殘響（越來越小）</text>
+<text x="510" y="280" class="lbl s">時間 →</text><text x="50" y="280" class="lbl s">0</text></svg>
+          </div>
+          <ul class="small">
+            <li><strong>脈衝</strong>：極短的一聲，像拍一下手、戳破氣球</li>
+            <li><strong>脈衝響應（IR）</strong>：在 a 發出脈衝，b 錄到的整串聲音；橫軸是時間、縱軸是大小</li>
+            <li>第一根高柱是直達聲；接著幾根是早期反射；後面越來越小、越來越密的是晚期殘響</li>
+            <li>有了 IR，任何聲音在這個位置聽起來的樣子都能算出來（用<strong>卷積</strong>，後面會講）</li>
+          </ul>
+        </div>
+        <p class="callout">
+          <strong>白話：</strong>IR 就是「a 到 b 這條路的聲音指紋」；換一個位置，指紋就不同
+        </p>
+        <aside class="notes">
+          這是整份簡報最重要的名詞。想像在大教堂拍一下手，你會聽到「啪——嗡嗡嗡」慢慢消失，把這段錄下來就是 IR。在小房間拍手，回音很短。所以 IR 同時包含距離、遮擋、房間大小這些資訊。左圖是示意圖，不是真實資料。
+        </aside>
+      </section>
+
+      <!-- 名詞一覽（聲學） -->
+      <section class="slide">
+        <h2>聲學與 DSP 名詞</h2>
+        <div class="wrap-x">
+          <table class="data compact">
+            <tr><th>名詞</th><th>全名 / 意思</th><th>白話</th></tr>
+            <tr><td>IR</td><td>Impulse Response，脈衝響應</td><td>在 a 拍一下手，b 錄到的完整聲音</td></tr>
+            <tr><td>DS / ER / LR</td><td>Direct Sound 直達聲 / Early Reflections 早期反射 / Late Reflections 晚期殘響</td><td>先到的聲音 / 撞牆一兩次 / 尾巴</td></tr>
+            <tr><td>dB</td><td>decibel，分貝</td><td>用「對數」表示大小，每差 10 dB 能量差 10 倍</td></tr>
+            <tr><td>FDTD / PFFDTD</td><td>Finite-Difference Time-Domain，有限差分時域法；Pretty Fast FDTD 是所用的模擬器</td><td>把空間切格子，一步一步算聲波怎麼走</td></tr>
+            <tr><td>Wave coding</td><td>參數式波場編碼 [2]</td><td>先模擬，再把每條 IR 壓成幾個數字存起來</td></tr>
+            <tr><td>卷積</td><td>convolution</td><td>把乾淨的聲音「套上」某個空間的 IR</td></tr>
+            <tr><td>DOA</td><td>Direction of Arrival，到達方向</td><td>聲音從哪個方向傳進耳朵</td></tr>
+            <tr><td>VBAP</td><td>Vector Base Amplitude Panning，向量基底振幅平移 [4]</td><td>調各喇叭音量，把聲音「擺」到某方向</td></tr>
+          </table>
+        </div>
+        <p class="note muted">全名出處：原論文 [1]；dB、FDTD、卷積為通用名稱</p>
+        <aside class="notes">
+          這頁是聲學和訊號處理的名詞，後面每一個都會再用一頁詳細說明。
+        </aside>
+      </section>
+
+      <!-- 名詞一覽（數學） -->
+      <section class="slide">
+        <h2>數學與機器學習名詞</h2>
+        <div class="wrap-x">
+          <table class="data compact">
+            <tr><th>名詞</th><th>意思</th><th>白話</th></tr>
+            <tr><td>向量 / 潛在向量</td><td>一串數字；latent embedding（本篇 16 個數字）</td><td>位置的「聲音身分證」</td></tr>
+            <tr><td>內插</td><td>interpolation，用附近已知的值估計中間的值</td><td>3 點時 10 度、4 點時 20 度，3 點半約 15 度</td></tr>
+            <tr><td>互易性</td><td>Reciprocity</td><td>a 傳到 b ＝ b 傳到 a</td></tr>
+            <tr><td>度量 / 距離函數</td><td>metric，輸入兩點、輸出一個「距離」</td><td>量兩張身分證差多少</td></tr>
+            <tr><td>黎曼度量</td><td>Riemannian metric [6]</td><td>每個地方的「尺」長度可以不同</td></tr>
+            <tr><td>梯度</td><td>gradient，函數上升最快的方向</td><td>站在山坡上，往哪裡走最陡</td></tr>
+            <tr><td>MSE / MAE</td><td>Mean Squared / Absolute Error，均方誤差 / 平均絕對誤差</td><td>預測和答案平均差多少</td></tr>
+            <tr><td>MUSHRA</td><td>Multiple Stimuli with Hidden Reference and Anchor</td><td>含隱藏參考與錨點的聽感評分法</td></tr>
+          </table>
+        </div>
+        <aside class="notes">
+          這頁是論文方法用到的數學名詞，同樣後面都會用小數字示範。
+        </aside>
+      </section>
+
+      <section class="slide section">
+        <h1>研究由來</h1>
+      </section>
+
+      <!-- 三種做法 -->
+      <section class="slide">
+        <h2>遊戲聲音傳播的三種做法</h2>
+        <div class="three">
+          <div class="col">
+            <h3>Ray tracing</h3>
+            <p>射線追蹤：像光線一樣沿直線走、撞牆反彈。不考慮聲波的波動性，天生算不出繞射；音源一動就要重算，CPU 負擔重 <sup class="cite">[1]</sup></p>
+          </div>
+          <div class="col">
+            <h3>Rooms &amp; Portals</h3>
+            <p>房間與開口：美術人員手動把場景標成「房間」和「門窗」（如 Wwise Rooms and Portals）。很省，但要人工標記，戶外沒有明確房間就不好用 <sup class="cite">[1]</sup></p>
+          </div>
+          <div class="col here">
+            <h3>Wave coding</h3>
+            <p>波動模擬 + 編碼：開發時先離線算好真正的聲波，自動包含繞射；遊戲時只查表 <sup class="cite">[2]</sup>。<strong>缺點：表格太大</strong></p>
+          </div>
+        </div>
+        <p class="callout">RLF 屬於第三種，目標是解決 wave coding「表格太大」的問題</p>
+        <aside class="notes">
+          遊戲業界常見三種方法。射線法便宜但不夠物理；房間與入口系統要美術一間一間標；wave coding（Microsoft Project Acoustics 也是這類）物理上最正確，代價是資料量。
+        </aside>
+      </section>
+
+      <!-- 為什麼預先計算 -->
+      <section class="slide">
+        <h2>預先計算的必要性</h2>
+        <div class="two">
+          <div>
+            <p class="big-label muted">WAL 地圖切成 0.137 m 小格子，共約</p>
+            <div class="big-number" style="font-size: clamp(48px, 8vw, 110px)">1.5 億格</div>
+            <p class="big-label muted" style="margin-top: 0.6em">模擬 2 秒的聲音，要走</p>
+            <div class="big-number" style="font-size: clamp(48px, 8vw, 110px)">8,660 步</div>
+          </div>
+          <ul class="small">
+            <li>每走一步，每一格都要更新一次 → 一個音源就要算約 1.5 億 × 8,660 次（我的估算）</li>
+            <li>遊戲一秒要畫 60 張畫面，聲音只分得到很少的運算時間，<strong>不可能即時模擬</strong></li>
+            <li>所以改成「開發時離線算好，遊戲時查答案」 <sup class="cite">[1][2]</sup></li>
+          </ul>
+        </div>
+        <p class="note muted">我的估算：208 / 0.137 × 10 / 0.137 × 185 / 0.137 ≈ 1516 × 73 × 1348 格；步數 = 2 s ÷ 每步 2.31×10⁻⁴ s。格子大小與每步時間見「波動模擬（FDTD）」頁</p>
+        <aside class="notes">
+          這頁說明為什麼不能在遊戲裡直接模擬。格子大小和時間步是論文的設定，乘出來的格子數是我自己估算的。重點是：物理模擬太貴，所以業界都用「預先計算」。
+        </aside>
+      </section>
+
+      <!-- 瓶頸 -->
+      <section class="slide">
+        <h2>Wave coding 的記憶體瓶頸</h2>
+        <ul class="small">
+          <li>答案要依「音源在哪」和「聽者在哪」查 → 音源 3 個座標 + 聽者 3 個座標 = <strong>6 維表格</strong> <sup class="cite">[1]</sup></li>
+          <li>比喻：一張「每個城市到每個城市的距離表」，城市多 10 倍，表格就大 100 倍</li>
+          <li>WAL 地圖：<span class="mono">182 GB</span>；小型測試地圖 Audio Gym：<span class="mono">3.1 GB</span> <sup class="cite">[1]</sup></li>
+        </ul>
+        <div class="formula">
+          \[ \underbrace{\pi(a,b)}_{\text{6 維大表格}} \;\Longrightarrow\; \hat\pi(a,b)=h\big(f(a),\,f(b)\big),\qquad f:\mathbb{R}^3\to\mathbb{R}^n \]
+          <span class="eq-no">式 (4)</span>
+        </div>
+        <ul class="small">
+          <li>\(\pi(a,b)\)：聲音從 a 到 b 實際走的距離（一種聲學參數）</li>
+          <li>\(f\)：輸入一個位置（3 個數字），輸出它的身分證（n 個數字）；\(\mathbb{R}^3\to\mathbb{R}^n\) 就是「3 個數字進、n 個數字出」</li>
+          <li>\(h\)：比對兩張身分證；頭上的 ^ 表示「預測值」</li>
+        </ul>
+        <p class="callout">
+          <strong>RLF 的想法：</strong>不存「每對位置」的答案，只存「每個位置」的身分證 → 從 N × N 變成 N × 16
+        </p>
+        <aside class="notes">
+          城市距離表的比喻：100 個城市要 1 萬格，1000 個城市要 100 萬格。RLF 改成每個城市只記一個座標，要距離時再算，大小只跟城市數成正比。
+        </aside>
+      </section>
+
+      <section class="slide section">
+        <h1>聲學原理與 DSP 流程</h1>
+      </section>
+
+      <!-- DSP 流程總覽 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜整體流程</p>
+        <h2>DSP 流程總覽</h2>
+        <ol class="steps">
+          <li><strong>模擬</strong>：用 FDTD 在每個音源位置放一個脈衝，得到整張地圖每一格的 IR <sup class="cite">[1][5]</sup></li>
+          <li><strong>萃取</strong>：把每條 IR 切成時間窗，算能量（dB）、衰減時間、到達方向 <sup class="cite">[1][3]</sup></li>
+          <li><strong>儲存</strong>：舊方法存大表格；RLF 改存潛在網格（這步是機器學習）<sup class="cite">[1]</sup></li>
+          <li><strong>渲染</strong>：遊戲中查出參數，用增益、卷積、VBAP 做出最後的聲音 <sup class="cite">[1][4]</sup></li>
+        </ol>
+        <p class="callout">
+          <strong>白話：</strong>①② 把物理變成數字（開發時做），④ 把數字變回聲音（遊戲時做）；①②④ 都是 DSP
+        </p>
+        <aside class="notes">
+          接下來每一頁都對應這四步的其中一部分。先講分貝，因為後面所有「大小」都用 dB 表示。
+        </aside>
+      </section>
+
+      <!-- 分貝 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜分貝與增益</p>
+        <h2>分貝的計算</h2>
+        <div class="two">
+          <div>
+            <div class="formula">
+              \[ L_{\text{dB}}=10\log_{10}\frac{E}{E_0}=20\log_{10}\frac{A}{A_0},\qquad A=10^{L/20} \]
+            </div>
+            <table class="data">
+              <tr><th>變化</th><th>能量 E</th><th>振幅 A</th></tr>
+              <tr><td class="num">+6 dB</td><td>× 4</td><td>× 2</td></tr>
+              <tr><td class="num">+10 dB</td><td>× 10</td><td>× 3.16</td></tr>
+              <tr><td class="num">−20 dB</td><td>× 1/100</td><td>× 0.1</td></tr>
+              <tr><td class="num">−60 dB</td><td>× 1/1,000,000</td><td>× 0.001</td></tr>
+            </table>
+          </div>
+          <ul class="small">
+            <li>\(E_0\)、\(A_0\) 是比較用的基準值；能量 E 是振幅 A 的平方，所以能量用 10 log、振幅用 20 log</li>
+            <li>人耳對大小的感覺接近「對數」，所以用 dB 比較直覺</li>
+            <li>空曠處距離加倍，聲音約小 6 dB：1 m → 0 dB、2 m → −6、4 m → −12、8 m → −18 dB</li>
+            <li>遊戲要播放時，把 dB 換回振幅：−6 dB → 乘 0.50</li>
+          </ul>
+        </div>
+        <p class="callout">
+          <strong>白話：</strong>dB 是把「大小的倍數」換成「加減」；殘響衰減 60 dB，就是能量剩一百萬分之一，差不多聽不到了
+        </p>
+        <aside class="notes">
+          dB 是後面所有公式的基礎。記住兩件事：能量用 10 log、振幅用 20 log；距離加倍掉 6 dB（反平方律）。後面的 L_DS、L_ER 都是 dB。
+        </aside>
+      </section>
+
+      <!-- FDTD -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜空間與時間取樣</p>
+        <h2>波動模擬（FDTD）</h2>
+        <div class="two">
+          <div>
+            <div class="formula">
+              \[ h=\frac{c}{f_{\max}\cdot \mathrm{PPW}},\qquad \Delta t=\frac{S\,h}{c} \]
+            </div>
+            <table class="data">
+              <tr><th>符號</th><th>意思</th><th>本篇數值</th></tr>
+              <tr><td>\(c\)</td><td>聲速</td><td class="num">343 m/s</td></tr>
+              <tr><td>\(f_{\max}\)</td><td>最高模擬頻率</td><td class="num">500 Hz</td></tr>
+              <tr><td>PPW</td><td>Points Per Wavelength，每個波長放幾個格點</td><td class="num">5</td></tr>
+              <tr><td>\(S\)</td><td>Courant 數（穩定條件）</td><td class="num">1/√3 ≈ 0.577</td></tr>
+              <tr><td>\(h,\ \Delta t\)</td><td>格子大小、每步時間</td><td class="num">0.137 m、2.3×10⁻⁴ s</td></tr>
+            </table>
+          </div>
+          <ul class="small">
+            <li><strong>取樣</strong>：電腦只能存「一格一格」的值。最短的波（500 Hz）長 343 ÷ 500 = 0.686 m，要切 5 格才描得出形狀 → 每格 0.137 m</li>
+            <li><strong>穩定條件</strong>：聲波走一步不能跑超過一格，否則數值會爆掉 → 每步時間要夠小</li>
+            <li>每格設定牆面材質的吸音程度；在音源放脈衝，算 2 秒 <sup class="cite">[1][5]</sup></li>
+          </ul>
+        </div>
+        <p class="callout">
+          <strong>驗算：</strong>343 ÷ (500 × 5) = 0.1372 m；0.1372 × 0.577 ÷ 343 ≈ 2.31×10⁻⁴ s，與論文一致
+        </p>
+        <aside class="notes">
+          取樣是 DSP 第一課。想像用點描繪一條波浪線，點太少就畫不出波浪。頻率越高、波越短，格子就要越小，運算量暴增，所以論文只模擬到 500 Hz。穩定條件（CFL）：如果時間步太大，聲波在一步內就跳過好幾格，數值方法追不上，結果會發散。
+        </aside>
+      </section>
+
+      <!-- 時間窗 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜時間窗與能量</p>
+        <h2>脈衝響應的時間窗</h2>
+        <div class="timeline-bar">
+          <div class="w" style="left: 0%; width: 1.5%; background: var(--src)"></div>
+          <div class="w" style="left: 1.5%; width: 9.85%; background: var(--accent)">ER</div>
+          <div class="w" style="left: 40.9%; width: 59.1%; background: var(--rcv)">LR 視窗</div>
+          <span class="tick" style="left: 0%">t<sub>DS</sub></span>
+          <span class="tick" style="left: 3%">+15</span>
+          <span class="tick" style="left: 11.3%">+115 ms</span>
+          <span class="tick" style="left: 40.9%">+415 ms</span>
+          <span class="tick" style="left: 97%">+1015 ms</span>
+        </div>
+        <div class="formula">
+          \[ \pi(a,b)=c\,(t_{DS}-t_0),\qquad L_{DS}=10\log_{10}\!\int_{t_{DS}}^{t_{DS}+15\,\mathrm{ms}} e(t)\,dt \]
+        </div>
+        <ul class="small">
+          <li>\(t_0\) 發聲時間、\(t_{DS}\) 直達聲到達時間；時間差 × 聲速 = <strong>聲音實際走的路</strong>（含繞路）。例：0.029 s × 343 m/s ≈ 10 m <sup class="cite">[1]</sup></li>
+          <li>\(e(t)\) 是每個時刻的能量（IR 平方）；\(\int\) 就是「把這段時間的能量加起來」，再換成 dB <sup class="cite">[1]</sup></li>
+          <li>同樣方法算早期反射 \(L_{ER}\)（+15 到 +115 ms）；晚期 \(L_{LR}\) 調成和早期銜接 <sup class="cite">[1]</sup></li>
+        </ul>
+        <p class="callout warn"><strong>注意：</strong>原文寫的 ER、LR 兩視窗並不相鄰（115 ms 與 415 ms），此處照原文呈現</p>
+        <aside class="notes">
+          把一條 IR 依時間切三段：最前面 15 毫秒算直達聲（紅），接著 100 毫秒算早期反射（綠），後面那段算晚期殘響（藍）。積分符號看不懂沒關係，對數位訊號來說就是把每個取樣點的平方加總。
+        </aside>
+      </section>
+
+      <!-- Schroeder 逐步 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜Schroeder 積分</p>
+        <h2>Schroeder 積分逐步計算</h2>
+        <div class="formula">
+          \[ S(t)=\int_t^{\infty} h^2(\tau)\,d\tau \quad\Longleftrightarrow\quad S[n]=\sum_{k\ge n} e[k] \]
+        </div>
+        <div class="wrap-x">
+          <table class="data">
+            <tr><th>時間格 n</th><td class="num">0</td><td class="num">1</td><td class="num">2</td><td class="num">3</td><td class="num">4</td><td class="num">5</td></tr>
+            <tr><th>能量 e[n]</th><td class="num">8</td><td class="num">3</td><td class="num">5</td><td class="num">1</td><td class="num">2</td><td class="num">0.5</td></tr>
+            <tr><th>e 換成 dB</th><td class="num">0</td><td class="num">−4.3</td><td class="num" style="color: var(--src)">−2.0 ↑</td><td class="num">−9.0</td><td class="num" style="color: var(--src)">−6.0 ↑</td><td class="num">−12.0</td></tr>
+            <tr><th>從後往前加 S[n]</th><td class="num">19.5</td><td class="num">11.5</td><td class="num">8.5</td><td class="num">3.5</td><td class="num">2.5</td><td class="num">0.5</td></tr>
+            <tr class="hl"><th>S 換成 dB</th><td class="num">0</td><td class="num">−2.3</td><td class="num">−3.6</td><td class="num">−7.5</td><td class="num">−8.9</td><td class="num">−15.9</td></tr>
+          </table>
+        </div>
+        <ul class="small">
+          <li>原始能量忽大忽小（紅色箭頭處反而變大），很難看出「衰減多快」</li>
+          <li>從尾巴往前累加後，曲線<strong>一定一路往下</strong>，斜率就是衰減速度 <sup class="cite">[3]</sup></li>
+        </ul>
+        <aside class="notes">
+          這是我設計的 6 個數字小例子，已用程式算過。S[5]=0.5；S[4]=2+0.5=2.5；S[3]=1+2.5=3.5，以此類推。再除以 S[0]=19.5 取 10 log 變 dB。原始能量在第 2、4 格反而上升，但累加後的 S 一定單調下降，因為每往前一格只會多加一個正數。
+        </aside>
+      </section>
+
+      <!-- 衰減時間 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜線性迴歸與衰減時間</p>
+        <h2>衰減時間的計算</h2>
+        <div class="formula">
+          \[ \tau_{ER/LR}=-\frac{60}{s_{ER/LR}} \qquad(s\text{：S 曲線的斜率，單位 dB/s}) \]
+        </div>
+        <ul class="small">
+          <li><strong>斜率</strong>：每過 1 秒掉幾 dB。例如 −40 dB/s</li>
+          <li><strong>衰減時間</strong>：掉 60 dB 要幾秒 → −60 ÷ (−40) = <strong>1.5 秒</strong>（和常聽到的 RT60 同概念）</li>
+          <li>晚期 \(s_{LR}\)：在 +415～+1015 ms 這段，用<strong>線性迴歸</strong>（找一條最貼近的直線）求斜率 <sup class="cite">[1]</sup></li>
+          <li>早期 \(s_{ER}\)：用相鄰兩點差值的均方根（RMS）估斜率 <sup class="cite">[1]</sup></li>
+        </ul>
+        <p class="callout">
+          <strong>白話：</strong>τ 大 = 大教堂、回音拖很久；τ 小 = 小房間或戶外，聲音很快就乾掉
+        </p>
+        <aside class="notes">
+          把上一頁的 S 曲線畫成 dB 對時間，會接近一條往下的直線。線性迴歸就是找最貼近那些點的直線，看它的斜率。下下頁的互動示範可以實際看到這條線。
+        </aside>
+      </section>
+
+      <!-- 到達方向 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜梯度與有限差分</p>
+        <h2>到達方向的計算</h2>
+        <div class="formula">
+          \[ \delta(a,b)=-\frac{\nabla_b\,\pi(a,b)}{\lVert\nabla_b\,\pi(a,b)\rVert},\qquad
+          \frac{\partial\pi}{\partial x}\approx\frac{\pi(x+1)-\pi(x-1)}{2} \]
+          <span class="eq-no">式 (1)</span>
+        </div>
+        <div class="two">
+          <table class="data">
+            <tr><th>聽者旁邊的格子</th><th>路徑距離 π</th></tr>
+            <tr><td>右 / 左一格</td><td class="num">14.0 / 12.0 m</td></tr>
+            <tr><td>上 / 下一格</td><td class="num">12.5 / 13.5 m</td></tr>
+            <tr><td>梯度 \(\nabla\pi\)</td><td class="num">[(14−12)/2, (12.5−13.5)/2] = [1, −0.5]</td></tr>
+            <tr class="hl"><td>到達方向 δ</td><td class="num">−[1, −0.5] ÷ 1.118 = [−0.89, 0.45]</td></tr>
+          </table>
+          <ul class="small">
+            <li>\(\nabla\)（梯度）：往哪走「距離增加最快」</li>
+            <li>加負號 → 往哪走「最快靠近音源」，那就是聲音傳來的方向</li>
+            <li>÷ 長度（\(\lVert\cdot\rVert\)）→ 變成長度 1 的單位方向</li>
+            <li>例子結果：聲音從<strong>左邊偏上</strong>傳來</li>
+          </ul>
+        </div>
+        <p class="callout">
+          <strong>白話：</strong>就像在山上找「往山頂最陡的方向」；不用另外存方向，從距離場就能推出來 <sup class="cite">[1]</sup>
+        </p>
+        <aside class="notes">
+          有限差分：電腦裡沒有連續函數，只有格子上的值，所以用「右邊減左邊除以 2」近似斜率。這個例子是我設的數字。注意聲音繞過牆時，方向是指向牆角，不是指向音源本身，這正是繞射的效果。
+        </aside>
+      </section>
+
+      <!-- 互動示範 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜參數萃取實作</p>
+        <h2>參數萃取互動示範</h2>
+        <div class="demo">
+          <div class="no-flip">
+            <canvas id="ir-canvas" width="960" height="600"></canvas>
+            <p class="legend">
+              <span><i style="background: var(--muted)"></i>能量 e(t)（dB）</span>
+              <span><i style="background: var(--accent)"></i>Schroeder 曲線 S(t)</span>
+              <span><i style="background: var(--src)"></i>LR 迴歸線</span>
+            </p>
+          </div>
+          <div class="demo-panel no-flip">
+            <label><span>房間真實衰減時間：<b id="v-rt">1.5</b> s</span>
+              <input id="in-rt" type="range" min="0.3" max="3" step="0.1" value="1.5" />
+            </label>
+            <label><span>音源距離：<b id="v-d">10</b> m</span>
+              <input id="in-d" type="range" min="2" max="40" step="1" value="10" />
+            </label>
+            <label><span><input id="in-occ" type="checkbox" /> 直達聲被牆擋住（−20 dB）</span></label>
+            <button id="in-seed">重新產生雜訊</button>
+            <table class="data">
+              <tr><th>參數</th><th>估計值</th></tr>
+              <tr><td>\(\pi\)（路徑距離）</td><td class="num" id="o-pi"></td></tr>
+              <tr><td>\(L_{DS}\)（直達聲音量）</td><td class="num" id="o-lds"></td></tr>
+              <tr><td>\(L_{ER}\)（早期反射音量）</td><td class="num" id="o-ler"></td></tr>
+              <tr><td>\(\tau_{ER}\)（差分 RMS）</td><td class="num" id="o-ter"></td></tr>
+              <tr><td>\(\tau_{LR}\)（線性迴歸）</td><td class="num" id="o-tlr"></td></tr>
+            </table>
+          </div>
+        </div>
+        <p class="note muted">
+          我的實驗：用「直達脈衝 + 指數衰減白雜訊」合成 IR（8 kHz、2 秒），套用論文的時間窗與斜率估計法。\(\tau_{LR}\) 誤差約 2%；\(\tau_{ER}\) 因雜訊使差分 RMS 偏大，約只有真值的 1/√3
+        </p>
+        <aside class="notes">
+          灰色鋸齒是每個時刻的能量，青綠線是 Schroeder 曲線，紅色虛線是迴歸線。三個色塊是時間窗：紅色直達、綠色早期、藍色晚期。示範：距離變遠，L_DS 下降但 L_ER 幾乎不變；勾選遮擋，只有 L_DS 掉 20 dB——這就是「隔牆聲音變小，但房間殘響還在」。τ_LR 用迴歸很準；τ_ER 用差分 RMS 會被雜訊放大而偏小，這是我的實驗觀察，也呼應論文說 ER 衰減時間最難重建。
+        </aside>
+      </section>
+
+      <!-- 卷積 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜卷積</p>
+        <h2>卷積的概念</h2>
+        <div class="formula">
+          \[ y[n]=(x*h)[n]=\sum_{k} x[k]\,h[n-k] \]
+        </div>
+        <div class="two">
+          <table class="data">
+            <tr><th></th><th>n=0</th><th>1</th><th>2</th><th>3</th></tr>
+            <tr><td>乾聲 x = [1, 0.5]</td><td colspan="4" class="muted">兩個聲音：先大、後小</td></tr>
+            <tr><td>房間 IR h = [1, 0.6, 0.3]</td><td colspan="4" class="muted">原聲 + 兩次回音</td></tr>
+            <tr><td>x[0]=1 帶出的回音</td><td class="num">1</td><td class="num">0.6</td><td class="num">0.3</td><td class="num">0</td></tr>
+            <tr><td>x[1]=0.5 帶出的回音</td><td class="num">0</td><td class="num">0.5</td><td class="num">0.3</td><td class="num">0.15</td></tr>
+            <tr class="hl"><td>相加 y</td><td class="num">1</td><td class="num">1.1</td><td class="num">0.6</td><td class="num">0.15</td></tr>
+          </table>
+          <ul class="small">
+            <li>每一個輸入的聲音，都會「觸發」一整串房間的回音</li>
+            <li>回音的大小照輸入縮放、時間往後挪，再全部疊起來</li>
+            <li>所以：<strong>乾聲 ＊ IR ＝ 在那個房間裡聽到的聲音</strong></li>
+          </ul>
+        </div>
+        <p class="callout">
+          <strong>白話：</strong>卷積就是「把每個聲音都丟進房間迴盪一次，再把所有回音加起來」
+        </p>
+        <aside class="notes">
+          卷積是 DSP 最核心的運算之一。表格第一列：第一個聲音大小 1，帶出 1、0.6、0.3 的回音。第二列：第二個聲音大小 0.5，晚一格出現，帶出 0.5、0.3、0.15。兩列相加就是結果。遊戲裡的「卷積殘響」就是這樣做的，只是 IR 有幾萬個點。
+        </aside>
+      </section>
+
+      <!-- 渲染 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜增益、卷積殘響、VBAP</p>
+        <h2>遊戲執行時的渲染</h2>
+        <div class="formula">
+          \[ x_{dry}(t)=10^{L_{DS}/20}\,x_{in}(t) \]
+          <span class="eq-no">式 (2)</span>
+        </div>
+        <div class="formula">
+          \[ x^{ER}_{wet}(t)=10^{L_{ER}/20}\sum_{j\in\{S,M,L\}}\big(x_{in}*P^{ER}_j\big)(t)\,\sqrt{w_{ER,j}} \]
+          <span class="eq-no">式 (3)</span>
+        </div>
+        <ul class="small">
+          <li>\(x_{in}\) 原始音效；dry（乾）= 直達聲，只要乘上 dB 換算的倍數 <sup class="cite">[1]</sup></li>
+          <li>wet（濕）= 殘響：準備小 / 中 / 大三種空間的真實錄音 IR \(P_S,P_M,P_L\)，各做一次卷積，再依 τ 混合 <sup class="cite">[1]</sup></li>
+          <li>權重例：τ = 2.0 s，參考 {0.5, 1.0, 3.0} s → 2.0 在 1 和 3 正中間 → w = {0, 0.5, 0.5} <sup class="cite">[1]</sup></li>
+          <li>直達聲用 VBAP 擺到 DOA 方向；殘響 1/3 跟直達聲同方向、2/3 四面八方 <sup class="cite">[1][4]</sup></li>
+        </ul>
+        <p class="callout">
+          <strong>白話：</strong>遊戲只做「調音量 + 套 3 種房間回音 + 擺方向」，真正的物理都已經在開發時算完
+        </p>
+        <aside class="notes">
+          式 2：例如 L_DS = −6 dB，就把聲音乘 0.5。式 3：Σ 是「三項加起來」，S、M、L 是小中大；權重開根號，是因為要讓「能量」照權重分配（能量是振幅平方）。查參數時，在相鄰格點之間做線性內插，但排除沒有視線的格點，避免聲音穿牆。
+        </aside>
+      </section>
+
+      <section class="slide section">
+        <h1>RLF 方法</h1>
+      </section>
+
+      <!-- 核心概念圖 -->
+      <section class="slide">
+        <h2>RLF 架構總覽</h2>
+        <figure class="paper short">
+          <img src="img/fig1.png" alt="原論文圖 1：RLF 推論流程與重建的六種聲學參數場" />
+          <figcaption>原論文 Figure 1：(a) 推論流程 (b) 某個音源位置下重建出的六種聲學參數 [1]</figcaption>
+        </figure>
+        <ul class="small">
+          <li>
+            整張地圖鋪一層 3D 網格，每個格點存一串數字（向量）；<span class="src">音源 a</span> 和
+            <span class="rcv">聽者 b</span> 各自從附近格點查出一串數字
+          </li>
+          <li>兩串數字丟進「距離函數」h，算出這對位置的聲學參數；右邊 6 張圖是同一個音源（紅圈）對整張地圖算出的結果</li>
+        </ul>
+        <p class="callout">
+          <strong>白話：</strong>每個位置都有一張「聲音身分證」，兩張身分證一比對，就知道聲音從 a 傳到 b 會變成什麼樣子。接下來依序說明：身分證怎麼查（內插）→ 怎麼比對（距離函數）→ 怎麼學（訓練）
+        </p>
+        <aside class="notes">
+          這張圖是整篇論文的縮影。左邊灰色網格是要學的 3D 網格 θ，紅色是音源 a、藍色是聽者 b，各自用三線性內插從周圍 8 個格點取出向量，再送進度量函數 h 得到預測值 ŷ。右邊 6 張彩色地圖：路徑距離、方向、直達聲音量、早期反射音量、早期衰減、晚期衰減。紅圈是音源，白線是牆。
+        </aside>
+      </section>
+
+      <!-- 向量與內插 -->
+      <section class="slide">
+        <p class="dsp-tag">DSP｜內插</p>
+        <h2>向量與三線性內插</h2>
+        <div class="two">
+          <div>
+            <svg viewBox="0 0 360 300" class="diagram" role="img" aria-label="二維雙線性內插示意">
+              <rect x="60" y="40" width="240" height="200" class="cell" />
+              <circle cx="60" cy="40" r="9" class="corner" /><text x="20" y="34" class="lbl s">10</text>
+              <circle cx="300" cy="40" r="9" class="corner" /><text x="310" y="34" class="lbl s">20</text>
+              <circle cx="60" cy="240" r="9" class="corner" /><text x="20" y="265" class="lbl s">30</text>
+              <circle cx="300" cy="240" r="9" class="corner" /><text x="310" y="265" class="lbl s">40</text>
+              <line x1="120" y1="40" x2="120" y2="240" class="guide" />
+              <circle cx="120" cy="40" r="6" class="mid" /><text x="104" y="28" class="lbl s">12.5</text>
+              <circle cx="120" cy="240" r="6" class="mid" /><text x="104" y="268" class="lbl s">32.5</text>
+              <circle cx="120" cy="140" r="11" class="dot-src" /><text x="138" y="146" class="lbl">22.5</text>
+              <text x="70" y="295" class="lbl s">x 在 1/4 處、y 在 1/2 處</text>
+            </svg>
+          </div>
+          <ul class="small">
+            <li><strong>向量</strong>：一串數字。本篇每個格點存 16 個數字，例如 [0.12, −0.30, …]</li>
+            <li><strong>線性內插</strong>：10 和 20 之間、走 30% 的地方 → 10 + (20−10)×0.3 = 13</li>
+            <li><strong>雙線性（2D）</strong>：先在上下兩邊各內插（12.5、32.5），再上下內插 → 22.5</li>
+            <li><strong>三線性（3D）</strong>：同樣做法用 8 個角；向量就是 16 個數字各做一次 <sup class="cite">[1]</sup></li>
+          </ul>
+        </div>
+        <p class="callout">
+          <strong>白話：</strong>玩家不會剛好站在格點上，所以用附近的格點「按距離加權平均」出他的身分證
+        </p>
+        <aside class="notes">
+          左圖：四個角的值是 10、20、30、40，要求的點在橫向 1/4、縱向 1/2。上邊：10 到 20 走 1/4 是 12.5；下邊：30 到 40 走 1/4 是 32.5；再上下走一半：22.5。3D 就是再多一個方向，用 8 個角。
+        </aside>
+      </section>
+
+      <!-- 潛在網格 -->
+      <section class="slide">
+        <h2>潛在網格與損失函數</h2>
+        <div class="formula">
+          \[ f_\theta(a)=\mathrm{interp}(\theta,\,a_x,a_y,a_z),\qquad \theta\in\mathbb{R}^{H\times W\times D\times n} \]
+          <span class="eq-no">式 (5)</span>
+        </div>
+        <div class="formula">
+          \[ \mathcal{L}(\theta)=\frac{1}{|\mathcal A||\mathcal B|}\sum_{a\in\mathcal A}\sum_{b\in\mathcal B}\big(\hat\pi(a,b)-\pi(a,b)\big)^2 \]
+          <span class="eq-no">式 (7)</span>
+        </div>
+        <ul class="small">
+          <li>\(\theta\)：整張網格的所有數字，H × W × D 個格點、每格 n 個數字；這就是要「學」的東西 <sup class="cite">[1]</sup></li>
+          <li>\(\mathcal L\)：均方誤差（MSE）。例：預測 [10, 7, 5]、答案 [12, 7, 4] → (4 + 0 + 1) ÷ 3 ≈ 1.67</li>
+          <li>\(\mathcal A,\mathcal B\)：訓練用的音源集合、聽者集合；\(|\mathcal A|\) 是個數</li>
+          <li>訓練 = 一直微調 θ，讓 \(\mathcal L\) 越來越小（梯度下降）<sup class="cite">[1]</sup></li>
+        </ul>
+        <p class="callout">
+          <strong>白話：</strong>先亂填身分證，拿模擬答案來對答案，錯多少就改多少，重複 2 萬輪
+        </p>
+        <aside class="notes">
+          式 5：任一位置的向量由周圍 8 個格點內插，網格比神經網路更能保留牆邊的銳利變化。式 7：差平方是為了不讓正負抵消，也讓大錯誤被罰更重。Σ 兩個是「所有音源、所有聽者都加起來」，再除以總數取平均。
+        </aside>
+      </section>
+
+      <!-- 距離函數與互易性 -->
+      <section class="slide">
+        <h2>距離函數與互易性</h2>
+        <p class="small">h 若滿足下面 4 條（偽度量），預測出的距離也會滿足，<strong>互易性自動成立</strong> <sup class="cite">[1][6]</sup></p>
+        <div class="wrap-x">
+          <table class="data">
+            <tr><th>性質</th><th>數學寫法</th><th>白話</th></tr>
+            <tr><td>非負</td><td>\(h(x,y)\ge 0\)</td><td>距離不會是負的</td></tr>
+            <tr><td>自己到自己</td><td>\(h(x,x)=0\)</td><td>站在原地距離為 0</td></tr>
+            <tr class="hl"><td>對稱</td><td>\(h(x,y)=h(y,x)\)</td><td>a→b 和 b→a 一樣 ＝ <strong>互易性</strong></td></tr>
+            <tr><td>三角不等式</td><td>\(h(x,z)\le h(x,y)+h(y,z)\)</td><td>繞路不會比直接走短</td></tr>
+          </table>
+        </div>
+        <p class="callout">
+          <strong>為什麼重要：</strong>物理上「a 喊 b 聽」和「b 喊 a 聽」的 IR 相同；把它寫進公式，模型就不可能違反，不用靠資料慢慢學
+        </p>
+        <aside class="notes">
+          聲學互易性是物理定律：音源和聽者對調，聲音傳播的結果相同（方向除外）。作者選一定對稱的 h，等於把物理規則直接寫進架構裡。
+        </aside>
+      </section>
+
+      <!-- 歐氏 -->
+      <section class="slide">
+        <h2>歐氏距離解碼器</h2>
+        <div class="two">
+          <div>
+            <div class="formula">
+              \[ \hat\pi_{EUC}(a,b)=\big\lVert f_\theta(a)-f_\theta(b)\big\rVert_2=\sqrt{\textstyle\sum_i\big(f_i(a)-f_i(b)\big)^2} \]
+              <span class="eq-no">式 (8)</span>
+            </div>
+            <ul class="small">
+              <li>就是國中學的「兩點距離」，只是從 2 維變 16 維；例 [1,2] 到 [4,6]：√(3²+4²) = 5</li>
+              <li>上圖：A、B 被一道牆隔開，真實要繞過牆頂 → 潛在空間把牆「撐開」成洞 <sup class="cite">[1]</sup></li>
+              <li>下圖：要繞出 U 形房間 → 空間嚴重扭曲；增加維度也很快沒用 <sup class="cite">[1]</sup></li>
+            </ul>
+          </div>
+          <figure class="paper">
+            <img src="img/fig2.png" alt="原論文圖 2：歐氏 RLF 在兩種 2D 幾何下學到的潛在空間" />
+            <figcaption>原論文 Figure 2：左為地圖，右為學到的 2D 潛在空間 [1]</figcaption>
+          </figure>
+        </div>
+        <p class="callout">
+          <strong>白話：</strong>想用一把「到處一樣長的尺」量繞路距離，地圖只好被拉扯變形
+        </p>
+        <aside class="notes">
+          左邊黃色是牆，紅線是聲音實際繞的路。右邊每個藍點是一個格點學到的 2D 向量。為了讓 A、B 的直線距離等於繞路長度，模型只好在牆的位置挖洞把兩側推開。但同一個空間還要滿足其他所有點對的距離，互相衝突，這叫「過度約束」。
+        </aside>
+      </section>
+
+      <!-- 黎曼直覺 -->
+      <section class="slide">
+        <h2>黎曼度量的直覺</h2>
+        <div class="compare">
+          <div class="col">
+            <h3>歐氏距離：同一把尺</h3>
+            <ul class="small">
+              <li>地圖上 1 公分永遠代表一樣的距離</li>
+              <li>要表達「這兩點其實很遠」，只能把它們在地圖上拉開 → 地圖變形</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>黎曼度量：會伸縮的尺</h3>
+            <ul class="small">
+              <li>像「開車時間地圖」：高速公路 1 公分 = 5 分鐘，山路 1 公分 = 30 分鐘</li>
+              <li>牆附近把尺「加長」，就能表達繞路很遠，地圖不用扯破</li>
+            </ul>
+          </div>
+        </div>
+        <p class="callout">
+          <strong>重點：</strong>度量張量 G 就是「每個地方的尺有多長、哪個方向比較長」；G 是單位矩陣時，就是普通的歐氏距離 <sup class="cite">[1][6]</sup>
+        </p>
+        <aside class="notes">
+          用開車時間比喻：地圖上一樣長的兩段路，高速公路很快、山路很慢。黎曼度量讓「長度」隨位置改變。RLF 讓模型自己學每個位置的尺長，這樣潛在空間不用硬扭曲。
+        </aside>
+      </section>
+
+      <!-- 黎曼公式 -->
+      <section class="slide">
+        <h2>黎曼度量解碼器</h2>
+        <div class="formula">
+          \[ d_G(a,b)=\inf_{\gamma:[0,1]\to\mathbb{R}^n}\int_0^1\sqrt{\dot\gamma(t)^\top G\big(\gamma(t)\big)\,\dot\gamma(t)}\;dt \]
+          <span class="eq-no">式 (9)</span>
+        </div>
+        <div class="formula">
+          \[ d_G(a,b)\approx\sqrt{\big(f_\theta(a)-f_\theta(b)\big)^\top G(m)\,\big(f_\theta(a)-f_\theta(b)\big)},\quad m=\tfrac{f_\theta(a)+f_\theta(b)}{2} \]
+          <span class="eq-no">式 (11)</span>
+        </div>
+        <ul class="small">
+          <li>式 (9) 逐字讀：\(\gamma\) 是從 a 走到 b 的一條路；\(\dot\gamma\) 是每一步的方向；\(\sqrt{\dot\gamma^\top G\dot\gamma}\) 是用當地的尺量這一步；\(\int\) 把每一步加起來；\(\inf\) 取所有路裡最短的 <sup class="cite">[1]</sup></li>
+          <li>找最短路太花時間 → 式 (11) 只在中點 m 量一次尺，直接算 <sup class="cite">[1]</sup></li>
+          <li>\(G=I\)（單位矩陣）時，式 (11) 就變回式 (8) 的歐氏距離 <sup class="cite">[1]</sup></li>
+        </ul>
+        <aside class="notes">
+          式 9 是嚴格定義，但要解最佳化問題，遊戲裡不可能。所以作者只在兩點中點 m 量一次尺，近似成一個加權距離（也叫 Mahalanobis 距離）。作者觀察到即使長距離也準，推測是因為潛在空間和 G 一起訓練，模型自己學會讓這個近似成立。
+        </aside>
+      </section>
+
+      <!-- G 兩種 -->
+      <section class="slide">
+        <h2>度量張量的兩種形式</h2>
+        <div class="formula">
+          \[ G_{PSD}(m)=\Lambda(m)^\top\Lambda(m),\qquad \Lambda:\mathbb{R}^n\to\mathbb{R}^{n\times n} \]
+          <span class="eq-no">式 (12)</span>
+        </div>
+        <div class="formula">
+          \[ G_{DIAG}(m)=\mathrm{diag}\big(\lambda(m)\big)^2,\qquad
+          d_{G_{DIAG}}(a,b)=\sqrt{\sum_{i=1}^{n}\lambda(m)_i^2\,\big(f_\theta(a)_i-f_\theta(b)_i\big)^2} \]
+          <span class="eq-no">式 (13)(14)</span>
+        </div>
+        <ul class="small">
+          <li>PSD（positive semi-definite，半正定）：寫成 \(\Lambda^\top\Lambda\) 保證量出的長度不會是負的 <sup class="cite">[1]</sup></li>
+          <li>DIAG（對角）：每一維各自乘一個權重 \(\lambda_i\)；例 λ = [0.5, 1]，[1,2] 到 [4,6]：√(0.25×9 + 1×16) = 4.27</li>
+          <li>PSD 最準、可處理「斜方向」；DIAG 只要 256 個參數、運算量約 1/25，準確度接近 <sup class="cite">[1]</sup></li>
+        </ul>
+        <p class="callout">
+          <strong>白話：</strong>DIAG 版就是「歐氏距離，但每一維的尺可以各自伸縮」——同樣兩點，距離從 5 變成 4.27
+        </p>
+        <aside class="notes">
+          Λ 和 λ 都是簡單的線性層，輸入中點 m、輸出尺的長度。對角版的計算和歐氏距離幾乎一樣，只是每一項先乘一個權重。後面的聽測就是用對角版。
+        </aside>
+      </section>
+
+      <!-- 音量解碼 -->
+      <section class="slide">
+        <h2>音量的解碼</h2>
+        <div class="formula">
+          \[ \underbrace{L_0-20\log_{10}\lVert a-b\rVert}_{\text{空曠處：距離加倍少 6 dB}}\;\Rightarrow\;
+          \hat L_{DS}(a,b)=L_0-h\big(f_\theta(a),f_\theta(b)\big) \]
+          <span class="eq-no">式 (16)</span>
+        </div>
+        <div class="formula">
+          \[ \hat L_{ER}(a,b)=\frac{L_0(a)+L_0(b)}{2}-h(\cdot,\cdot),\qquad L_0(x)=w^\top f_\theta(x)+\beta \]
+          <span class="eq-no">式 (17)</span>
+        </div>
+        <ul class="small">
+          <li>\(L_0\)：離音源 1 公尺時的音量；直達聲 = 基準音量 − 「潛在距離」<sup class="cite">[1]</sup></li>
+          <li>空曠處只看真實距離；有牆時，模型學到的潛在距離會變大 → 自動算出「被擋住變小聲」</li>
+          <li>早期反射強弱跟所在空間有關（大廳 vs 戶外）→ 基準音量改成隨位置變，兩端平均以保持互易 <sup class="cite">[1]</sup></li>
+        </ul>
+        <aside class="notes">
+          這頁顯示作者如何把物理知識塞進公式。空曠處聲音依反平方律衰減：距離加倍少 6 dB。作者把「真實距離的 log」換成學出來的潛在距離，讓模型自己學繞射與遮擋造成的額外衰減。w 和 β 也是要學的數字，w^T f 就是兩個向量對應相乘再相加（內積）。
+        </aside>
+      </section>
+
+      <!-- 衰減時間解碼 -->
+      <section class="slide">
+        <h2>衰減時間與方向的解碼</h2>
+        <div class="two">
+          <div>
+            <div class="formula">
+              \[ \hat\tau_{ER/LR}(a,b)=K\,\sigma\big(f_\theta(a)^\top f_\theta(b)\big),\qquad \sigma(z)=\frac{1}{1+e^{-z}} \]
+              <span class="eq-no">式 (18)</span>
+            </div>
+            <svg viewBox="0 0 560 270" class="diagram" role="img" aria-label="sigmoid 函數曲線"><line x1="40" y1="220" x2="520" y2="220" class="grid-l"/><text x="4" y="226" class="lbl s">0</text><line x1="40" y1="130" x2="520" y2="130" class="grid-l"/><text x="4" y="136" class="lbl s">0.5</text><line x1="40" y1="40" x2="520" y2="40" class="grid-l"/><text x="4" y="46" class="lbl s">1</text><line x1="280" y1="30" x2="280" y2="230" class="grid-l"/><path d="M40.0,219.6 L50.0,219.4 L60.0,219.3 L70.0,219.1 L80.0,218.8 L90.0,218.5 L100.0,218.0 L110.0,217.5 L120.0,216.8 L130.0,215.9 L140.0,214.7 L150.0,213.3 L160.0,211.5 L170.0,209.2 L180.0,206.3 L190.0,202.8 L200.0,198.5 L210.0,193.4 L220.0,187.2 L230.0,179.9 L240.0,171.6 L250.0,162.3 L260.0,152.0 L270.0,141.2 L280.0,130.0 L290.0,118.8 L300.0,108.0 L310.0,97.7 L320.0,88.4 L330.0,80.1 L340.0,72.8 L350.0,66.6 L360.0,61.5 L370.0,57.2 L380.0,53.7 L390.0,50.8 L400.0,48.5 L410.0,46.7 L420.0,45.3 L430.0,44.1 L440.0,43.2 L450.0,42.5 L460.0,42.0 L470.0,41.5 L480.0,41.2 L490.0,40.9 L500.0,40.7 L510.0,40.6 L520.0,40.4" class="curve"/><circle cx="200" cy="198.54347403601884" r="7" class="dot-src"/><text x="214" y="222.54347403601884" class="lbl s">σ(-2)=0.12</text><circle cx="280" cy="130" r="7" class="dot-src"/><text x="294" y="136" class="lbl s">σ(0)=0.50</text><circle cx="360" cy="61.45652596398119" r="7" class="dot-src"/><text x="374" y="93.45652596398119" class="lbl s">σ(2)=0.88</text><text x="32" y="258" class="lbl s">-6</text><text x="112" y="258" class="lbl s">-4</text><text x="192" y="258" class="lbl s">-2</text><text x="272" y="258" class="lbl s">0</text><text x="352" y="258" class="lbl s">2</text><text x="432" y="258" class="lbl s">4</text><text x="512" y="258" class="lbl s">6</text></svg>
+          </div>
+          <ul class="small">
+            <li><strong>內積</strong> \(f(a)^\top f(b)\)：對應位置相乘再相加；例 [0.3, −0.2]·[0.5, 0.4] = 0.15 − 0.08 = 0.07；對調也一樣 → 互易</li>
+            <li><strong>sigmoid σ</strong>：把任何數壓到 0～1：σ(−2) = 0.12、σ(0) = 0.5、σ(2) = 0.88</li>
+            <li>K = 允許的最長衰減時間，例 5 s：5 × σ(0.07) = 5 × 0.5175 ≈ 2.59 s</li>
+            <li>方向（DOA）不互易，a→b 和 b→a 的方向不一定剛好相反 → 不直接預測，改對預測的距離取梯度 <sup class="cite">[1]</sup></li>
+          </ul>
+        </div>
+        <aside class="notes">
+          衰減時間不像距離，所以作者改用內積，因為內積天生對稱。sigmoid 把輸出夾在 0 到 1，乘上 K 就保證衰減時間在 0 到 K 秒之間，不會出現負的秒數。三組參數（距離、音量、衰減）各有自己的一張網格。
+        </aside>
+      </section>
+
+      <!-- 訓練 -->
+      <section class="slide">
+        <h2>訓練流程</h2>
+        <figure class="paper short">
+          <img src="img/fig3.png" alt="原論文圖 3：RLF 訓練流程，含停止梯度與 MSE 損失" />
+          <figcaption>原論文 Figure 3：訓練階段；SG = Stop Gradient 停止梯度 [1]</figcaption>
+        </figure>
+        <ol class="steps small">
+          <li>下排：給音源位置 a 與場景，FDTD 算出「標準答案」；上排：網格 θ + 距離函數 h 算出「預測」<sup class="cite">[1]</sup></li>
+          <li>兩者算 MSE，依誤差微調 θ 和 h；音源那一格不調（SG），避免模型只遷就訓練用的音源 <sup class="cite">[1]</sup></li>
+          <li>音源怎麼挑：先隨機 20 個，再只在「還沒被任何音源看見」的地方加，直到全部覆蓋 <sup class="cite">[1]</sup></li>
+        </ol>
+        <aside class="notes">
+          音源挑選很聰明：迷宮這種複雜區域會被放比較多音源，足球場這種空曠區很少。其他技巧：網格學習率比解碼器小 10 倍；初始值設成格點座標本身加一點雜訊，等於一開始就是歐氏距離，模型只要學「修正量」。Adam 訓練 2 萬輪。
+        </aside>
+      </section>
+
+      <section class="slide section">
+        <h1>計算案例</h1>
+      </section>
+
+      <!-- 手算 -->
+      <section class="slide">
+        <h2>二維潛在向量手算例</h2>
+        <p class="small">
+          假設 n = 2：<span class="src">\(f(a)=[1,2]\)</span>、<span class="rcv">\(f(b)=[4,6]\)</span>、\(\lambda(m)=[0.5,\,1]\)、\(L_0=-10\) dB、K = 5 s（數值為示意，非論文資料）
+        </p>
+        <div class="wrap-x">
+          <table class="data calc">
+            <tr><th>步驟</th><th>計算</th><th>結果</th></tr>
+            <tr><td>歐氏距離 式 (8)</td><td>\(\sqrt{3^2+4^2}\)</td><td class="num">5.000</td></tr>
+            <tr class="hl"><td>對角黎曼 式 (14)</td><td>\(\sqrt{0.5^2\cdot3^2+1^2\cdot4^2}=\sqrt{2.25+16}\)</td><td class="num">4.272</td></tr>
+            <tr><td>直達聲 式 (16)</td><td>\(-10-4.272\)；振幅 \(10^{-14.27/20}\)</td><td class="num">−14.27 dB ／ ×0.193</td></tr>
+            <tr><td>早期反射 式 (17)</td><td>\(w=[2,-1],\beta=-8\)：\(L_0(a)=-8,\ L_0(b)=-6\) → \(-7-4.272\)</td><td class="num">−11.27 dB</td></tr>
+            <tr><td>衰減時間 式 (18)</td><td>\(f_\tau(a)=[0.3,-0.2],\ f_\tau(b)=[0.5,0.4]\)：\(5\,\sigma(0.07)\)</td><td class="num">2.587 s</td></tr>
+            <tr><td>殘響權重 式 (3)</td><td>參考 {0.5, 1, 3} s，2.587 落在 1–3 s 之間：\((2.587-1)/(3-1)\)</td><td class="num">{0, 0.206, 0.794}</td></tr>
+          </table>
+        </div>
+        <p class="callout">
+          <strong>互易性檢查：</strong>把 a、b 對調，差值變號後平方、中點不變、內積不變 → 全部結果相同
+        </p>
+        <aside class="notes">
+          把前面每一頁的公式串起來算一次，數字都用 Node 驗算過。重點看第二列：λ 把第一維的權重縮成 0.5，所以距離從 5 變 4.27——這就是「尺在這裡變短」。最後播放時，直達聲乘 0.193、殘響用 20.6% 中空間加 79.4% 大空間的回音。
+        </aside>
+      </section>
+
+      <section class="slide section">
+        <h1>實驗結果</h1>
+      </section>
+
+      <!-- 場景 -->
+      <section class="slide">
+        <h2>測試場景</h2>
+        <figure class="paper">
+          <img src="img/fig6.png" alt="原論文圖 6：玩家視角的 Audio Gym 與 WAL 地圖" />
+          <figcaption>原論文 Figure 6：玩家視角 (a) Audio Gym (b) Wwise Audio Lab [1][7]</figcaption>
+        </figure>
+        <table class="data small">
+          <tr><th>地圖</th><th>大小</th><th>網格間距</th><th>音源數：訓練 / 驗證 / 測試</th></tr>
+          <tr><td>Audio Gym</td><td>59 × 8 × 59 m，含 3D 迷宮、吸音房接反射房</td><td class="num">1 m</td><td class="num">127 / 42 / 38</td></tr>
+          <tr><td>WAL</td><td>208 × 10 × 185 m，建築加大片空地</td><td class="num">1.2 m（173×8×154 格）</td><td class="num">182 / 97 / 102</td></tr>
+        </table>
+        <aside class="notes">
+          兩個場景：Audio Gym 是作者刻意設計的「刁難」地圖；WAL 是 Audiokinetic 的示範遊戲地圖，比較像真實遊戲。訓練、驗證、測試用的音源完全不重疊，測試的是「沒見過的音源位置」。
+        </aside>
+      </section>
+
+      <!-- 重建結果 -->
+      <section class="slide">
+        <h2>重建結果比較</h2>
+        <figure class="paper fig4">
+          <img src="img/fig4.png" alt="原論文圖 4：真值與三種模型重建的六種聲學參數場" />
+          <figcaption>原論文 Figure 4：(a) 真值 (b) MLP (c) 歐氏 (d) 對角黎曼；未見過的音源（紅圈），離地 1.3 m 切面 [1]</figcaption>
+        </figure>
+        <ul class="small">
+          <li>看第 2 欄（方向）：MLP 滿是雜訊，因為它的距離不夠平滑，取梯度就亂掉；對角黎曼版和真值幾乎一樣 <sup class="cite">[1]</sup></li>
+          <li>所有模型都會抹平細小的陰影紋路；早期衰減時間的真值本身就很吵 <sup class="cite">[1]</sup></li>
+        </ul>
+        <aside class="notes">
+          每一列是一種方法，每一欄是一種參數。第一列是 FDTD 真值。MLP 是一般的神經網路，把兩個向量串起來丟進去。比較第二欄方向場最明顯。
+        </aside>
+      </section>
+
+      <!-- 數字 -->
+      <section class="slide">
+        <h2>準確度與成本</h2>
+        <div class="wrap-x">
+          <table class="data">
+            <tr><th>模型</th><th>距離 π (m)</th><th>方向 (°)</th><th>直達聲 (dB)</th><th>早期反射 (dB)</th><th>記憶體 / 參數</th><th>延遲 (μs)</th></tr>
+            <tr><td>Wave coding（舊方法）</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="num">3.1 / 182 GB</td><td class="num">—</td></tr>
+            <tr><td>RLF Euclidean</td><td class="num">1.2 / 0.94</td><td class="num">7.5 / 4.3</td><td class="num">3.3 / 5.1</td><td class="num">2.6 / 5.7</td><td class="num">0</td><td class="num">10</td></tr>
+            <tr><td>RLF G<sub>PSD</sub></td><td class="num">0.17 / 0.34</td><td class="num">3.8 / 3.2</td><td class="num">1.9 / 4.2</td><td class="num">1.5 / 2.6</td><td class="num">4.1k</td><td class="num">93</td></tr>
+            <tr class="hl"><td>RLF G<sub>DIAG</sub></td><td class="num">0.19 / 0.40</td><td class="num">3.9 / 3.3</td><td class="num">2.2 / 4.3</td><td class="num">1.7 / 2.8</td><td class="num">256</td><td class="num">46</td></tr>
+            <tr><td>MLP - Small</td><td class="num">0.36 / 0.42</td><td class="num">11 / 6.2</td><td class="num">2.5 / 4.3</td><td class="num">2.2 / 3.0</td><td class="num">2.1k</td><td class="num">139</td></tr>
+            <tr><td>MLP - Large</td><td class="num">0.30 / 0.51</td><td class="num">8.5 / 7.8</td><td class="num">2.0 / 4.2</td><td class="num">1.8 / 3.0</td><td class="num">14.6k</td><td class="num">247</td></tr>
+          </table>
+        </div>
+        <ul class="small">
+          <li>前 4 欄是平均誤差（越小越好），斜線左邊是 Audio Gym、右邊是 WAL；「參數」是解碼器要學的數字個數；μs 是百萬分之一秒 <sup class="cite">[1]</sup></li>
+          <li>對角黎曼版：距離平均差 0.2–0.4 m、方向差 3–4°；查 100 組只要 46 μs（單一 CPU 核心）<sup class="cite">[1]</sup></li>
+        </ul>
+        <p class="callout">
+          <strong>我的推導：</strong>RLF 每組參數的網格 = 173 × 8 × 154 格 × 16 個數字 × 4 bytes ≈ 13.6 MB，正是論文的 14 MB
+        </p>
+        <aside class="notes">
+          遊戲一格畫面約 16,667 μs，46 μs 不到 0.3%。論文也提醒 14 MB 和 182 GB 都是未壓縮大小，wave coding 也能壓縮。
+        </aside>
+      </section>
+
+      <!-- 維度 -->
+      <section class="slide">
+        <h2>潛在維度的影響</h2>
+        <figure class="paper">
+          <img src="img/fig5.png" alt="原論文圖 5：各模型平均絕對誤差隨潛在維度變化" />
+          <figcaption>原論文 Figure 5：橫軸是身分證有幾個數字（4～32），縱軸是誤差 [1]</figcaption>
+        </figure>
+        <ul class="small">
+          <li>歐氏版（藍）距離誤差在 8 個數字後就不再下降 → 一把固定的尺，給再多維度也沒用 <sup class="cite">[1]</sup></li>
+          <li>黎曼版（橘、綠）數字越多越準；16 個數字以上就贏過一般神經網路 MLP <sup class="cite">[1]</sup></li>
+        </ul>
+        <aside class="notes">
+          這張圖支持黎曼度量的論點：歐氏版不管給多少維都卡在 1.2 公尺左右，黎曼版能一路降到 0.1 公尺。
+        </aside>
+      </section>
+
+      <!-- 聽測 -->
+      <section class="slide">
+        <h2>主觀聽測</h2>
+        <p class="small">28 位遊戲音訊從業者看影片、聽槍聲和說話聲，替「真實感」打 0–100 分（5 個場景的平均）<sup class="cite">[1]</sup></p>
+        <div class="three">
+          <div class="col here">
+            <h3>RLF（本篇）</h3>
+            <div class="big-number" style="font-size: clamp(48px, 7vw, 96px)">61.8</div>
+            <p>± 3.8 分</p>
+          </div>
+          <div class="col">
+            <h3>真值（原始模擬）</h3>
+            <div class="big-number" style="font-size: clamp(48px, 7vw, 96px)">62.6</div>
+            <p>± 3.9 分</p>
+          </div>
+          <div class="col">
+            <h3>低錨點（故意做差）</h3>
+            <div class="big-number" style="font-size: clamp(48px, 7vw, 96px); color: var(--muted)">27.7</div>
+            <p>± 4.1 分（只算距離衰減）</p>
+          </div>
+        </div>
+        <p class="callout">
+          <strong>意思是：</strong>RLF 和真值只差 0.8 分，統計上分不出來（p = 0.41）；兩者都明顯贏過低錨點（p &lt; 0.001）<sup class="cite">[1]</sup>
+        </p>
+        <aside class="notes">
+          p 值：p 越小，差異越不像是巧合。p = 0.41 表示 RLF 和真值的差距很可能只是隨機波動；p 小於 0.001 表示和低錨點的差距是真的。低錨點是故意做很差的版本，用來確認評分者有認真聽。± 是 95% 信賴區間。
+        </aside>
+      </section>
+
+      <section class="slide section">
+        <h1>重點整理</h1>
+      </section>
+
+      <!-- 限制 -->
+      <section class="slide">
+        <h2>限制與未來方向</h2>
+        <div class="compare">
+          <div class="col">
+            <h3>限制</h3>
+            <ul class="small">
+              <li>只支援不會變的場景，換地圖要重新訓練；門開關、牆被炸掉都還不行 <sup class="cite">[1]</sup></li>
+              <li>比較的是未壓縮大小，沒有再壓縮潛在網格 <sup class="cite">[1]</sup></li>
+              <li>模擬只到 500 Hz（我的觀察，論文未列為限制）</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>未來方向</h3>
+            <ul class="small">
+              <li>延伸到會變動的場景 <sup class="cite">[1]</sup></li>
+              <li>同一套方法可存任何「對稱、受地形影響」的量，例如 AI 尋路距離、視線判斷 <sup class="cite">[1]</sup></li>
+            </ul>
+          </div>
+        </div>
+        <aside class="notes">
+          最大限制是靜態場景。作者提到路徑距離場加梯度，其實就是遊戲 AI 的尋路場，這是很有意思的延伸。
+        </aside>
+      </section>
+
+      <!-- 重點 -->
+      <section class="slide">
+        <h2>本篇的 DSP 與創新點</h2>
+        <div class="compare">
+          <div class="col">
+            <h3>可學到的 DSP</h3>
+            <ul class="small">
+              <li>取樣：格子大小、時間步、穩定條件</li>
+              <li>分貝、能量、脈衝響應、時間窗</li>
+              <li>Schroeder 積分、線性迴歸求衰減時間</li>
+              <li>梯度求方向、卷積殘響、VBAP、內插</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>論文的創新（機器學習）</h3>
+            <ul class="small">
+              <li>「每對位置」改成「每個位置」，記憶體降 3–4 個數量級</li>
+              <li>對稱的距離函數，讓互易性一定成立</li>
+              <li>會伸縮的尺（黎曼度量），解決地圖被扯破</li>
+            </ul>
+          </div>
+        </div>
+        <p class="callout">
+          <strong>一句話：</strong>DSP 負責把聲音物理變成參數、再變回聲音；RLF 負責把參數存得又小又快——遊戲才放得下
+        </p>
+        <aside class="notes">
+          總結：這篇的創新點在表示法與機器學習，不是新的 DSP 演算法；但它完整示範了遊戲聲學從模擬、萃取、到渲染的 DSP 流程，很適合當學習材料。謝謝大家。
+        </aside>
+      </section>
+
+      <!-- 參考資料 -->
+      <section class="slide">
+        <h2>參考資料</h2>
+        <ol class="refs">
+          <li>
+            Seuté, Vasudev, Richan, Buffoni. Reciprocal Latent Fields for Precomputed Sound Propagation. SIGGRAPH Conference Papers ’26（圖 1–7 出自本文，CC BY-NC-ND 4.0）
+            <a href="https://arxiv.org/abs/2602.06937" target="_blank" rel="noopener">https://arxiv.org/abs/2602.06937</a>
+          </li>
+          <li>
+            Raghuvanshi, Snyder. Parametric Wave Field Coding for Precomputed Sound Propagation. ACM TOG 33(4), 2014
+            <a href="https://doi.org/10.1145/2601097.2601184" target="_blank" rel="noopener">https://doi.org/10.1145/2601097.2601184</a>
+          </li>
+          <li>
+            Schroeder. New Method of Measuring Reverberation Time. JASA 37(3), 1965
+            <a href="https://doi.org/10.1121/1.1909343" target="_blank" rel="noopener">https://doi.org/10.1121/1.1909343</a>
+          </li>
+          <li>Pulkki. Virtual Sound Source Positioning Using Vector Base Amplitude Panning. JAES 45(6), 456–466, 1997</li>
+          <li>
+            Hamilton. PFFDTD Software, 2021
+            <a href="https://github.com/bsxfun/pffdtd" target="_blank" rel="noopener">https://github.com/bsxfun/pffdtd</a>
+          </li>
+          <li>
+            Gruffaz, Sassen. Riemannian metric learning: Closer to you than you imagine. arXiv, 2025
+            <a href="https://arxiv.org/abs/2503.05321" target="_blank" rel="noopener">https://arxiv.org/abs/2503.05321</a>
+          </li>
+          <li>
+            Ashby. Introducing The Wwise Audio Lab (WAL). Audiokinetic, 2018
+            <a href="https://www.audiokinetic.com/en/learning/videos/twnpk0nrcs4/" target="_blank" rel="noopener">https://www.audiokinetic.com/en/learning/videos/twnpk0nrcs4/</a>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <div class="edge-nav prev" id="edge-prev" aria-hidden="true">‹</div>
+    <div class="edge-nav next" id="edge-next" aria-hidden="true">›</div>
+
+    <div id="hud">
+      <a href="../" target="_top">目錄</a>
+      <a href="research.html" target="_top">參考資料</a>
+      <span id="counter"></span>
+      <button id="prev" aria-label="上一頁">‹</button>
+      <button id="next" aria-label="下一頁">›</button>
+      <button id="theme" aria-label="切換深淺色">◐</button>
+    </div>
+
+    <script>
+      (() => {
+        const slides = [...document.querySelectorAll('.slide')];
+        const counter = document.getElementById('counter');
+        const progress = document.getElementById('progress');
+        const edgePrev = document.getElementById('edge-prev');
+        const edgeNext = document.getElementById('edge-next');
+        let i = 0;
+
+        function show(n) {
+          i = Math.max(0, Math.min(slides.length - 1, n));
+          slides.forEach((s, k) => s.classList.toggle('active', k === i));
+          counter.textContent = `${i + 1} / ${slides.length}`;
+          progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+          history.replaceState(null, '', `#${i + 1}`);
+          edgePrev.hidden = i === 0;
+          edgeNext.hidden = i === slides.length - 1;
+        }
+
+        document.addEventListener('keydown', (e) => {
+          // 在按鈕、選單、輸入框上操作時不翻頁
+          if (e.target.closest?.('button, select, input, textarea, [contenteditable]')) return;
+          if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) {
+            e.preventDefault();
+            show(i + 1);
+          } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+            e.preventDefault();
+            show(i - 1);
+          } else if (e.key === 'Home') show(0);
+          else if (e.key === 'End') show(slides.length - 1);
+          else if (e.key === 'f' || e.key === 'F') {
+            document.fullscreenElement
+              ? document.exitFullscreen()
+              : document.documentElement.requestFullscreen();
+          } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
+        });
+
+        // 首頁或其他分頁切換主題時同步
+        addEventListener('storage', (e) => {
+          if (e.key === 'theme' && e.newValue) document.documentElement.dataset.theme = e.newValue;
+        });
+
+        // 滑鼠翻頁：右下角按鈕
+        document.getElementById('prev').onclick = () => show(i - 1);
+        document.getElementById('next').onclick = () => show(i + 1);
+
+        // 滑鼠翻頁：點投影片左半部上一頁、右半部下一頁
+        // 點連結、按鈕、選單、畫布等互動元件，或剛選取文字時不翻頁
+        const deck = document.getElementById('deck');
+        const NO_FLIP =
+          'a, button, select, input, textarea, label, canvas, summary, [contenteditable], .no-flip';
+        const sideOf = (e) => (e.clientX < innerWidth / 2 ? 'prev' : 'next');
+        deck.addEventListener('click', (e) => {
+          if (e.button !== 0 || e.target.closest(NO_FLIP)) return;
+          if (String(getSelection?.() ?? '').trim()) return;
+          show(i + (sideOf(e) === 'prev' ? -1 : 1));
+        });
+        deck.addEventListener('mousemove', (e) => {
+          if (e.target.closest(NO_FLIP)) delete deck.dataset.side;
+          else deck.dataset.side = sideOf(e);
+        });
+        deck.addEventListener('mouseleave', () => delete deck.dataset.side);
+
+        // 用滑鼠點過按鈕、改過選單後移開焦點，鍵盤左右鍵才能繼續翻頁
+        document.addEventListener('click', (e) => {
+          if (e.detail > 0) e.target.closest('button')?.blur();
+        });
+        document.addEventListener('change', (e) => {
+          if (e.target.matches('select')) e.target.blur();
+        });
+        document.getElementById('theme').onclick = () => {
+          const root = document.documentElement;
+          const dark = root.dataset.theme
+            ? root.dataset.theme === 'dark'
+            : matchMedia('(prefers-color-scheme: dark)').matches;
+          root.dataset.theme = dark ? 'light' : 'dark';
+          try {
+            localStorage.setItem('theme', root.dataset.theme);
+          } catch {}
+        };
+
+        let startX = null;
+        document.addEventListener(
+          'touchstart',
+          (e) => {
+            startX = e.touches[0].clientX;
+          },
+          { passive: true },
+        );
+        document.addEventListener('touchend', (e) => {
+          if (startX === null) return;
+          const dx = e.changedTouches[0].clientX - startX;
+          if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+          startX = null;
+        });
+
+        show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+      })();
+    </script>
+    <script>
+      addEventListener('DOMContentLoaded', () => {
+        if (window.renderMathInElement) {
+          renderMathInElement(document.getElementById('deck'), {
+            delimiters: [
+              { left: '\\[', right: '\\]', display: true },
+              { left: '\\(', right: '\\)', display: false },
+            ],
+          });
+        }
+      });
+
+      // ---- 參數萃取示範：合成 IR，套用論文的時間窗與斜率估計（我的實驗，已用 Node 驗證） ----
+      (() => {
+        const canvas = document.getElementById('ir-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const $ = (id) => document.getElementById(id);
+        const FS = 8000;
+        const T = 2;
+        const C = 343;
+        let seed = 7;
+
+        function analyze(rt60, dist, occluded) {
+          const N = Math.round(FS * T);
+          const h = new Float64Array(N);
+          let s = seed >>> 0;
+          const rnd = () => {
+            s = (s * 1664525 + 1013904223) >>> 0;
+            return s / 4294967296;
+          };
+          const gauss = () => {
+            const u = rnd() || 1e-12;
+            const v = rnd();
+            return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+          };
+          const nd = Math.round((dist / C) * FS);
+          h[nd] = (1 / dist) * (occluded ? 0.1 : 1);
+          const k = Math.log(1000) / rt60; // 振幅 e^{-kt}，能量在 rt60 秒掉 60 dB
+          for (let n = nd + Math.round(0.002 * FS); n < N; n++) {
+            h[n] += 0.01 * gauss() * Math.exp((-k * (n - nd)) / FS);
+          }
+          const e = h.map((x) => x * x);
+          const S = new Float64Array(N);
+          let acc = 0;
+          for (let n = N - 1; n >= 0; n--) S[n] = acc += e[n];
+          const SdB = Array.from(S, (x) => 10 * Math.log10(x / S[0] + 1e-30));
+          const win = (a, b) => [nd + Math.round(a * FS), Math.min(N - 1, nd + Math.round(b * FS))];
+          const level = ([a, b]) => {
+            let E = 0;
+            for (let n = a; n < b; n++) E += e[n];
+            return 10 * Math.log10(E + 1e-30);
+          };
+          const DS = win(0, 0.015);
+          const ER = win(0.015, 0.115);
+          const LR = win(0.415, 1.015);
+          // τ_ER：S(t) 前向差分的 RMS
+          let q = 0;
+          let m = 0;
+          for (let n = ER[0]; n < ER[1] - 1; n++) {
+            const d = (SdB[n + 1] - SdB[n]) * FS;
+            q += d * d;
+            m++;
+          }
+          const sER = -Math.sqrt(q / m);
+          // τ_LR：S(t) 線性迴歸
+          let sx = 0, sy = 0, sxx = 0, sxy = 0, M = 0;
+          for (let n = LR[0]; n < LR[1]; n++) {
+            const x = n / FS;
+            const y = SdB[n];
+            sx += x; sy += y; sxx += x * x; sxy += x * y; M++;
+          }
+          const sLR = (M * sxy - sx * sy) / (M * sxx - sx * sx);
+          const bLR = (sy - sLR * sx) / M;
+          return {
+            e, SdB, nd, LR, sLR, bLR,
+            pi: C * (nd / FS),
+            LDS: level(DS),
+            LER: level(ER),
+            tauER: -60 / sER,
+            tauLR: -60 / sLR,
+          };
+        }
+
+        const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+        function draw() {
+          const rt = +$('in-rt').value;
+          const d = +$('in-d').value;
+          const occ = $('in-occ').checked;
+          $('v-rt').textContent = rt.toFixed(1);
+          $('v-d').textContent = d;
+          const r = analyze(rt, d, occ);
+
+          const W = canvas.width, H = canvas.height;
+          const pad = { l: 70, r: 20, t: 20, b: 50 };
+          const tMax = 1.2, yMin = -100, yMax = 0;
+          const X = (t) => pad.l + (t / tMax) * (W - pad.l - pad.r);
+          const Y = (db) => pad.t + ((yMax - Math.max(yMin, Math.min(yMax, db))) / (yMax - yMin)) * (H - pad.t - pad.b);
+          ctx.clearRect(0, 0, W, H);
+          ctx.font = '22px "JetBrains Mono", monospace';
+
+          // 時間窗底色
+          const td = r.nd / FS;
+          const band = (a, b, color) => {
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.14;
+            ctx.fillRect(X(td + a), pad.t, X(td + b) - X(td + a), H - pad.t - pad.b);
+            ctx.globalAlpha = 1;
+          };
+          band(0, 0.015, css('--src'));
+          band(0.015, 0.115, css('--accent'));
+          band(0.415, 1.015, css('--rcv'));
+
+          // 格線與座標
+          ctx.strokeStyle = css('--line');
+          ctx.fillStyle = css('--muted');
+          ctx.lineWidth = 1;
+          for (let db = 0; db >= -100; db -= 20) {
+            ctx.beginPath(); ctx.moveTo(pad.l, Y(db)); ctx.lineTo(W - pad.r, Y(db)); ctx.stroke();
+            ctx.fillText(String(db), 8, Y(db) + 7);
+          }
+          for (let t = 0; t <= 1.2001; t += 0.2) ctx.fillText(t.toFixed(1) + (t > 1.1 ? ' s' : ''), X(t) - (t > 1.1 ? 52 : 18), H - 16);
+                    ctx.fillText('dB', 8, H - 16);
+
+          // 能量 e(t)（以平方值的 dB，相對直達聲無遮擋時的 0 dB 位準）
+          ctx.strokeStyle = css('--muted');
+          ctx.globalAlpha = 0.45;
+          ctx.beginPath();
+          const step = 4;
+          for (let n = 0; n < tMax * FS; n += step) {
+            let mx = 0;
+            for (let j = 0; j < step; j++) mx = Math.max(mx, r.e[n + j] || 0);
+            const db = 10 * Math.log10(mx + 1e-30);
+            n === 0 ? ctx.moveTo(X(n / FS), Y(db)) : ctx.lineTo(X(n / FS), Y(db));
+          }
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+
+          // Schroeder 曲線
+          ctx.strokeStyle = css('--accent');
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          for (let n = 0; n < tMax * FS; n += 8) {
+            n === 0 ? ctx.moveTo(X(n / FS), Y(r.SdB[n])) : ctx.lineTo(X(n / FS), Y(r.SdB[n]));
+          }
+          ctx.stroke();
+
+          // LR 迴歸線
+          ctx.strokeStyle = css('--src');
+          ctx.lineWidth = 3;
+          ctx.setLineDash([10, 8]);
+          ctx.beginPath();
+          const t0 = r.LR[0] / FS, t1 = r.LR[1] / FS;
+          ctx.moveTo(X(t0), Y(r.bLR + r.sLR * t0));
+          ctx.lineTo(X(t1), Y(r.bLR + r.sLR * t1));
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.lineWidth = 1;
+
+          $('o-pi').textContent = r.pi.toFixed(2) + ' m';
+          $('o-lds').textContent = r.LDS.toFixed(1) + ' dB';
+          $('o-ler').textContent = r.LER.toFixed(1) + ' dB';
+          $('o-ter').textContent = r.tauER.toFixed(2) + ' s';
+          $('o-tlr').textContent = r.tauLR.toFixed(2) + ' s（真值 ' + rt.toFixed(1) + '）';
+        }
+
+        ['in-rt', 'in-d', 'in-occ'].forEach((id) => {
+          $(id).addEventListener('input', draw);
+          $(id).addEventListener('change', (e) => e.target.blur()); // 鍵盤左右鍵繼續翻頁
+        });
+        $('in-seed').addEventListener('click', () => {
+          seed = (seed * 31 + 17) % 100000;
+          draw();
+        });
+        $('theme').addEventListener('click', () => requestAnimationFrame(draw));
+        matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+        addEventListener('storage', () => requestAnimationFrame(draw));
+        document.fonts?.ready.then(draw);
+        draw();
+      })();
+    </script>
+  </body>
+</html>
