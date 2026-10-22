@@ -593,12 +593,15 @@
       }
       .steps li {
         counter-increment: s;
-        display: grid;
-        grid-template-columns: 2.2em 1fr;
-        align-items: baseline;
+        /* 不用 grid：文字與公式混排時，每段文字會被拆成獨立的格子而直排 */
+        padding-left: 2.2em;
+        text-indent: -2.2em;
       }
       .steps li::before {
         content: counter(s);
+        display: inline-block;
+        width: 2.2em;
+        text-indent: 0;
         font-family: 'Noto Serif TC', serif;
         font-weight: 900;
         color: var(--accent);
@@ -897,133 +900,31 @@
       </section>
 
       <section class="slide">
-        <h2>窮舉的困難</h2>
-        <div class="big-number">77 年</div>
-        <p class="big-label">
-          20 個城市的拜訪順序有 20! ≈ 2.4×10¹⁸ 種。電腦每秒檢查 10 億種，也要算大約 77
-          年（我的計算）
-        </p>
-        <p class="small muted" style="margin-top: 1.2em">
-          就像要在整片沙灘上找到最漂亮的一顆貝殼，不可能每顆都翻起來看。
-        </p>
-        <aside class="notes">
-          所以人們改用「聰明的猜法」：先到處看看，再往看起來不錯的地方仔細找。不保證找到最好的，但能很快找到夠好的答案。這類方法叫做「元啟發式演算法」（metaheuristics）。
-        </aside>
-      </section>
-
-      <section class="slide">
-        <h2>演算法年表</h2>
-        <div class="wrap-x">
-          <table class="data timeline">
-            <tr>
-              <th>年份</th>
-              <th>演算法</th>
-              <th>靈感來源</th>
-            </tr>
-            <tr>
-              <td>1975</td>
-              <td>遺傳演算法 GA</td>
-              <td>
-                生物演化：好的基因留下來、互相組合
-                <sup class="cite">[9]</sup>
-              </td>
-            </tr>
-            <tr>
-              <td>1983</td>
-              <td>模擬退火 SA</td>
-              <td>
-                金屬加熱後慢慢冷卻，結構會變得更穩定
-                <sup class="cite">[10]</sup>
-              </td>
-            </tr>
-            <tr>
-              <td>1992</td>
-              <td>蟻群演算法 ACO</td>
-              <td>
-                螞蟻沿路留下氣味，越多螞蟻走過的路氣味越濃
-                <sup class="cite">[11]</sup>
-              </td>
-            </tr>
-            <tr>
-              <td>1995</td>
-              <td>粒子群 PSO</td>
-              <td>
-                鳥群一起飛，每隻鳥會跟著鄰居和自己的經驗調整方向
-                <sup class="cite">[12]</sup>
-              </td>
-            </tr>
-            <tr>
-              <td>2009</td>
-              <td>重力搜尋 GSA</td>
-              <td>
-                萬有引力：越好的解越「重」，把別人吸過來
-                <sup class="cite">[13]</sup>
-              </td>
-            </tr>
-            <tr>
-              <td>2023</td>
-              <td><strong>FLA</strong></td>
-              <td>
-                <strong>擴散：物質從濃的地方流向淡的地方</strong>
-                <sup class="cite">[1]</sup>
-              </td>
-            </tr>
-          </table>
-        </div>
-      </section>
-
-      <section class="slide">
-        <h2>演算法分類</h2>
-        <div class="three">
-          <div class="col">
-            <h3>演化型</h3>
-            <p>模仿生物一代代演化</p>
-            <p class="muted">
-              例：遺傳演算法 GA
-              <sup class="cite">[9]</sup>
-            </p>
-          </div>
-          <div class="col">
-            <h3>群體型</h3>
-            <p>模仿動物成群合作</p>
-            <p class="muted">
-              例：蟻群 ACO、粒子群 PSO
-              <sup class="cite">[11][12]</sup>
-            </p>
-          </div>
-          <div class="col here">
-            <h3>物理型</h3>
-            <p>模仿物理定律</p>
-            <p class="muted">
-              例：模擬退火 SA、重力 GSA、
-              <strong>FLA</strong>
-              <sup class="cite">[1][15]</sup>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="slide">
-        <h2>沒有免費午餐定理</h2>
+        <h2>FLA 的由來</h2>
         <ul>
           <li>
-            「沒有免費午餐定理」：一個演算法在某些題目表現較好，必然在另一些題目表現較差
-            <sup class="cite">[14]</sup>
+            <strong>為什麼需要</strong>
+            ：很多問題的可能答案多到無法一一檢查（例如 20 個城市的拜訪順序約有 2.4×10¹⁸
+            種），只能用「聰明的猜法」很快找到夠好的答案，這類方法叫做元啟發式演算法
           </li>
           <li>
-            所以研究者不斷提出新方法，FLA 就是其中之一
+            <strong>誰提出</strong>
+            ：Hashim 等人在 2023 年發表
             <sup class="cite">[1]</sup>
           </li>
           <li>
-            但也有人批評：許多新演算法只是換了比喻，內容和舊方法差不多
-            <sup class="cite">[7]</sup>
-            。例如有研究指出 GSA 其實沒有真的按照重力定律運作
-            <sup class="cite">[13]</sup>
+            <strong>屬於哪一類</strong>
+            ：物理型，模仿物理定律來找答案，和模擬退火同一類
+            <sup class="cite">[1][15]</sup>
+          </li>
+          <li>
+            <strong>靈感</strong>
+            ：菲克定律，也就是物質從濃的地方流向淡的地方（下一章）
           </li>
         </ul>
         <aside class="notes">
-          所以學習 FLA
-          時，重點是看懂它實際怎麼移動候選解，而不是只記住「擴散」這個比喻。後面的實驗也會看到這一點。
+          元啟發式演算法不保證找到最好的答案，但能很快找到夠好的答案。FLA
+          只借用了擴散的公式形狀和名稱，後面會說明它實際怎麼移動候選解。
         </aside>
       </section>
 
@@ -1337,6 +1238,11 @@
         </aside>
       </section>
 
+      <!-- 6 章節 -->
+      <section class="slide section">
+        <h1>演算法步驟</h1>
+      </section>
+
       <!-- 一句話說 FLA -->
       <section class="slide">
         <h2>FLA 概要</h2>
@@ -1364,41 +1270,8 @@
           </div>
         </div>
         <aside class="notes">
-          三個階段的比例由下一頁的 TF 公式決定
+          三個階段的比例由後面的時間函數 TF 決定
           [3]。「擴散、平衡、穩態」只是名字，用來描述先廣泛找、再集中找的節奏。
-        </aside>
-      </section>
-
-      <!-- 6 章節 -->
-      <section class="slide section">
-        <h1>演算法步驟</h1>
-      </section>
-
-      <!-- 5 TF -->
-      <section class="slide">
-        <h2>時間函數 TF</h2>
-        <div class="formula">
-          \[ TF = \sinh\!\left(\tfrac{t}{T}\right)^{C_1},\qquad C_1 = 0.5 \]
-        </div>
-        <div class="phase-bar" role="img" aria-label="擴散 74%、平衡 14%、穩態 12%">
-          <div class="do">擴散 DO　TF &lt; 0.9</div>
-          <div class="eo">平衡</div>
-          <div class="sso">穩態</div>
-        </div>
-        <div class="phase-scale">
-          <span>t = 0</span>
-          <span>0.74T</span>
-          <span>0.88T</span>
-          <span>T</span>
-        </div>
-        <p class="small" style="margin-top: 1em">
-          前約 74% 的迭代在擴散（探索），約 14% 平衡（0.9 ≤ TF ≤ 1），最後約 12% 穩態（TF &gt; 1）
-          <sup class="cite">[3]</sup>
-        </p>
-        <aside class="notes">
-          比例是由 TF 的門檻反推：sinh(t/T) &lt; 0.81 → t/T &lt; 0.7405；sinh(t/T) ≤ 1 → t/T ≤
-          0.8814。注意 [4] 把公式寫成 sinh(t/T)/c1，與 mealpy 程式碼不同，實作請以作者 MATLAB 程式
-          [2] 為準。
         </aside>
       </section>
 
@@ -1639,7 +1512,7 @@
         <p class="callout small">
           <strong>白話</strong>
           　每一代都做同一件事：看時間決定現在怎麼找 → 每個點試一個新位置 →
-          更好才搬過去。接下來幾頁說明兩個區域的關係、在三個階段怎麼變換，以及擴散階段實際怎麼移動。
+          更好才搬過去。接下來依序說明：時間函數 TF 怎麼決定階段 → 兩個區域 → 三個階段各自怎麼移動。
         </p>
         <aside class="notes">
           ① 隨機產生 N 個解；② 編號前一半是區域 1、後一半是區域 2；③
@@ -1651,60 +1524,51 @@
         </aside>
       </section>
 
+      <!-- 5 TF -->
+      <section class="slide">
+        <h2>時間函數 TF</h2>
+        <div class="formula">
+          \[ TF = \sinh\!\left(\tfrac{t}{T}\right)^{C_1},\qquad C_1 = 0.5 \]
+        </div>
+        <div class="phase-bar" role="img" aria-label="擴散 74%、平衡 14%、穩態 12%">
+          <div class="do">擴散 DO　TF &lt; 0.9</div>
+          <div class="eo">平衡</div>
+          <div class="sso">穩態</div>
+        </div>
+        <div class="phase-scale">
+          <span>t = 0</span>
+          <span>0.74T</span>
+          <span>0.88T</span>
+          <span>T</span>
+        </div>
+        <p class="small" style="margin-top: 1em">
+          前約 74% 的迭代在擴散（探索），約 14% 平衡（0.9 ≤ TF ≤ 1），最後約 12% 穩態（TF &gt; 1）
+          <sup class="cite">[3]</sup>
+        </p>
+        <aside class="notes">
+          比例是由 TF 的門檻反推：sinh(t/T) &lt; 0.81 → t/T &lt; 0.7405；sinh(t/T) ≤ 1 → t/T ≤
+          0.8814。注意 [4] 把公式寫成 sinh(t/T)/c1，與 mealpy 程式碼不同，實作請以作者 MATLAB 程式
+          [2] 為準。
+        </aside>
+      </section>
+
       <!-- 兩個區域的分工 -->
       <section class="slide">
         <h2>兩個區域的分工</h2>
-        <div class="wrap-x">
-          <table class="data">
-            <tr>
-              <th>階段</th>
-              <th>
-                <span class="r1">區域 1</span>
-                ／
-                <span class="r2">區域 2</span>
-                在做什麼
-              </th>
-              <th>兩區關係</th>
-            </tr>
-            <tr>
-              <td>開始</td>
-              <td>
-                族群照編號平分成前、後兩半，都是隨機產生，
-                <strong>本質上沒有差別</strong>
-              </td>
-              <td>—</td>
-            </tr>
-            <tr>
-              <td><span class="tag do">DO</span></td>
-              <td>
-                每一代隨機決定一區當「送出方」、另一區當「接收方」，兩者的移動方式不同（下一頁）
-              </td>
-              <td>交流</td>
-            </tr>
-            <tr>
-              <td><span class="tag eo">EO</span></td>
-              <td>
-                各自向
-                <strong>自己區域</strong>
-                的最佳解靠攏
-              </td>
-              <td>不交流</td>
-            </tr>
-            <tr>
-              <td><span class="tag sso">SSO</span></td>
-              <td>
-                都向
-                <strong>全域</strong>
-                最佳解收斂
-              </td>
-              <td>
-                合流
-                <sup class="cite">[3]</sup>
-              </td>
-            </tr>
-          </table>
-        </div>
-        <ul class="small">
+        <ul>
+          <li>
+            <strong>怎麼分</strong>
+            ：族群照編號平分成前、後兩半，叫做
+            <span class="r1">區域 1</span>
+            與
+            <span class="r2">區域 2</span>
+            ；兩半都是隨機產生，本質上沒有差別
+            <sup class="cite">[3]</sup>
+          </li>
+          <li>
+            <strong>各有一個最佳解</strong>
+            ：每區找出自己分數最好的點（區域最佳解），兩者中較好的就是全域最佳解
+          </li>
           <li>
             <strong>分子不會真的換區（依程式碼）</strong>
             ：區域是按編號固定的，「跨區」只是位置跳到對方最佳解附近，下一代它仍屬於原本的區域
@@ -2016,10 +1880,6 @@
         </div>
         <ul class="small" style="margin-top: 1em">
           <li>
-            <strong>不變的是編號</strong>
-            ：區域按編號固定，整個過程不重新分組；「跨區」只是位置換到對方最佳解附近（依程式碼）
-          </li>
-          <li>
             <strong>改變的是「往哪裡靠」</strong>
             ：DO 往對方或本區最佳解、EO 往本區最佳解、SSO 往全域最佳解；切換時間由 TF 決定
             <sup class="cite">[3]</sup>
@@ -2157,6 +2017,42 @@
         </p>
       </section>
 
+      <!-- 8 DO -->
+      <section class="slide">
+        <h2>擴散階段 DO</h2>
+        <p class="en-line">DO = Diffusion Operator（擴散算子）</p>
+        <div class="two">
+          <div>
+            <div class="formula">\[ DOF = e^{-C_2 (TF - r)},\quad TDO = C_5\,TF - r \]</div>
+            <div class="formula">
+              \[ x' = X_{best,j} + DF\cdot DOF\cdot \vec r \odot \left(J\,X_{best,j} - x\right) \]
+              \[ J = -D\,\frac{\bar x_j - \bar x_i}{\lVert X_{best,j} - x\rVert + \varepsilon} \]
+            </div>
+          </div>
+          <ul class="small">
+            <li>方向：\(TDO &lt;\) 隨機數時區域 1 → 2，否則 2 → 1</li>
+            <li>
+              跨區數量 \(NT_{12} = \mathrm{round}\big(N_1(C_3 + r(C_4 - C_3))\big)\)，約為該區的
+              10–20%
+            </li>
+            <li>留在原區的分子逐維度：80% 取本區最佳、10% 在最佳附近隨機跳、10% 保持原值</li>
+            <li>
+              另一區全部：\(x' = X_{best} + DOF\,(\vec r\,(U-L) + L)\)
+              <sup class="cite">[3][4]</sup>
+            </li>
+          </ul>
+        </div>
+        <p class="callout small">
+          <strong>白話</strong>
+          　前約 3/4
+          輪：大部分點在自己這群最好的點附近大範圍亂跳；少數點跳到另一群最好的點附近看看。
+        </p>
+        <aside class="notes">
+          DF 是 ±1 的隨機方向，\(\vec r\) 是每個維度各自的 [0,1] 隨機數，⊙ 表示逐元素相乘。DOF 在 TF
+          小時較大，所以早期步伐大、偏探索。
+        </aside>
+      </section>
+
       <!-- 擴散方向與步伐 -->
       <section class="slide">
         <h2>擴散方向與步伐</h2>
@@ -2216,42 +2112,6 @@
         <aside class="notes">
           機率算法：TDO &lt; 隨機數 ⇔ r₁ + r₂ &gt; 2TF（r₁、r₂ 為 [0,1] 均勻隨機數）。2TF ≤ 1
           時機率為 1 − (2TF)²/2；2TF &gt; 1 時為 (2 − 2TF)²/2。DOF 範圍是 r 取 0 與 1 的結果。
-        </aside>
-      </section>
-
-      <!-- 8 DO -->
-      <section class="slide">
-        <h2>擴散階段 DO</h2>
-        <p class="en-line">DO = Diffusion Operator（擴散算子）</p>
-        <div class="two">
-          <div>
-            <div class="formula">\[ DOF = e^{-C_2 (TF - r)},\quad TDO = C_5\,TF - r \]</div>
-            <div class="formula">
-              \[ x' = X_{best,j} + DF\cdot DOF\cdot \vec r \odot \left(J\,X_{best,j} - x\right) \]
-              \[ J = -D\,\frac{\bar x_j - \bar x_i}{\lVert X_{best,j} - x\rVert + \varepsilon} \]
-            </div>
-          </div>
-          <ul class="small">
-            <li>方向：\(TDO &lt;\) 隨機數時區域 1 → 2，否則 2 → 1</li>
-            <li>
-              跨區數量 \(NT_{12} = \mathrm{round}\big(N_1(C_3 + r(C_4 - C_3))\big)\)，約為該區的
-              10–20%
-            </li>
-            <li>留在原區的分子逐維度：80% 取本區最佳、10% 在最佳附近隨機跳、10% 保持原值</li>
-            <li>
-              另一區全部：\(x' = X_{best} + DOF\,(\vec r\,(U-L) + L)\)
-              <sup class="cite">[3][4]</sup>
-            </li>
-          </ul>
-        </div>
-        <p class="callout small">
-          <strong>白話</strong>
-          　前約 3/4
-          輪：大部分點在自己這群最好的點附近大範圍亂跳；少數點跳到另一群最好的點附近看看。
-        </p>
-        <aside class="notes">
-          DF 是 ±1 的隨機方向，\(\vec r\) 是每個維度各自的 [0,1] 隨機數，⊙ 表示逐元素相乘。DOF 在 TF
-          小時較大，所以早期步伐大、偏探索。
         </aside>
       </section>
 
@@ -2465,15 +2325,27 @@
       <section class="slide">
         <h2>第 1 代擴散計算</h2>
         <ol class="steps calc">
-          <li>取 \(r = 0.6\)：\(DOF = e^{-2(0.3165-0.6)} = 1.7630\)</li>
           <li>
-            \(TDO = 2(0.3165) - 0.5 = 0.1330 &lt;\) 隨機數 0.4 → 區域 1 → 2，以 \(X_{best,2} = C\)
-            為目標
+            取 \(r = 0.6\)
+            <br />
+            \(DOF = e^{-2(0.3165-0.6)} = 1.7630\)
           </li>
-          <li>\(J = -0.01\cdot\dfrac{(-2,\ 0)}{\lVert C - A\rVert = 5.3852} = (0.003714,\ 0)\)</li>
           <li>
-            \(DF = +1,\ \vec r = (0.5, 0.5)\)：\(x' = C + 1.7630\cdot(0.5,0.5)\odot\big((0.0037, 0)
-            - (3,-1)\big) = (-1.6412,\ 4.8815)\)
+            \(TDO = 2(0.3165) - 0.5 = 0.1330 &lt;\) 隨機數 0.4
+            <br />
+            → 區域 1 → 2，以 \(X_{best,2} = C\) 為目標
+          </li>
+          <li>
+            \(\lVert C - A\rVert = 5.3852\)
+            <br />
+            \(J = -0.01\cdot\dfrac{(-2,\ 0)}{5.3852} = (0.003714,\ 0)\)
+          </li>
+          <li>
+            \(DF = +1,\ \vec r = (0.5, 0.5)\)
+            <br />
+            \(x' = C + 1.7630\cdot(0.5,0.5)\odot\big((0.0037, 0) - (3,-1)\big)\)
+            <br />
+            \(\phantom{x'} = (-1.6412,\ 4.8815)\)
           </li>
           <li>
             \(f(x') = 26.52 &gt; 10\) →
@@ -2631,8 +2503,8 @@
         </p>
         <ul class="small">
           <li>
-            屬於物理型元啟發式演算法，這一類方法的源頭可追溯到 1975 年的遺傳演算法
-            <sup class="cite">[9]</sup>
+            屬於物理型元啟發式演算法，2023 年由 Hashim 等人提出
+            <sup class="cite">[1]</sup>
           </li>
           <li>
             靈感來自菲克第一定律：物質從濃處流向淡處
