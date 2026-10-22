@@ -6,7 +6,7 @@
     <title>Reciprocal Latent Fields</title>
     <meta name="description" content="遊戲聲音傳播的預計算資料如何用 3D 潛在網格與黎曼度量，從 182 GB 壓到 14 MB：從基礎觀念、DSP 流程到公式逐步詳解" />
     <meta name="date" content="2026-10-19" />
-    <meta name="category" content="數位訊號處理" />
+    <meta name="category" content="資訊" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
@@ -1885,6 +1885,9 @@
               : document.documentElement.requestFullscreen();
           } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
         });
+
+        // 嵌在首頁預覽中時，由首頁的按鈕切換深淺色，隱藏自己的按鈕
+        if (window.self !== window.top) document.getElementById("theme").hidden = true;
 
         // 首頁或其他分頁切換主題時同步
         addEventListener('storage', (e) => {

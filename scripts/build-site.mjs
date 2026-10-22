@@ -153,7 +153,9 @@ for (const dir of dirs) {
 }
 
 // ---- 首頁：左側分類清單 + 右側簡報預覽 ----
-const UNCATEGORIZED = '未分類';
+// 分類標籤只用這份清單；簡報的 category 不在清單中就不加標籤，列在「其他」
+const CATEGORIES = ['資訊'];
+const UNCATEGORIZED = '其他';
 const decks = dirs
   .filter((dir) => existsSync(join(root, dir, 'slides.html')))
   .map((dir) => {
@@ -163,7 +165,7 @@ const decks = dirs
       dir,
       title: html.match(/<title>([^<]*)<\/title>/i)?.[1].trim() || dir,
       description: meta(html, 'description'),
-      category: meta(html, 'category') || UNCATEGORIZED,
+      category: CATEGORIES.includes(meta(html, 'category')) ? meta(html, 'category') : '',
       date: meta(html, 'date') || statSync(file).mtime.toISOString().slice(0, 10),
       slides: (html.match(/<section class="slide/g) || []).length,
       hasResearch: existsSync(join(root, dir, 'research.md')),
@@ -229,8 +231,8 @@ const indexScript = `
   const frame = $('frame');
   let cat = ALL, current = null;
 
-  const categories = [...new Set(decks.map((d) => d.category))].sort((a, b) =>
-    a === '${UNCATEGORIZED}' ? 1 : b === '${UNCATEGORIZED}' ? -1 : a.localeCompare(b, 'zh-Hant'));
+  const categories = ${JSON.stringify(CATEGORIES)}.filter((c) => decks.some((d) => d.category === c));
+  const groups = decks.some((d) => !d.category) ? [...categories, ''] : categories;
   const query = () => $('search').value.trim().toLowerCase();
   const matches = (d, q) => !q || [d.title, d.description, d.category].join(' ').toLowerCase().includes(q);
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -250,12 +252,12 @@ const indexScript = `
       $('list').innerHTML = \`<p class="empty">\${q ? \`沒有符合「\${esc(q)}」的簡報。\` : '這個分類還沒有簡報。'}</p>\`;
       return;
     }
-    const groups = cat === ALL ? categories : [cat];
-    $('list').innerHTML = groups
+    $('list').innerHTML = (cat === ALL ? groups : [cat])
       .map((g) => {
         const items = shown.filter((d) => d.category === g);
         if (!items.length) return '';
-        return (cat === ALL ? \`<div class="group">\${esc(g)}</div>\` : '') + items.map((d) => \`
+        const head = cat === ALL && groups.length > 1 ? \`<div class="group">\${esc(g || '${UNCATEGORIZED}')}</div>\` : '';
+        return head + items.map((d) => \`
           <button type="button" class="item" data-dir="\${esc(d.dir)}" aria-current="\${d.dir === current}">
             <div class="t">\${esc(d.title)}</div>
             <div class="m">\${esc(d.date)} ・ \${d.slides} 頁</div>
@@ -360,5 +362,5 @@ ${indexScript}`,
   }),
 );
 console.log(
-  `已產生 output/index.html（${decks.length} 份簡報，${new Set(decks.map((d) => d.category)).size} 個分類）`,
+  `已產生 output/index.html（${decks.length} 份簡報，${new Set(decks.map((d) => d.category).filter(Boolean)).size} 個分類）`,
 );

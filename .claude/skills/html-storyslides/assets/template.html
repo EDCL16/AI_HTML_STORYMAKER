@@ -463,6 +463,9 @@
           } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
         });
 
+        // 嵌在首頁預覽中時，由首頁的按鈕切換深淺色，隱藏自己的按鈕
+        if (window.self !== window.top) document.getElementById("theme").hidden = true;
+
         // 首頁或其他分頁切換主題時同步
         addEventListener('storage', (e) => {
           if (e.key === 'theme' && e.newValue) document.documentElement.dataset.theme = e.newValue;
