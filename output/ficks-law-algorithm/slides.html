@@ -681,6 +681,27 @@
         margin-right: 0.3em;
         vertical-align: middle;
       }
+
+      /* 流程圖與兩區變換圖 */
+      .flow-wrap {
+        overflow-x: auto;
+        flex-shrink: 0;
+      }
+      .flow {
+        display: block;
+        width: 100%;
+        min-width: 640px;
+        height: min(56vh, 34vw);
+        min-height: 256px;
+      }
+      .trans svg {
+        display: block;
+        width: 100%;
+        margin: 0.4em 0 0.6em;
+      }
+      .trans .col p {
+        font-size: clamp(14px, 1.5vw, 19px);
+      }
     </style>
   </head>
   <body>
@@ -1384,36 +1405,250 @@
       <!-- 7 流程 -->
       <section class="slide">
         <h2>演算法流程</h2>
-        <ol class="steps">
-          <li>
-            隨機產生 N 個解；編號前一半是
-            <span class="r1">區域 1</span>
-            、後一半是
-            <span class="r2">區域 2</span>
-            ，各自找出區域最佳解
-          </li>
-          <li>計算時間函數 TF，決定這一代屬於哪個階段</li>
-          <li>
-            依階段產生新解：
-            <span class="tag do">DO</span>
-            兩區交流、
-            <span class="tag eo">EO</span>
-            各區自己收斂、
-            <span class="tag sso">SSO</span>
-            全部向全域最佳收斂
-          </li>
-          <li>超出邊界的座標截回範圍 \([L, U]\)</li>
-          <li>貪婪選擇：新解比舊解好才取代，否則留在原位</li>
-          <li>
-            更新兩區最佳解與全域最佳解，回到步驟 2
-            <sup class="cite">[3][4]</sup>
-          </li>
-        </ol>
+        <div class="flow-wrap">
+          <svg
+            class="flow"
+            viewBox="0 0 1000 400"
+            role="img"
+            aria-label="流程圖：初始化 N 個解，依編號分成區域 1 與區域 2，找出區域最佳與全域最佳，計算 TF；TF 小於 0.9 進入擴散 DO，介於 0.9 與 1 進入平衡 EO，大於 1 進入穩態 SSO；接著截回邊界、貪婪選擇、更新最佳解；若 t 小於 T 回到計算 TF，否則輸出全域最佳解"
+          >
+            <defs>
+              <marker
+                id="fa"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto"
+              >
+                <path d="M0 0 L10 5 L0 10z" fill="var(--muted)" />
+              </marker>
+            </defs>
+
+            <!-- 連線（先畫，方塊蓋在上面） -->
+            <g stroke="var(--muted)" stroke-width="2" fill="none">
+              <path d="M150 52 H188" marker-end="url(#fa)" />
+              <path d="M340 52 H378" marker-end="url(#fa)" />
+              <path d="M530 52 H568" marker-end="url(#fa)" />
+              <path d="M720 52 H773" marker-end="url(#fa)" />
+              <!-- TF 判斷 → 三個階段 -->
+              <path d="M860 90 V130 M470 130 H910" />
+              <path d="M470 130 V168" marker-end="url(#fa)" />
+              <path d="M690 130 V168" marker-end="url(#fa)" />
+              <path d="M910 130 V168" marker-end="url(#fa)" />
+              <!-- 三個階段 → 截回邊界 -->
+              <path d="M470 248 V285 M690 248 V285 M470 285 H910" />
+              <path d="M910 248 V318" marker-end="url(#fa)" />
+              <path d="M820 352 H782" marker-end="url(#fa)" />
+              <path d="M600 352 H562" marker-end="url(#fa)" />
+              <path d="M380 352 H337" marker-end="url(#fa)" />
+              <!-- t < T：是 → 回到計算 TF；否 → 輸出 -->
+              <path d="M250 314 V105 H645 V86" marker-end="url(#fa)" />
+              <path d="M165 352 H132" marker-end="url(#fa)" />
+            </g>
+
+            <g font-size="17" fill="var(--fg)" text-anchor="middle">
+              <!-- 第一列：準備 -->
+              <rect
+                x="0"
+                y="20"
+                width="150"
+                height="64"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+                stroke-width="2"
+              />
+              <text x="75" y="47">① 初始化</text>
+              <text x="75" y="70" font-size="14" fill="var(--muted)">隨機產生 N 個解</text>
+
+              <rect
+                x="190"
+                y="20"
+                width="150"
+                height="64"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+                stroke-width="2"
+              />
+              <text x="265" y="47">② 依編號分兩區</text>
+              <text x="265" y="70" font-size="14">
+                <tspan fill="var(--r1)" font-weight="700">區域 1</tspan>
+                <tspan fill="var(--muted)">／</tspan>
+                <tspan fill="var(--r2)" font-weight="700">區域 2</tspan>
+              </text>
+
+              <rect
+                x="380"
+                y="20"
+                width="150"
+                height="64"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+                stroke-width="2"
+              />
+              <text x="455" y="47">③ 找出最佳解</text>
+              <text x="455" y="70" font-size="14" fill="var(--muted)">兩區各一個＋全域</text>
+
+              <rect
+                x="570"
+                y="20"
+                width="150"
+                height="64"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--accent)"
+                stroke-width="2"
+              />
+              <text x="645" y="47">④ 計算 TF</text>
+              <text x="645" y="70" font-size="14" fill="var(--muted)">第 t 代 / 共 T 代</text>
+
+              <path
+                d="M860 14 L945 52 L860 90 L775 52 Z"
+                fill="var(--card)"
+                stroke="var(--accent)"
+                stroke-width="2"
+              />
+              <text x="860" y="58">TF 落在哪？</text>
+
+              <!-- 第二列：三個階段 -->
+              <rect
+                x="380"
+                y="170"
+                width="180"
+                height="78"
+                rx="10"
+                fill="var(--r1)"
+                fill-opacity="0.12"
+                stroke="var(--r1)"
+                stroke-width="2"
+              />
+              <text x="470" y="196" font-size="14" fill="var(--r1)" font-weight="700">
+                TF &lt; 0.9
+              </text>
+              <text x="470" y="218" font-weight="700">擴散 DO</text>
+              <text x="470" y="239" font-size="14" fill="var(--muted)">兩區交流</text>
+
+              <rect
+                x="600"
+                y="170"
+                width="180"
+                height="78"
+                rx="10"
+                fill="var(--accent)"
+                fill-opacity="0.12"
+                stroke="var(--accent)"
+                stroke-width="2"
+              />
+              <text x="690" y="196" font-size="14" fill="var(--accent)" font-weight="700">
+                0.9 ≤ TF ≤ 1
+              </text>
+              <text x="690" y="218" font-weight="700">平衡 EO</text>
+              <text x="690" y="239" font-size="14" fill="var(--muted)">各區向自己最佳</text>
+
+              <rect
+                x="820"
+                y="170"
+                width="180"
+                height="78"
+                rx="10"
+                fill="var(--best)"
+                fill-opacity="0.14"
+                stroke="var(--best)"
+                stroke-width="2"
+              />
+              <text x="910" y="196" font-size="14" fill="var(--best)" font-weight="700">
+                TF &gt; 1
+              </text>
+              <text x="910" y="218" font-weight="700">穩態 SSO</text>
+              <text x="910" y="239" font-size="14" fill="var(--muted)">全部向全域最佳</text>
+
+              <!-- 第三列：收尾（由右往左） -->
+              <rect
+                x="820"
+                y="320"
+                width="180"
+                height="64"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+                stroke-width="2"
+              />
+              <text x="910" y="347">⑤ 截回邊界</text>
+              <text x="910" y="370" font-size="14" fill="var(--muted)">超出 [L, U] 的座標</text>
+
+              <rect
+                x="600"
+                y="320"
+                width="180"
+                height="64"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+                stroke-width="2"
+              />
+              <text x="690" y="347">⑥ 貪婪選擇</text>
+              <text x="690" y="370" font-size="14" fill="var(--muted)">新解更好才取代</text>
+
+              <rect
+                x="380"
+                y="320"
+                width="180"
+                height="64"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+                stroke-width="2"
+              />
+              <text x="470" y="347">⑦ 更新最佳解</text>
+              <text x="470" y="370" font-size="14" fill="var(--muted)">兩區最佳＋全域最佳</text>
+
+              <path
+                d="M250 314 L335 352 L250 390 L165 352 Z"
+                fill="var(--card)"
+                stroke="var(--accent)"
+                stroke-width="2"
+              />
+              <text x="250" y="358">t &lt; T ？</text>
+
+              <rect
+                x="0"
+                y="320"
+                width="130"
+                height="64"
+                rx="10"
+                fill="var(--best)"
+                fill-opacity="0.14"
+                stroke="var(--best)"
+                stroke-width="2"
+              />
+              <text x="65" y="347" font-weight="700">輸出</text>
+              <text x="65" y="370" font-size="14" fill="var(--muted)">全域最佳解</text>
+
+              <!-- 判斷分支標籤 -->
+              <text x="236" y="138" font-size="14" fill="var(--muted)" text-anchor="end">
+                是，t + 1
+              </text>
+              <text x="150" y="342" font-size="14" fill="var(--muted)">否</text>
+            </g>
+          </svg>
+        </div>
         <p class="callout small">
           <strong>白話</strong>
           　每一代都做同一件事：看時間決定現在怎麼找 → 每個點試一個新位置 →
-          更好才搬過去。接下來三頁說明兩個區域怎麼分工，以及擴散階段實際怎麼移動。
+          更好才搬過去。接下來幾頁說明兩個區域的關係、在三個階段怎麼變換，以及擴散階段實際怎麼移動。
         </p>
+        <aside class="notes">
+          ① 隨機產生 N 個解；② 編號前一半是區域 1、後一半是區域 2；③
+          各自找出區域最佳解，兩者中較好的是全域最佳解；④ 計算時間函數
+          TF，決定這一代屬於哪個階段；依階段產生新解：DO 兩區交流、EO 各區自己收斂、SSO
+          全部向全域最佳收斂；⑤ 超出邊界的座標截回範圍 [L, U]；⑥
+          貪婪選擇：新解比舊解好才取代，否則留在原位；⑦
+          更新兩區最佳解與全域最佳解，還沒到最後一代就回到 ④ [3][4]。
+        </aside>
       </section>
 
       <!-- 兩個區域的分工 -->
@@ -1479,6 +1714,322 @@
             ：兩區各有自己的最佳解，等於同時追蹤兩個可能的好地方，到穩態前不會全部擠在同一處，比較不容易一開始就卡在局部最低點
           </li>
         </ul>
+      </section>
+
+      <!-- 兩區的變換過程 -->
+      <section class="slide">
+        <h2>兩區的變換過程</h2>
+        <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+          <defs>
+            <marker
+              id="tv"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10z" fill="var(--muted)" />
+            </marker>
+            <path
+              id="star"
+              d="M0 -9 L2.6 -3 L9 -3 L4.2 1.4 L6 8.5 L0 4.6 L-6 8.5 L-4.2 1.4 L-9 -3 L-2.6 -3Z"
+            />
+          </defs>
+        </svg>
+        <div class="three trans">
+          <div class="col">
+            <h3>
+              <span class="tag do">擴散 DO</span>
+              　交流
+            </h3>
+            <svg
+              viewBox="0 0 300 180"
+              role="img"
+              aria-label="擴散階段：區域 1 少數分子跳到區域 2 最佳解附近，區域 2 分子從自己的最佳解向四周大範圍跳開"
+            >
+              <rect
+                x="2"
+                y="24"
+                width="144"
+                height="152"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+              />
+              <rect
+                x="154"
+                y="24"
+                width="144"
+                height="152"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+              />
+              <line
+                x1="150"
+                y1="24"
+                x2="150"
+                y2="176"
+                stroke="var(--muted)"
+                stroke-dasharray="5 5"
+              />
+              <text
+                x="74"
+                y="16"
+                text-anchor="middle"
+                font-size="14"
+                font-weight="700"
+                fill="var(--r1)"
+              >
+                區域 1（送出）
+              </text>
+              <text
+                x="226"
+                y="16"
+                text-anchor="middle"
+                font-size="14"
+                font-weight="700"
+                fill="var(--r2)"
+              >
+                區域 2（接收）
+              </text>
+              <use href="#star" x="62" y="112" fill="var(--best)" />
+              <g fill="var(--r1)">
+                <circle cx="40" cy="100" r="5" />
+                <circle cx="84" cy="98" r="5" />
+                <circle cx="46" cy="138" r="5" />
+                <circle cx="88" cy="134" r="5" />
+                <circle cx="64" cy="152" r="5" />
+                <circle cx="108" cy="58" r="5" />
+              </g>
+              <path
+                d="M113 56 C 160 38, 200 52, 220 84"
+                stroke="var(--r1)"
+                stroke-width="2"
+                fill="none"
+                marker-end="url(#tv)"
+              />
+              <circle
+                cx="224"
+                cy="92"
+                r="5"
+                fill="var(--r1)"
+                stroke="var(--card)"
+                stroke-width="1.5"
+              />
+              <use href="#star" x="236" y="118" fill="var(--best)" />
+              <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#tv)">
+                <path d="M236 118 L176 54" />
+                <path d="M236 118 L286 46" />
+                <path d="M236 118 L172 162" />
+                <path d="M236 118 L288 164" />
+              </g>
+              <g fill="var(--r2)">
+                <circle cx="172" cy="50" r="5" />
+                <circle cx="289" cy="42" r="5" />
+                <circle cx="168" cy="166" r="5" />
+                <circle cx="291" cy="168" r="5" />
+              </g>
+            </svg>
+            <p>
+              每代隨機選一區當送出方：它的 10–20% 分子跳到
+              <strong>對方</strong>
+              最佳解附近，接收方以本區最佳解為中心大範圍亂跳
+            </p>
+          </div>
+          <div class="col">
+            <h3>
+              <span class="tag eo">平衡 EO</span>
+              　各自收斂
+            </h3>
+            <svg
+              viewBox="0 0 300 180"
+              role="img"
+              aria-label="平衡階段：兩區各自的分子向本區最佳解靠攏，沒有分子跨過中間的膜"
+            >
+              <rect
+                x="2"
+                y="24"
+                width="144"
+                height="152"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+              />
+              <rect
+                x="154"
+                y="24"
+                width="144"
+                height="152"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+              />
+              <line
+                x1="150"
+                y1="24"
+                x2="150"
+                y2="176"
+                stroke="var(--muted)"
+                stroke-dasharray="5 5"
+              />
+              <text
+                x="74"
+                y="16"
+                text-anchor="middle"
+                font-size="14"
+                font-weight="700"
+                fill="var(--r1)"
+              >
+                區域 1
+              </text>
+              <text
+                x="226"
+                y="16"
+                text-anchor="middle"
+                font-size="14"
+                font-weight="700"
+                fill="var(--r2)"
+              >
+                區域 2
+              </text>
+              <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#tv)">
+                <path d="M28 52 L60 90" />
+                <path d="M126 60 L88 92" />
+                <path d="M24 156 L58 116" />
+                <path d="M124 150 L88 116" />
+                <path d="M178 48 L212 88" />
+                <path d="M280 56 L240 90" />
+                <path d="M176 158 L212 118" />
+                <path d="M278 150 L240 116" />
+              </g>
+              <g fill="var(--r1)">
+                <circle cx="24" cy="48" r="5" />
+                <circle cx="130" cy="56" r="5" />
+                <circle cx="20" cy="160" r="5" />
+                <circle cx="128" cy="154" r="5" />
+              </g>
+              <g fill="var(--r2)">
+                <circle cx="174" cy="44" r="5" />
+                <circle cx="284" cy="52" r="5" />
+                <circle cx="172" cy="162" r="5" />
+                <circle cx="282" cy="154" r="5" />
+              </g>
+              <use href="#star" x="74" y="104" fill="var(--best)" />
+              <use href="#star" x="226" y="104" fill="var(--best)" />
+            </svg>
+            <p>
+              兩區
+              <strong>不交換</strong>
+              分子，每個分子往
+              <strong>本區</strong>
+              最佳解靠攏，兩區各自縮小範圍
+            </p>
+          </div>
+          <div class="col">
+            <h3>
+              <span class="tag sso">穩態 SSO</span>
+              　合流
+            </h3>
+            <svg
+              viewBox="0 0 300 180"
+              role="img"
+              aria-label="穩態階段：兩區所有分子都向同一個全域最佳解收斂，區域 2 的分子也跨過膜"
+            >
+              <rect
+                x="2"
+                y="24"
+                width="144"
+                height="152"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+              />
+              <rect
+                x="154"
+                y="24"
+                width="144"
+                height="152"
+                rx="10"
+                fill="var(--card)"
+                stroke="var(--line)"
+              />
+              <line
+                x1="150"
+                y1="24"
+                x2="150"
+                y2="176"
+                stroke="var(--muted)"
+                stroke-dasharray="5 5"
+              />
+              <text
+                x="74"
+                y="16"
+                text-anchor="middle"
+                font-size="14"
+                font-weight="700"
+                fill="var(--r1)"
+              >
+                區域 1
+              </text>
+              <text
+                x="226"
+                y="16"
+                text-anchor="middle"
+                font-size="14"
+                font-weight="700"
+                fill="var(--r2)"
+              >
+                區域 2
+              </text>
+              <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#tv)">
+                <path d="M30 50 L102 92" />
+                <path d="M24 156 L100 116" />
+                <path d="M128 40 L122 84" />
+                <path d="M184 50 L132 94" />
+                <path d="M276 70 L136 102" />
+                <path d="M186 156 L134 116" />
+                <path d="M280 150 L138 110" />
+              </g>
+              <g fill="var(--r1)">
+                <circle cx="26" cy="46" r="5" />
+                <circle cx="20" cy="160" r="5" />
+                <circle cx="128" cy="34" r="5" />
+              </g>
+              <g fill="var(--r2)">
+                <circle cx="188" cy="46" r="5" />
+                <circle cx="281" cy="68" r="5" />
+                <circle cx="190" cy="160" r="5" />
+                <circle cx="284" cy="152" r="5" />
+              </g>
+              <circle cx="118" cy="104" r="17" fill="none" stroke="var(--best)" stroke-width="2" />
+              <use href="#star" x="118" y="104" fill="var(--best)" />
+            </svg>
+            <p>
+              中心換成
+              <strong>全域</strong>
+              最佳解（兩區最佳中較好的那個），兩區所有分子一起往它收斂
+            </p>
+          </div>
+        </div>
+        <ul class="small" style="margin-top: 1em">
+          <li>
+            <strong>不變的是編號</strong>
+            ：區域按編號固定，整個過程不重新分組；「跨區」只是位置換到對方最佳解附近（依程式碼）
+          </li>
+          <li>
+            <strong>改變的是「往哪裡靠」</strong>
+            ：DO 往對方或本區最佳解、EO 往本區最佳解、SSO 往全域最佳解；切換時間由 TF 決定
+            <sup class="cite">[3]</sup>
+          </li>
+        </ul>
+        <aside class="notes">
+          圖中 ★ 是區域最佳解，圈起來的 ★ 是全域最佳解。示意圖把全域最佳畫在區域
+          1，實際上它在哪一區取決於當下哪一區的最佳解比較好。DO
+          階段送出方的「留守分子」沒有畫出來，細節見下一頁。
+        </aside>
       </section>
 
       <!-- 擴散階段的三種分子 -->
@@ -2265,6 +2816,8 @@
     <div id="hud">
       <a href="../" target="_top">目錄</a>
       <a href="research.html" target="_top">參考資料</a>
+      <a href="slides.pdf" download title="下載 PDF">PDF</a>
+      <a href="slides.pptx" download title="下載 PowerPoint">PPT</a>
       <span id="counter"></span>
       <button id="prev" aria-label="上一頁">‹</button>
       <button id="next" aria-label="下一頁">›</button>
