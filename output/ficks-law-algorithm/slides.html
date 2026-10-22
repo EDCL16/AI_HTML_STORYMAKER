@@ -6,7 +6,7 @@
     <title>Fick's Law Algorithm（FLA）</title>
     <meta
       name="description"
-      content="以物理擴散定律為啟發的找最佳解方法：名詞介紹、演算法由來、擴散原理、演算法步驟、計算案例與互動示範"
+      content="以物理擴散定律為啟發的找最佳解方法：名詞介紹、演算法由來、擴散原理、演算法步驟、計算案例、互動示範、應用與比較"
     />
     <meta name="date" content="2026-10-06" />
     <meta name="category" content="最佳化演算法" />
@@ -471,11 +471,15 @@
         grid-template-columns: repeat(2, 1fr);
         gap: clamp(12px, 2vw, 24px);
       }
+      .cards.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
       .cards.four {
         grid-template-columns: repeat(4, 1fr);
       }
       @media (max-width: 800px) {
         .cards,
+        .cards.three,
         .cards.four {
           grid-template-columns: 1fr;
         }
@@ -550,6 +554,18 @@
       table.data th {
         color: var(--muted);
         font-weight: 500;
+      }
+      table.data.tight {
+        font-size: clamp(13px, 1.45vw, 18px);
+      }
+      table.data.tight th,
+      table.data.tight td {
+        padding: 0.4em 0.6em;
+      }
+      table.data .hl {
+        background: var(--accent-soft);
+        color: var(--fg);
+        font-weight: 700;
       }
       .wrap-x {
         overflow-x: auto;
@@ -2616,6 +2632,154 @@
             </p>
           </div>
         </div>
+      </section>
+
+      <!-- ===== 延伸：應用與比較 ===== -->
+      <section class="slide section">
+        <h1>應用與比較</h1>
+      </section>
+
+      <section class="slide">
+        <h2>FLA 的使用方式</h2>
+        <div class="cards four">
+          <div class="card">
+            <p class="label">步驟 1</p>
+            <h3>定義變數與範圍</h3>
+            <p>例如控制器的 3 個參數，各自有上下限 \([L, U]\)</p>
+          </div>
+          <div class="card">
+            <p class="label">步驟 2</p>
+            <h3>寫目標函數 \(f\)</h3>
+            <p>輸入一組參數、輸出分數，越小越好；有限制條件時，違反就加大分數（懲罰）</p>
+          </div>
+          <div class="card">
+            <p class="label">步驟 3</p>
+            <h3>呼叫現成實作</h3>
+            <p>
+              mealpy 的
+              <code>FLA.OriginalFLA</code>
+              ，或作者的 MATLAB 程式
+              <sup class="cite">[2][3]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">步驟 4</p>
+            <h3>取出全域最佳解</h3>
+            <p>就是找到的最佳參數</p>
+          </div>
+        </div>
+        <div class="cards three" style="margin-top: 1em">
+          <div class="card">
+            <p class="label">已用於</p>
+            <h3>控制器調參</h3>
+            <p>
+              雙旋翼 MIMO 系統的 NMPC：找權重矩陣、時間步長與預測時域
+              <sup class="cite">[5]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">已用於</p>
+            <h3>機械設計</h3>
+            <p>
+              結合準對立學習，求解有限制條件的機械設計問題
+              <sup class="cite">[8]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">已用於</p>
+            <h3>參數估計</h3>
+            <p>
+              改良版 FLAS 用於工程問題與太陽能 PV 模型參數估計
+              <sup class="cite">[4]</sup>
+            </p>
+          </div>
+        </div>
+        <aside class="notes">
+          FLA 只需要能算出
+          f(x)，不需要問題的公式，也不需要微分，所以適合模擬器、控制系統這類「只能試、不能推導」的問題。
+        </aside>
+      </section>
+
+      <section class="slide">
+        <h2>和其他演算法的比較</h2>
+        <div class="wrap-x">
+          <table class="data tight">
+            <tr>
+              <th></th>
+              <th>
+                GA 遺傳
+                <sup class="cite">[9]</sup>
+              </th>
+              <th>
+                PSO 粒子群
+                <sup class="cite">[12]</sup>
+              </th>
+              <th>
+                SA 模擬退火
+                <sup class="cite">[10]</sup>
+              </th>
+              <th>
+                GSA 重力
+                <sup class="cite">[13]</sup>
+              </th>
+              <th class="hl">FLA</th>
+            </tr>
+            <tr>
+              <td>幾個解</td>
+              <td>一個族群</td>
+              <td>一個族群</td>
+              <td>一個解</td>
+              <td>一個族群</td>
+              <td class="hl">固定分成兩群</td>
+            </tr>
+            <tr>
+              <td>新解怎麼來</td>
+              <td>交配＋突變</td>
+              <td>速度受自己最佳與全體最佳拉動</td>
+              <td>在目前解附近擾動</td>
+              <td>好的解較「重」，吸引其他解</td>
+              <td class="hl">往對方、本區或全域最佳附近跳</td>
+            </tr>
+            <tr>
+              <td>探索 → 開發</td>
+              <td>交配率、突變率</td>
+              <td>慣性權重遞減</td>
+              <td>溫度遞減</td>
+              <td>重力常數遞減</td>
+              <td class="hl">TF 切成三段固定規則</td>
+            </tr>
+            <tr>
+              <td>接受變差的解</td>
+              <td>會</td>
+              <td>會（另記最佳）</td>
+              <td>會，依機率</td>
+              <td>會</td>
+              <td class="hl">不會，更好才取代</td>
+            </tr>
+            <tr>
+              <td>主要參數</td>
+              <td>交配率、突變率</td>
+              <td>慣性權重、\(c_1\)、\(c_2\)</td>
+              <td>初始溫度、降溫速度</td>
+              <td>\(G_0\)、衰減率</td>
+              <td class="hl">\(C_1\)～\(C_5\)、\(D\)</td>
+            </tr>
+          </table>
+        </div>
+        <p class="callout small">
+          <strong>差在哪</strong>
+          　FLA
+          用兩群各自追蹤一個好地方，並依代數切換三種移動規則；不看搜尋狀況調整，新解更好才取代。原作者的比較結果顯示
+          FLA 具競爭力
+          <sup class="cite">[1]</sup>
+          ，但依沒有免費午餐定理
+          <sup class="cite">[14]</sup>
+          ，實際使用仍要在自己的問題上比過。
+        </p>
+        <aside class="notes">
+          FLA
+          的階段切換只看第幾代，好處是行為可預測，缺點是不會依問題難易自動調整；貪婪取代讓收斂較穩，但也較容易困在局部最低點。
+        </aside>
       </section>
 
       <!-- 20 參考資料 -->
