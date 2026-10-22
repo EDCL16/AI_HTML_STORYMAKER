@@ -465,6 +465,50 @@
       .three .col.here {
         border: 2px solid var(--accent);
       }
+      /* 卡片格：取代純條列，每張卡一個重點 */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(12px, 2vw, 24px);
+      }
+      .cards.four {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      @media (max-width: 800px) {
+        .cards,
+        .cards.four {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: clamp(14px, 2vw, 24px);
+      }
+      .card.wide {
+        grid-column: 1 / -1;
+        border: 2px solid var(--accent);
+      }
+      .card.mine {
+        border-style: dashed;
+      }
+      .card .label {
+        font-size: clamp(16px, 1.7vw, 21px);
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.05em;
+        margin-bottom: 0.3em;
+      }
+      .card h3 {
+        font-family: 'Noto Serif TC', serif;
+        font-size: clamp(18px, 2.1vw, 26px);
+        line-height: 1.35;
+        margin-bottom: 0.4em;
+      }
+      .card p {
+        font-size: clamp(15px, 1.6vw, 19px);
+      }
       .timeline td:first-child {
         font-family: 'Noto Serif TC', serif;
         font-weight: 900;
@@ -901,27 +945,37 @@
 
       <section class="slide">
         <h2>FLA 的由來</h2>
-        <ul>
-          <li>
-            <strong>為什麼需要</strong>
-            ：很多問題的可能答案多到無法一一檢查（例如 20 個城市的拜訪順序約有 2.4×10¹⁸
-            種），只能用「聰明的猜法」很快找到夠好的答案，這類方法叫做元啟發式演算法
-          </li>
-          <li>
-            <strong>誰提出</strong>
-            ：Hashim 等人在 2023 年發表
-            <sup class="cite">[1]</sup>
-          </li>
-          <li>
-            <strong>屬於哪一類</strong>
-            ：物理型，模仿物理定律來找答案，和模擬退火同一類
-            <sup class="cite">[1][15]</sup>
-          </li>
-          <li>
-            <strong>靈感</strong>
-            ：菲克定律，也就是物質從濃的地方流向淡的地方（下一章）
-          </li>
-        </ul>
+        <div class="cards four">
+          <div class="card">
+            <p class="label">為什麼需要</p>
+            <h3>答案多到查不完</h3>
+            <p>
+              20 個城市的拜訪順序約有 2.4×10¹⁸
+              種，只能用「聰明的猜法」很快找到夠好的答案，這類方法叫做元啟發式演算法
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">誰提出</p>
+            <h3>Hashim 等人</h3>
+            <p>
+              2023 年發表於 Knowledge-Based Systems
+              <sup class="cite">[1]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">屬於哪一類</p>
+            <h3>物理型</h3>
+            <p>
+              模仿物理定律來找答案，和模擬退火同一類
+              <sup class="cite">[1][15]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">靈感</p>
+            <h3>菲克擴散定律</h3>
+            <p>物質從濃的地方流向淡的地方（下一章）</p>
+          </div>
+        </div>
         <aside class="notes">
           元啟發式演算法不保證找到最好的答案，但能很快找到夠好的答案。FLA
           只借用了擴散的公式形狀和名稱，後面會說明它實際怎麼移動候選解。
@@ -1555,29 +1609,38 @@
       <!-- 兩個區域的分工 -->
       <section class="slide">
         <h2>兩個區域的分工</h2>
-        <ul>
-          <li>
-            <strong>怎麼分</strong>
-            ：族群照編號平分成前、後兩半，叫做
-            <span class="r1">區域 1</span>
-            與
-            <span class="r2">區域 2</span>
-            ；兩半都是隨機產生，本質上沒有差別
-            <sup class="cite">[3]</sup>
-          </li>
-          <li>
-            <strong>各有一個最佳解</strong>
-            ：每區找出自己分數最好的點（區域最佳解），兩者中較好的就是全域最佳解
-          </li>
-          <li>
-            <strong>分子不會真的換區（依程式碼）</strong>
-            ：區域是按編號固定的，「跨區」只是位置跳到對方最佳解附近，下一代它仍屬於原本的區域
-          </li>
-          <li>
-            <strong>為什麼要分兩區（我的推論）</strong>
-            ：兩區各有自己的最佳解，等於同時追蹤兩個可能的好地方，到穩態前不會全部擠在同一處，比較不容易一開始就卡在局部最低點
-          </li>
-        </ul>
+        <div class="cards">
+          <div class="card">
+            <p class="label">怎麼分</p>
+            <h3>
+              照編號平分：
+              <span class="r1">區域 1</span>
+              ／
+              <span class="r2">區域 2</span>
+            </h3>
+            <p>
+              族群前一半是區域 1、後一半是區域 2；兩半都是隨機產生，本質上沒有差別
+              <sup class="cite">[3]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">各有一個最佳解</p>
+            <h3>區域最佳 → 全域最佳</h3>
+            <p>每區找出自己分數最好的點，兩者中較好的就是全域最佳解</p>
+          </div>
+          <div class="card">
+            <p class="label">依程式碼</p>
+            <h3>分子不會真的換區</h3>
+            <p>區域按編號固定；「跨區」只是位置跳到對方最佳解附近，下一代它仍屬於原本的區域</p>
+          </div>
+          <div class="card mine">
+            <p class="label">我的推論</p>
+            <h3>為什麼要分兩區</h3>
+            <p>
+              等於同時追蹤兩個可能的好地方，到穩態前不會全部擠在同一處，比較不容易一開始就卡在局部最低點
+            </p>
+          </div>
+        </div>
       </section>
 
       <!-- 兩區的變換過程 -->
@@ -1698,7 +1761,8 @@
               </g>
             </svg>
             <p>
-              每代隨機選一區當送出方：它的 10–20% 分子跳到
+              論文說成「高濃度區流向低濃度區」，但濃度並沒有實際計算：每代由 TDO
+              與隨機數決定哪一區當送出方。送出方的 10–20% 分子跳到
               <strong>對方</strong>
               最佳解附近，接收方以本區最佳解為中心大範圍亂跳
             </p>
@@ -2463,35 +2527,50 @@
       <!-- 18 實作注意 -->
       <section class="slide">
         <h2>實作注意事項</h2>
-        <ul class="small">
-          <li>
-            <strong>容易局部收斂</strong>
-            ，高維、高複雜度問題精度下降；FLAS 等改良版加入變異與學習策略來補強
-            <sup class="cite">[4][8]</sup>
-          </li>
-          <li>
-            <strong>MS 會除以適應值</strong>
-            ，f 為 0 或負數時可能溢位或方向反轉
-            <sup class="cite">[3]</sup>
-            ；我建議先把目標函數平移成正值
-          </li>
-          <li>
-            <strong>TF 公式的寫法不一致</strong>
-            ：\(\sinh(t/T)/c_1\) 與 \(\sinh(t/T)^{C_1}\)，請以作者的 MATLAB 程式為準
-            <sup class="cite">[2][3][4]</sup>
-          </li>
-          <li>
-            <strong>偏好原點（我的實驗）</strong>
-            ：區域最佳即全域最佳時，SSO 化簡為 \(x' = X_{ss}\odot(1 + Q\cdot
-            MS)\)，等於把最佳解往原點縮放。同樣 60 代，Sphere 誤差中位數約 \(10^{-22}\)，最佳解移到
-            (2.5, −1.5) 後只到 \(1.7\times10^{-3}\)。測試時請用位移過的函數
-          </li>
-          <li>
-            <strong>參數多</strong>
-            ，部分可能多餘，先用預設值，再針對問題微調
-            <sup class="cite">[3]</sup>
-          </li>
-        </ul>
+        <div class="cards four">
+          <div class="card">
+            <p class="label">收斂</p>
+            <h3>容易卡在局部最佳</h3>
+            <p>
+              高維、複雜問題精度下降；FLAS 等改良版加入變異與學習策略補強
+              <sup class="cite">[4][8]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">MS 公式</p>
+            <h3>會除以 f</h3>
+            <p>
+              f 為 0 或負數時可能溢位或方向反轉
+              <sup class="cite">[3]</sup>
+              ；建議先把目標函數平移成正值
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">TF 公式</p>
+            <h3>寫法不一致</h3>
+            <p>
+              \(\sinh(t/T)/c_1\) 與 \(\sinh(t/T)^{C_1}\)，以作者的 MATLAB 程式為準
+              <sup class="cite">[2][3][4]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">參數</p>
+            <h3>數量多</h3>
+            <p>
+              部分可能多餘；先用預設值，再針對問題微調
+              <sup class="cite">[3]</sup>
+            </p>
+          </div>
+          <div class="card wide">
+            <p class="label">我的實驗</p>
+            <h3>偏好原點：測試時要用位移過的函數</h3>
+            <p>
+              區域最佳即全域最佳時，SSO 化簡為 \(x' = X_{ss}\odot(1 + Q\cdot
+              MS)\)，等於把最佳解往原點縮放。同樣 60 代，Sphere 誤差中位數約
+              \(10^{-22}\)；最佳解移到 (2.5, −1.5) 後只到 \(1.7\times10^{-3}\)。
+            </p>
+          </div>
+        </div>
       </section>
 
       <!-- 19 重點整理 -->
@@ -2501,31 +2580,42 @@
           <strong>一句話說 FLA</strong>
           　兩群點在地圖上找最低點：先廣泛亂跳，再各群集中，最後全部收斂；新位置分數更好才移過去。名字裡的「擴散」只是靈感來源。
         </p>
-        <ul class="small">
-          <li>
-            屬於物理型元啟發式演算法，2023 年由 Hashim 等人提出
-            <sup class="cite">[1]</sup>
-          </li>
-          <li>
-            靈感來自菲克第一定律：物質從濃處流向淡處
-            <sup class="cite">[1][6]</sup>
-          </li>
-          <li>
-            \(TF = \sinh(t/T)^{0.5}\) 把迭代切成約 74% 擴散、14% 平衡、12% 穩態
-            <sup class="cite">[3]</sup>
-          </li>
-          <li>
-            已用於 NMPC 控制器參數調整
-            <sup class="cite">[5]</sup>
-            與機械設計
-            <sup class="cite">[8]</sup>
-          </li>
-          <li>
-            但要看清物理隱喻底下的實際機制
-            <sup class="cite">[7]</sup>
-            ：例如穩態更新其實是對最佳解做縮放，對原點有偏好
-          </li>
-        </ul>
+        <div class="cards four">
+          <div class="card">
+            <p class="label">是什麼</p>
+            <h3>物理型元啟發式演算法</h3>
+            <p>
+              2023 年由 Hashim 等人提出；靈感來自菲克定律：物質從濃處流向淡處
+              <sup class="cite">[1][6]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">怎麼切階段</p>
+            <h3>74% ／ 14% ／ 12%</h3>
+            <p>
+              \(TF = \sinh(t/T)^{0.5}\) 把迭代切成擴散、平衡、穩態三段
+              <sup class="cite">[3]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">用在哪</p>
+            <h3>控制器與機械設計</h3>
+            <p>
+              NMPC 控制器參數調整
+              <sup class="cite">[5]</sup>
+              、限制條件下的機械設計
+              <sup class="cite">[8]</sup>
+            </p>
+          </div>
+          <div class="card">
+            <p class="label">要注意</p>
+            <h3>看實際機制，不看比喻</h3>
+            <p>
+              穩態更新其實是對最佳解做縮放，對原點有偏好
+              <sup class="cite">[7]</sup>
+            </p>
+          </div>
+        </div>
       </section>
 
       <!-- 20 參考資料 -->
