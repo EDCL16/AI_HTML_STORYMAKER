@@ -703,6 +703,68 @@
       .slide .refs li {
         font-size: inherit;
       }
+      /* ---- 公式 ---- */
+      .formula {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--dsp);
+        border-radius: 8px;
+        padding: 0.1em 1em;
+        margin: 0 0 0.7em;
+        font-size: calc(var(--u) * 1.9);
+      }
+      .formula .katex-display {
+        margin: 0.45em 0;
+      }
+      .formula .eq-no {
+        float: right;
+        color: var(--muted);
+        font-size: 0.65em;
+        margin-top: 0.9em;
+      }
+      .two.top {
+        align-items: start;
+      }
+      table.data.calc td,
+      table.data.calc th {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      table.data.calc td:first-child,
+      table.data.calc th:first-child {
+        text-align: left;
+      }
+      .slide:has(.formula) h2 {
+        margin-bottom: 0.4em;
+      }
+      .slide:has(.formula) .callout {
+        margin-top: 0.6em;
+      }
+      .formula .katex-display {
+        margin: 0.25em 0;
+      }
+      .formula .eq-no {
+        position: absolute;
+        right: 0.8em;
+        bottom: 0.3em;
+        margin: 0;
+      }
+      .formula {
+        position: relative;
+        font-size: calc(var(--u) * 1.75);
+      }
+      .two.top table.data th,
+      .two.top table.data td {
+        padding: 0.35em 0.6em;
+      }
+      .dsp-sum h3 {
+        font-size: calc(var(--u) * 2);
+        color: var(--dsp);
+        margin: 0 0 0.4em;
+      }
+      .dsp-sum table.data td:first-child {
+        color: var(--dsp);
+      }
     </style>
     <script>
       try {
@@ -710,6 +772,9 @@
         if (t) document.documentElement.dataset.theme = t;
       } catch {}
     </script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" />
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"></script>
   </head>
   <body>
     <div id="progress"></div>
@@ -754,7 +819,7 @@
           </div>
         </div>
         <p class="callout">
-          一句話：RLF 讓遊戲用很少的記憶體，就能播出照物理算出來的回音和遮擋效果
+          RLF 讓遊戲用很少的記憶體，就能播出照物理算出來的回音和遮擋效果
         </p>
         <aside class="notes">
           先講整份報告的主線。遊戲想要真實的聲音，業界有一種很準的方法叫 wave coding，問題是資料量太大。這篇論文提出 RLF，把資料縮小一萬多倍，聽起來卻一樣。後面所有內容都是在解釋這三格。
@@ -918,7 +983,7 @@
         </div>
         <p class="callout">wave coding 算得準，但地圖一大，表格就存不下</p>
         <aside class="notes">
-          wave coding 的資料量跟「音源位置數 × 聽者位置數」成正比。比較小的測試地圖 Audio Gym 也要 3.1 GB。所以問題很清楚：方法夠準，但存不下。RLF 要解決的就是這件事。
+          wave coding 的資料量跟「音源位置數 × 聽者位置數」成正比。比較小的測試地圖 Audio Gym 也要 3.1 GB。方法夠準，只是存不下，RLF 改的就是儲存這一段。
         </aside>
       </section>
 
@@ -976,7 +1041,59 @@
         </ol>
         <p class="callout">做完這四步，一段 IR 就變成上一章的四個聲學參數</p>
         <aside class="notes">
-          第一步是取樣：電腦只能存一格一格的值。論文只模擬到 500 Hz，這個頻率的波長是 0.686 m，切 5 格就是 0.137 m。時間步要夠小，否則數值會發散。第二步的時間窗就是把一段錄音切三段分別算音量。第三步是 1965 年 Schroeder 提出的量殘響方法。第四步像在山上找最陡的方向，不用另外存方向，從距離就推得出來。
+          第一步是取樣：電腦只能存一格一格的值。論文只模擬到 500 Hz，這個頻率的波長是 0.686 m，切 5 格就是 0.137 m。時間步要夠小，否則數值會發散。第二步的時間窗就是把一段錄音切三段分別算音量。第三步是 1965 年 Schroeder 提出的量殘響方法。第四步像在山上找最陡的方向，不用另外存方向，從距離就推得出來。第二、三步的公式在接下來兩頁。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>距離與音量的計算</h2>
+        <div class="formula">
+          \[ \pi(a,b)=c\,(t_{DS}-t_0),\qquad L_{DS}=10\log_{10}\!\int_{t_{DS}}^{t_{DS}+15\,\mathrm{ms}} e(t)\,dt,\qquad A=10^{L/20} \]
+        </div>
+        <div class="two top">
+          <table class="data">
+            <tr><th>符號</th><th>意思</th></tr>
+            <tr><td>\(t_0,\ t_{DS}\)</td><td>發聲時間、直達聲到達時間</td></tr>
+            <tr><td>\(c\)</td><td>聲速，約 343 m/s</td></tr>
+            <tr><td>\(e(t)\)</td><td>IR 每一刻的能量（振幅平方）</td></tr>
+            <tr><td>\(L,\ A\)</td><td>音量（dB）、振幅的倍數</td></tr>
+          </table>
+          <ul>
+            <li>距離：晚 0.029 s 到 → 0.029 × 343 ≈ 10 m，包含繞路 <sup class="cite">[1]</sup></li>
+            <li>音量：前 15 ms 的能量加起來，取 log 換成 dB <sup class="cite">[1]</sup></li>
+            <li>倍數：−6 dB → \(10^{-6/20}\approx 0.50\)，振幅剩一半</li>
+          </ul>
+        </div>
+        <p class="callout">白話：看直達聲晚多久到，就知道走了多遠；把它前 15 ms 的能量加總，就知道多大聲</p>
+        <aside class="notes">
+          π 是路徑距離，L_DS 是直達聲音量，兩個都出自論文。積分在電腦裡就是把那 15 ms 內每個取樣的平方加起來。最後一條 A = 10 的 L/20 次方，是把 dB 換回乘法倍數，遊戲播放時會用到。早期反射音量的算法一樣，只是時間窗換成之後的 100 ms。−6 dB 的例子是我算的。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>衰減時間的計算</h2>
+        <div class="formula">
+          \[ S(t)=\int_t^{\infty} h^2(\tau)\,d\tau,\qquad \tau_{ER/LR}=-\frac{60}{s_{ER/LR}} \]
+        </div>
+        <div class="two top">
+          <table class="data calc">
+            <tr><th>取樣 n</th><th>能量 e[n]</th><th>S[n]</th><th>S（dB）</th></tr>
+            <tr><td>0</td><td>4</td><td>8</td><td>0.0</td></tr>
+            <tr><td>1</td><td>2</td><td>4</td><td>−3.0</td></tr>
+            <tr><td>2</td><td>1</td><td>2</td><td>−6.0</td></tr>
+            <tr><td>3</td><td>1</td><td>1</td><td>−9.0</td></tr>
+          </table>
+          <ul>
+            <li>\(S[n]\)：從最後一個取樣往前加總，曲線只會往下 <sup class="cite">[3]</sup></li>
+            <li>\(s\)：S 曲線的斜率，每秒掉幾 dB <sup class="cite">[1]</sup></li>
+            <li>斜率 −40 dB/s → \(\tau = 60/40 = 1.5\) 秒，回音要 1.5 秒才降 60 dB</li>
+          </ul>
+        </div>
+        <p class="callout">白話：從 IR 尾巴往前累加能量，量曲線掉得多快，就知道回音多久會消失</p>
+        <aside class="notes">
+          直接看 IR 的話，聲音忽大忽小，很難量斜率。Schroeder 的做法是從尾巴往前加，加出來的曲線很平滑，只會往下。左表是我編的 4 個取樣：8、4、2、1，每一步剛好掉 3 dB。在 dB 圖上畫一條直線，斜率就是 s。論文分兩段量：早期衰減和晚期衰減，所以有 ER、LR 兩個 τ。
         </aside>
       </section>
 
@@ -999,7 +1116,63 @@
         </div>
         <p class="callout">遊戲執行時只做這三件事，物理模擬在開發時就算完了</p>
         <aside class="notes">
-          卷積可以理解成把乾淨的聲音「套上」某個空間的回音。殘響有三分之一跟直達聲同方向，三分之二從四面八方來。這三件事的運算量都很小，所以適合在遊戲裡即時做。
+          卷積可以理解成把乾淨的聲音「套上」某個空間的回音。殘響有三分之一跟直達聲同方向，三分之二從四面八方來。這三件事的運算量都很小，所以適合在遊戲裡即時做。下一頁用數字看卷積怎麼算。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>卷積的計算</h2>
+        <div class="formula">
+          \[ y[n]=\sum_{k} x[k]\,h[n-k],\qquad x_{dry}(t)=10^{L_{DS}/20}\,x_{in}(t) \]
+          <span class="eq-no">右式：論文式 (2)</span>
+        </div>
+        <div class="two top">
+          <table class="data calc">
+            <tr><th>輸出</th><th>計算</th><th>結果</th></tr>
+            <tr><td>y[0]</td><td>1 × 1</td><td>1.00</td></tr>
+            <tr><td>y[1]</td><td>1 × 0.6 + 0.5 × 1</td><td>1.10</td></tr>
+            <tr><td>y[2]</td><td>1 × 0.3 + 0.5 × 0.6</td><td>0.60</td></tr>
+            <tr><td>y[3]</td><td>0.5 × 0.3</td><td>0.15</td></tr>
+          </table>
+          <ul>
+            <li>音效 \(x = [1,\ 0.5]\)，房間的 IR \(h = [1,\ 0.6,\ 0.3]\)</li>
+            <li>每個取樣都帶出一串變小的回音，錯開疊加起來</li>
+            <li>直達聲不做卷積，只乘上倍數 \(10^{L_{DS}/20}\) <sup class="cite">[1]</sup></li>
+          </ul>
+        </div>
+        <p class="callout">白話：卷積就是把每個聲音都複製成一串回音，再全部加起來</p>
+        <aside class="notes">
+          左表的數字是我舉的小例子，用程式驗算過。原本只有 2 個取樣的聲音，做完卷積變成 4 個，多出來的尾巴就是回音。論文的式 (3) 把音效分別和小、中、大三種房間的 IR 做卷積，再依衰減時間決定三者的比例，原理就是這一頁的加總。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>DSP 在論文中的工作</h2>
+        <div class="two top dsp-sum">
+          <div>
+            <h3>開發時：IR → 聲學參數</h3>
+            <table class="data">
+              <tr><td>FDTD 波動模擬</td><td>場景 → 每個格點的 IR <sup class="cite">[1][5]</sup></td></tr>
+              <tr><td>到達時間、時間窗</td><td>IR → 路徑距離、音量 <sup class="cite">[1]</sup></td></tr>
+              <tr><td>Schroeder 積分</td><td>IR → 早期、晚期衰減時間 <sup class="cite">[1][3]</sup></td></tr>
+              <tr><td>梯度</td><td>路徑距離 → 到達方向 <sup class="cite">[1]</sup></td></tr>
+            </table>
+          </div>
+          <div>
+            <h3>遊戲時：參數 → 聲音</h3>
+            <table class="data">
+              <tr><td>三線性內插</td><td>周圍 8 個格點 → 該位置的向量 <sup class="cite">[1]</sup></td></tr>
+              <tr><td>增益</td><td>直達聲 dB → 乘上的倍數 <sup class="cite">[1]</sup></td></tr>
+              <tr><td>卷積殘響</td><td>音效套上三種房間的 IR → 回音 <sup class="cite">[1]</sup></td></tr>
+              <tr><td>VBAP</td><td>到達方向 → 各喇叭的音量 <sup class="cite">[1][4]</sup></td></tr>
+            </table>
+          </div>
+        </div>
+        <p class="callout">DSP 負責把聲音變成數字、再把數字變回聲音；RLF 負責把中間的數字存小</p>
+        <aside class="notes">
+          被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊四項在開發時做，把波動模擬出來的 IR 變成聲學參數，這些參數就是 RLF 的訓練資料。右邊四項在遊戲執行時做：先用三線性內插查出音源和聽者的向量，RLF 算出參數後，再用增益、卷積、VBAP 播出聲音。論文自己的新東西只有中間的儲存方式，前後都是既有的 DSP 方法。
         </aside>
       </section>
 
@@ -1027,7 +1200,7 @@
           <sup class="cite">[1]</sup>
         </p>
         <aside class="notes">
-          這是整篇論文的核心想法。舊方法存「a 到 b 的答案」，RLF 只存「a 的座標」和「b 的座標」，要用時再算距離。右圖是論文用 2 維示範：黃色牆兩側的 A、B，在學出來的空間裡被放到洞的兩側，直線距離剛好等於繞路的距離。實際用的是 16 維。
+          舊方法存「a 到 b 的答案」，RLF 只存「a 的座標」和「b 的座標」，要用時再算距離。右圖是論文用 2 維示範：黃色牆兩側的 A、B，在學出來的空間裡被放到洞的兩側，直線距離剛好等於繞路的距離。實際用的是 16 維。
         </aside>
       </section>
 
@@ -1052,9 +1225,13 @@
           </svg>
           <ul>
             <li>物理定律：音源和聽者對調，IR 相同（方向除外）<sup class="cite">[1]</sup></li>
-            <li>RLF 的距離函數本身就對稱：h(x, y) = h(y, x)</li>
+            <li>RLF 用兩點向量的距離當答案，a、b 對調結果不變</li>
             <li>模型算出來的結果一定滿足互易性，不必靠資料去學</li>
           </ul>
+        </div>
+        <div class="formula" style="margin-top: 0.5em">
+          \[ \hat\pi(a,b)=\big\lVert f(a)-f(b)\big\rVert_2=\big\lVert f(b)-f(a)\big\rVert_2=\hat\pi(b,a) \]
+          <span class="eq-no">論文式 (8)</span>
         </div>
         <p class="callout">論文名稱的 Reciprocal（互易）就是指這個性質</p>
         <aside class="notes">
@@ -1132,7 +1309,7 @@
         </div>
         <p class="callout">這篇研究把準確但太大的 wave coding，縮小到遊戲放得下的程度</p>
         <aside class="notes">
-          第一點是最直接的好處。第二點是方法上的特色：與其讓模型自己學互易性，不如直接把它寫進公式。第三點：Audiokinetic 就是開發 Wwise 的公司，Wwise 是很多遊戲在用的音效引擎，所以這個方法離實際使用不遠。不過論文沒有說會放進哪個產品。
+          第二點：作者沒有讓模型自己去學互易性，直接把它寫進公式。第三點：Audiokinetic 就是開發 Wwise 的公司，Wwise 是很多遊戲在用的音效引擎，所以這個方法離實際使用不遠。不過論文沒有說會放進哪個產品。
         </aside>
       </section>
 
@@ -1322,6 +1499,18 @@
 
         show((parseInt(location.hash.slice(1), 10) || 1) - 1);
       })();
+    </script>
+      <script>
+      addEventListener('DOMContentLoaded', () => {
+        if (window.renderMathInElement) {
+          renderMathInElement(document.getElementById('deck'), {
+            delimiters: [
+              { left: '\\[', right: '\\]', display: true },
+              { left: '\\(', right: '\\)', display: false },
+            ],
+          });
+        }
+      });
     </script>
   </body>
 </html>
