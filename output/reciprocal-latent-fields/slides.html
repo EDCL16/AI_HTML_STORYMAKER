@@ -464,6 +464,36 @@
         font-size: 0.7em;
         margin-top: 0.4em;
       }
+      /* 符號說明：公式裡每個符號代表什麼 */
+      .syms {
+        display: grid;
+        grid-template-columns: repeat(var(--cols, 3), auto);
+        justify-content: start;
+        gap: 0.1em 1.6em;
+        margin: -0.4em 0 0.8em;
+        padding: 0.35em 0.9em;
+        border-left: 4px solid var(--warn);
+        background: var(--card);
+        border-radius: 0 8px 8px 0;
+        font-size: clamp(13px, 1.45vw, 18px);
+        line-height: 1.55;
+      }
+      .syms b {
+        color: var(--warn);
+        margin-right: 0.45em;
+        font-weight: 400;
+      }
+      .dsp-fig {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.5em 0.8em;
+        margin: 0;
+      }
+      .dsp-fig svg {
+        max-height: 36vh;
+        font-family: 'Noto Sans TC', system-ui, sans-serif;
+      }
       .small li,
       .small p {
         font-size: clamp(14px, 1.6vw, 20px);
@@ -1038,11 +1068,15 @@
           \[ \underbrace{\pi(a,b)}_{\text{6 維大表格}} \;\Longrightarrow\; \hat\pi(a,b)=h\big(f(a),\,f(b)\big),\qquad f:\mathbb{R}^3\to\mathbb{R}^n \]
           <span class="eq-no">式 (4)</span>
         </div>
-        <ul class="small">
-          <li>\(\pi(a,b)\)：聲音從 a 到 b 實際走的距離（一種聲學參數）</li>
-          <li>\(f\)：輸入一個位置（3 個數字），輸出它的身分證（n 個數字）；\(\mathbb{R}^3\to\mathbb{R}^n\) 就是「3 個數字進、n 個數字出」</li>
-          <li>\(h\)：比對兩張身分證；頭上的 ^ 表示「預測值」</li>
-        </ul>
+        <div class="syms" style="--cols: 2" aria-label="符號說明">
+          <span><b>\(a,\ b\)</b>音源位置、聽者位置（各 3 個座標）</span>
+          <span><b>\(\pi(a,b)\)</b>聲音從 a 到 b 實際走的距離（一種聲學參數）</span>
+          <span><b>\(\hat\pi\)</b>頭上的 ^ 表示「預測值」</span>
+          <span><b>\(f\)</b>輸入一個位置，輸出它的「身分證」</span>
+          <span><b>\(\mathbb{R}^3\to\mathbb{R}^n\)</b>3 個數字進、n 個數字出</span>
+          <span><b>\(n\)</b>身分證有幾個數字（論文用 16）</span>
+          <span><b>\(h\)</b>比對兩張身分證，算出參數</span>
+        </div>
         <p class="callout">
           <strong>RLF 的想法：</strong>不存「每對位置」的答案，只存「每個位置」的身分證 → 從 N × N 變成 N × 16
         </p>
@@ -1081,6 +1115,14 @@
           <div>
             <div class="formula">
               \[ L_{\text{dB}}=10\log_{10}\frac{E}{E_0}=20\log_{10}\frac{A}{A_0},\qquad A=10^{L/20} \]
+            </div>
+            <div class="syms" style="--cols: 3" aria-label="符號說明">
+              <span><b>\(L_{\text{dB}}\)</b>音量，單位 dB</span>
+              <span><b>\(E,\ E_0\)</b>能量、基準能量</span>
+              <span><b>\(A,\ A_0\)</b>振幅、基準振幅</span>
+              <span><b>\(\log_{10}\)</b>以 10 為底的對數</span>
+              <span><b>\(10,\ 20\)</b>能量用 10、振幅用 20（E = A²）</span>
+              <span><b>\(10^{L/20}\)</b>把 dB 換回振幅倍數</span>
             </div>
             <table class="data">
               <tr><th>變化</th><th>能量 E</th><th>振幅 A</th></tr>
@@ -1154,6 +1196,15 @@
         <div class="formula">
           \[ \pi(a,b)=c\,(t_{DS}-t_0),\qquad L_{DS}=10\log_{10}\!\int_{t_{DS}}^{t_{DS}+15\,\mathrm{ms}} e(t)\,dt \]
         </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(\pi(a,b)\)</b>a 到 b 聲音實際走的路（m）</span>
+          <span><b>\(c\)</b>聲速 343 m/s</span>
+          <span><b>\(t_0\)</b>a 發聲的時刻</span>
+          <span><b>\(t_{DS}\)</b>直達聲到 b 的時刻</span>
+          <span><b>\(L_{DS}\)</b>直達聲音量（dB）</span>
+          <span><b>\(e(t)\)</b>時刻 t 的能量 = IR 的平方</span>
+          <span><b>\(\textstyle\int\!\cdots dt\)</b>把 15 ms 視窗內的能量加起來</span>
+        </div>
         <ul class="small">
           <li>\(t_0\) 發聲時間、\(t_{DS}\) 直達聲到達時間；時間差 × 聲速 = <strong>聲音實際走的路</strong>（含繞路）。例：0.029 s × 343 m/s ≈ 10 m <sup class="cite">[1]</sup></li>
           <li>\(e(t)\) 是每個時刻的能量（IR 平方）；\(\int\) 就是「把這段時間的能量加起來」，再換成 dB <sup class="cite">[1]</sup></li>
@@ -1170,7 +1221,15 @@
         <p class="dsp-tag">DSP｜Schroeder 積分</p>
         <h2>Schroeder 積分逐步計算</h2>
         <div class="formula">
-          \[ S(t)=\int_t^{\infty} h^2(\tau)\,d\tau \quad\Longleftrightarrow\quad S[n]=\sum_{k\ge n} e[k] \]
+          \[ S(t)=\int_t^{\infty} h^2(u)\,du \quad\Longleftrightarrow\quad S[n]=\sum_{k\ge n} e[k] \]
+        </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(h(u)\)</b>IR 在時刻 u 的振幅</span>
+          <span><b>\(h^2\)</b>振幅平方 = 能量</span>
+          <span><b>\(u\)</b>加總用的時間，從 t 到結束</span>
+          <span><b>\(S(t),\ S[n]\)</b>從這裡到結尾還剩多少能量</span>
+          <span><b>\(e[k]\)</b>第 k 個時間格的能量</span>
+          <span><b>\(\textstyle\sum_{k\ge n}\)</b>把第 n 格以後全部加起來</span>
         </div>
         <div class="wrap-x">
           <table class="data">
@@ -1197,12 +1256,23 @@
         <div class="formula">
           \[ \tau_{ER/LR}=-\frac{60}{s_{ER/LR}} \qquad(s\text{：S 曲線的斜率，單位 dB/s}) \]
         </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(\tau\)</b>衰減時間（s）</span>
+          <span><b>\(s\)</b>S 曲線的斜率（dB/s，負數）</span>
+          <span><b>\(60\)</b>掉 60 dB = 能量剩百萬分之一</span>
+          <span><b>\(ER\)</b>Early Reflection，早期反射</span>
+          <span><b>\(LR\)</b>Late Reverberation，晚期殘響</span>
+          <span><b>\(-\)</b>斜率是負的，加負號讓 τ 變正</span>
+        </div>
+        <div class="two">
+        <figure class="dsp-fig"><svg viewBox="0 0 600 290" role="img" aria-label="每 75 毫秒的能量從尾巴往前累加，換成 dB 後是每 75 毫秒掉 3 dB 的直線" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="f-decay" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--warn)"/></marker></defs><text x="4" y="14" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">灰：這段能量　金線：往後累加 S</text><rect x="68" y="80" width="112" height="32" style="fill:var(--line)"/><rect x="68" y="40" width="112" height="3" style="fill:var(--warn)"/><text x="124" y="130" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">能量 4</text><text x="124" y="34" style="fill:var(--warn);font-size:14px;font-weight:700" text-anchor="middle">S=8</text><rect x="188" y="96" width="112" height="16" style="fill:var(--line)"/><rect x="188" y="76" width="112" height="3" style="fill:var(--warn)"/><text x="244" y="130" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">能量 2</text><text x="244" y="70" style="fill:var(--warn);font-size:14px;font-weight:700" text-anchor="middle">S=4</text><rect x="308" y="104" width="112" height="8" style="fill:var(--line)"/><rect x="308" y="94" width="112" height="3" style="fill:var(--warn)"/><text x="364" y="130" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">能量 1</text><text x="364" y="88" style="fill:var(--warn);font-size:14px;font-weight:700" text-anchor="middle">S=2</text><rect x="428" y="104" width="112" height="8" style="fill:var(--line)"/><rect x="428" y="103" width="112" height="3" style="fill:var(--warn)"/><text x="484" y="130" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">能量 1</text><text x="484" y="97" style="fill:var(--warn);font-size:14px;font-weight:700" text-anchor="middle">S=1</text><line x1="64" y1="112" x2="544" y2="112" style="stroke:var(--fg);stroke-width:2"/><line x1="537.6" y1="144" x2="80" y2="144" style="stroke:var(--warn);stroke-width:2;stroke-dasharray:5 4" marker-end="url(#f-decay)"/><text x="552" y="140" style="fill:var(--warn);font-size:13px;font-weight:500" text-anchor="start">從尾巴</text><text x="552" y="156" style="fill:var(--warn);font-size:13px;font-weight:500" text-anchor="start">往前加</text><line x1="64" y1="166" x2="64" y2="254.5" style="stroke:var(--fg);stroke-width:2"/><line x1="64" y1="254.5" x2="544" y2="254.5" style="stroke:var(--fg);stroke-width:2"/><line x1="59" y1="172" x2="64" y2="172" style="stroke:var(--fg);stroke-width:2"/><text x="55" y="177" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="end">0</text><line x1="59" y1="194.5" x2="64" y2="194.5" style="stroke:var(--fg);stroke-width:2"/><text x="55" y="199.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="end">-3</text><line x1="59" y1="217" x2="64" y2="217" style="stroke:var(--fg);stroke-width:2"/><text x="55" y="222" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="end">-6</text><line x1="59" y1="239.5" x2="64" y2="239.5" style="stroke:var(--fg);stroke-width:2"/><text x="55" y="244.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="end">-9</text><text x="4" y="202" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">S</text><text x="4" y="220" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="start">(dB)</text><line x1="64" y1="172" x2="504" y2="254.5" style="stroke:var(--warn);stroke-width:3;stroke-dasharray:2 0"/><circle cx="64" cy="172" r="6" style="fill:var(--warn)"/><text x="64" y="272.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="middle">0</text><circle cx="184" cy="194.5" r="6" style="fill:var(--warn)"/><text x="184" y="272.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="middle">75</text><circle cx="304" cy="217" r="6" style="fill:var(--warn)"/><text x="304" y="272.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="middle">150</text><circle cx="424" cy="239.5" r="6" style="fill:var(--warn)"/><text x="424" y="272.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="middle">225</text><text x="544" y="272.5" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="end">ms</text><text x="286" y="178" style="fill:var(--warn);font-size:15px;font-weight:700" text-anchor="start">斜率 s = −3 dB / 75 ms = −40 dB/s</text><text x="286" y="198" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">照這個速度，掉 60 dB 要 1.5 s</text></svg></figure>
         <ul class="small">
           <li><strong>斜率</strong>：每過 1 秒掉幾 dB。例如 −40 dB/s</li>
           <li><strong>衰減時間</strong>：掉 60 dB 要幾秒 → −60 ÷ (−40) = <strong>1.5 秒</strong>（和常聽到的 RT60 同概念）</li>
           <li>晚期 \(s_{LR}\)：在 +415～+1015 ms 這段，用<strong>線性迴歸</strong>（找一條最貼近的直線）求斜率 <sup class="cite">[1]</sup></li>
           <li>早期 \(s_{ER}\)：用相鄰兩點差值的均方根（RMS）估斜率 <sup class="cite">[1]</sup></li>
         </ul>
+        </div>
         <p class="callout">
           <strong>白話：</strong>τ 大 = 大教堂、回音拖很久；τ 小 = 小房間或戶外，聲音很快就乾掉
         </p>
@@ -1219,6 +1289,15 @@
           \[ \delta(a,b)=-\frac{\nabla_b\,\pi(a,b)}{\lVert\nabla_b\,\pi(a,b)\rVert},\qquad
           \frac{\partial\pi}{\partial x}\approx\frac{\pi(x+1)-\pi(x-1)}{2} \]
           <span class="eq-no">式 (1)</span>
+        </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(\delta(a,b)\)</b>聲音傳到 b 的方向（單位向量）</span>
+          <span><b>\(\nabla_b\pi\)</b>在 b 處，π 增加最快的方向（梯度）</span>
+          <span><b>\(\lVert\cdot\rVert\)</b>向量長度</span>
+          <span><b>\(-\)</b>反過來，指向靠近音源的方向</span>
+          <span><b>\(\partial\pi/\partial x\)</b>π 沿 x 方向的變化率</span>
+          <span><b>\(\pi(x\pm1)\)</b>右邊 / 左邊一格的 π</span>
+          <span><b>\(\div 2\)</b>左右兩格相隔 2 格</span>
         </div>
         <div class="two">
           <table class="data">
@@ -1290,15 +1369,16 @@
         <div class="formula">
           \[ y[n]=(x*h)[n]=\sum_{k} x[k]\,h[n-k] \]
         </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(x[k]\)</b>乾聲第 k 個取樣</span>
+          <span><b>\(h[m]\)</b>房間 IR 第 m 個取樣</span>
+          <span><b>\(y[n]\)</b>輸出第 n 個取樣</span>
+          <span><b>\(*\)</b>卷積運算</span>
+          <span><b>\(n-k\)</b>第 k 個聲音發出後過了幾格</span>
+          <span><b>\(\textstyle\sum_k\)</b>每個取樣的回音全部加起來</span>
+        </div>
         <div class="two">
-          <table class="data">
-            <tr><th></th><th>n=0</th><th>1</th><th>2</th><th>3</th></tr>
-            <tr><td>乾聲 x = [1, 0.5]</td><td colspan="4" class="muted">兩個聲音：先大、後小</td></tr>
-            <tr><td>房間 IR h = [1, 0.6, 0.3]</td><td colspan="4" class="muted">原聲 + 兩次回音</td></tr>
-            <tr><td>x[0]=1 帶出的回音</td><td class="num">1</td><td class="num">0.6</td><td class="num">0.3</td><td class="num">0</td></tr>
-            <tr><td>x[1]=0.5 帶出的回音</td><td class="num">0</td><td class="num">0.5</td><td class="num">0.3</td><td class="num">0.15</td></tr>
-            <tr class="hl"><td>相加 y</td><td class="num">1</td><td class="num">1.1</td><td class="num">0.6</td><td class="num">0.15</td></tr>
-          </table>
+          <figure class="dsp-fig"><svg viewBox="0 0 600 300" role="img" aria-label="卷積：音效每個取樣各複製一份縮小的房間 IR，錯開後疊加成輸出" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="f-conv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--warn)"/></marker></defs><text x="104" y="45" style="fill:var(--fg);font-size:15px;font-weight:700" text-anchor="end">x 音效</text><line x1="116" y1="40" x2="456.4" y2="40" style="stroke:var(--line);stroke-width:1"/><line x1="130" y1="40" x2="130" y2="8" style="stroke:var(--fg);stroke-width:4"/><circle cx="130" cy="8" r="5" style="fill:var(--fg)"/><text x="139" y="13" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">1</text><line x1="226" y1="40" x2="226" y2="24" style="stroke:var(--fg);stroke-width:4"/><circle cx="226" cy="24" r="5" style="fill:var(--fg)"/><text x="235" y="29" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.5</text><text x="104" y="95" style="fill:var(--warn);font-size:15px;font-weight:700" text-anchor="end">h 房間 IR</text><line x1="116" y1="90" x2="456.4" y2="90" style="stroke:var(--line);stroke-width:1"/><line x1="130" y1="90" x2="130" y2="58" style="stroke:var(--warn);stroke-width:4"/><circle cx="130" cy="58" r="5" style="fill:var(--warn)"/><text x="139" y="63" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">1</text><line x1="226" y1="90" x2="226" y2="70.8" style="stroke:var(--warn);stroke-width:4"/><circle cx="226" cy="70.8" r="5" style="fill:var(--warn)"/><text x="235" y="75.8" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.6</text><line x1="322" y1="90" x2="322" y2="80.4" style="stroke:var(--warn);stroke-width:4"/><circle cx="322" cy="80.4" r="5" style="fill:var(--warn)"/><text x="331" y="85.4" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.3</text><text x="104" y="145" style="fill:var(--accent);font-size:15px;font-weight:700" text-anchor="end">x[0] × h</text><line x1="116" y1="140" x2="456.4" y2="140" style="stroke:var(--line);stroke-width:1"/><line x1="130" y1="140" x2="130" y2="108" style="stroke:var(--accent);stroke-width:4"/><circle cx="130" cy="108" r="5" style="fill:var(--accent)"/><text x="139" y="113" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">1</text><line x1="226" y1="140" x2="226" y2="120.8" style="stroke:var(--accent);stroke-width:4"/><circle cx="226" cy="120.8" r="5" style="fill:var(--accent)"/><text x="235" y="125.8" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.6</text><line x1="322" y1="140" x2="322" y2="130.4" style="stroke:var(--accent);stroke-width:4"/><circle cx="322" cy="130.4" r="5" style="fill:var(--accent)"/><text x="331" y="135.4" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.3</text><text x="104" y="195" style="fill:var(--rcv);font-size:15px;font-weight:700" text-anchor="end">x[1] × h</text><line x1="116" y1="190" x2="456.4" y2="190" style="stroke:var(--line);stroke-width:1"/><line x1="226" y1="190" x2="226" y2="174" style="stroke:var(--rcv);stroke-width:4"/><circle cx="226" cy="174" r="5" style="fill:var(--rcv)"/><text x="235" y="179" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.5</text><line x1="322" y1="190" x2="322" y2="180.4" style="stroke:var(--rcv);stroke-width:4"/><circle cx="322" cy="180.4" r="5" style="fill:var(--rcv)"/><text x="331" y="185.4" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.3</text><line x1="418" y1="190" x2="418" y2="185.2" style="stroke:var(--rcv);stroke-width:4"/><circle cx="418" cy="185.2" r="5" style="fill:var(--rcv)"/><text x="427" y="190.2" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.15</text><text x="104" y="273" style="fill:var(--fg);font-size:15px;font-weight:700" text-anchor="end">y 輸出</text><line x1="116" y1="268" x2="456.4" y2="268" style="stroke:var(--fg);stroke-width:2"/><rect x="121" y="236" width="18" height="32" style="fill:var(--accent)"/><text x="144" y="241" style="fill:var(--fg);font-size:13px;font-weight:700" text-anchor="start">1.00</text><text x="130" y="288" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">n = 0</text><rect x="217" y="248.8" width="18" height="19.2" style="fill:var(--accent)"/><rect x="217" y="232.8" width="18" height="16" style="fill:var(--rcv)"/><text x="240" y="237.8" style="fill:var(--fg);font-size:13px;font-weight:700" text-anchor="start">1.10</text><text x="226" y="288" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">n = 1</text><rect x="313" y="258.4" width="18" height="9.6" style="fill:var(--accent)"/><rect x="313" y="248.8" width="18" height="9.6" style="fill:var(--rcv)"/><text x="336" y="253.8" style="fill:var(--fg);font-size:13px;font-weight:700" text-anchor="start">0.60</text><text x="322" y="288" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">n = 2</text><rect x="409" y="263.2" width="18" height="4.8" style="fill:var(--rcv)"/><text x="432" y="268.2" style="fill:var(--fg);font-size:13px;font-weight:700" text-anchor="start">0.15</text><text x="418" y="288" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">n = 3</text><text x="466" y="196" style="fill:var(--rcv);font-size:14px;font-weight:500" text-anchor="start">晚一格</text><text x="466" y="236" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">綠藍疊起來</text><text x="466" y="254" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">就是 y</text></svg></figure>
           <ul class="small">
             <li>每一個輸入的聲音，都會「觸發」一整串房間的回音</li>
             <li>回音的大小照輸入縮放、時間往後挪，再全部疊起來</li>
@@ -1324,6 +1404,18 @@
         <div class="formula">
           \[ x^{ER}_{wet}(t)=10^{L_{ER}/20}\sum_{j\in\{S,M,L\}}\big(x_{in}*P^{ER}_j\big)(t)\,\sqrt{w_{ER,j}} \]
           <span class="eq-no">式 (3)</span>
+        </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(x_{in}\)</b>原始音效</span>
+          <span><b>\(x_{dry}\)</b>乾聲：調過音量的直達聲</span>
+          <span><b>\(x^{ER}_{wet}\)</b>濕聲：早期反射的殘響</span>
+          <span><b>\(L_{DS},\ L_{ER}\)</b>直達聲、早期反射音量（dB）</span>
+          <span><b>\(10^{L/20}\)</b>dB 換成振幅倍數</span>
+          <span><b>\(j\in\{S,M,L\}\)</b>小、中、大三種空間</span>
+          <span><b>\(P^{ER}_j\)</b>第 j 種空間的錄音 IR</span>
+          <span><b>\(*\)</b>卷積</span>
+          <span><b>\(w_{ER,j}\)</b>依 τ 算出的混合權重</span>
+          <span><b>\(\sqrt{w}\)</b>開根號讓能量照權重分配</span>
         </div>
         <ul class="small">
           <li>\(x_{in}\) 原始音效；dry（乾）= 直達聲，只要乘上 dB 換算的倍數 <sup class="cite">[1]</sup></li>
@@ -1410,10 +1502,20 @@
           \[ \mathcal{L}(\theta)=\frac{1}{|\mathcal A||\mathcal B|}\sum_{a\in\mathcal A}\sum_{b\in\mathcal B}\big(\hat\pi(a,b)-\pi(a,b)\big)^2 \]
           <span class="eq-no">式 (7)</span>
         </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(f_\theta(a)\)</b>位置 a 的潛在向量</span>
+          <span><b>\(\mathrm{interp}\)</b>三線性內插（周圍 8 個格點）</span>
+          <span><b>\(a_x,a_y,a_z\)</b>a 的三個座標</span>
+          <span><b>\(\theta\)</b>整張網格的所有數字（要學的）</span>
+          <span><b>\(H,W,D\)</b>網格長、寬、高各幾格</span>
+          <span><b>\(n\)</b>每格幾個數字（16）</span>
+          <span><b>\(\mathcal L\)</b>損失：預測錯多少（均方誤差）</span>
+          <span><b>\(\mathcal A,\ \mathcal B\)</b>訓練用的音源、聽者集合</span>
+          <span><b>\(|\mathcal A|\)</b>集合裡有幾個位置</span>
+          <span><b>\(\hat\pi-\pi\)</b>預測減答案</span>
+        </div>
         <ul class="small">
-          <li>\(\theta\)：整張網格的所有數字，H × W × D 個格點、每格 n 個數字；這就是要「學」的東西 <sup class="cite">[1]</sup></li>
           <li>\(\mathcal L\)：均方誤差（MSE）。例：預測 [10, 7, 5]、答案 [12, 7, 4] → (4 + 0 + 1) ÷ 3 ≈ 1.67</li>
-          <li>\(\mathcal A,\mathcal B\)：訓練用的音源集合、聽者集合；\(|\mathcal A|\) 是個數</li>
           <li>訓練 = 一直微調 θ，讓 \(\mathcal L\) 越來越小（梯度下降）<sup class="cite">[1]</sup></li>
         </ul>
         <p class="callout">
@@ -1453,6 +1555,12 @@
             <div class="formula">
               \[ \hat\pi_{EUC}(a,b)=\big\lVert f_\theta(a)-f_\theta(b)\big\rVert_2=\sqrt{\textstyle\sum_i\big(f_i(a)-f_i(b)\big)^2} \]
               <span class="eq-no">式 (8)</span>
+            </div>
+            <div class="syms" style="--cols: 2" aria-label="符號說明">
+              <span><b>\(\hat\pi_{EUC}\)</b>用歐氏距離預測的 π</span>
+              <span><b>\(\lVert\cdot\rVert_2\)</b>一般的直線長度</span>
+              <span><b>\(f_i(a)\)</b>a 的潛在向量第 i 個數字</span>
+              <span><b>\(\textstyle\sum_i\)</b>每一維的差平方加起來</span>
             </div>
             <ul class="small">
               <li>就是國中學的「兩點距離」，只是從 2 維變 16 維；例 [1,2] 到 [4,6]：√(3²+4²) = 5</li>
@@ -1511,6 +1619,16 @@
           \[ d_G(a,b)\approx\sqrt{\big(f_\theta(a)-f_\theta(b)\big)^\top G(m)\,\big(f_\theta(a)-f_\theta(b)\big)},\quad m=\tfrac{f_\theta(a)+f_\theta(b)}{2} \]
           <span class="eq-no">式 (11)</span>
         </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(d_G(a,b)\)</b>用度量 G 量出的距離</span>
+          <span><b>\(\gamma\)</b>潛在空間中 a 到 b 的一條路</span>
+          <span><b>\(t\in[0,1]\)</b>路上的進度，0 起點、1 終點</span>
+          <span><b>\(\dot\gamma\)</b>每一步的方向與大小</span>
+          <span><b>\(G(\cdot)\)</b>某個位置的度量張量（尺）</span>
+          <span><b>\({}^\top\)</b>轉置：直的向量變橫的</span>
+          <span><b>\(\inf\)</b>取所有路中最小的值</span>
+          <span><b>\(m\)</b>兩個潛在向量的中點</span>
+        </div>
         <ul class="small">
           <li>式 (9) 逐字讀：\(\gamma\) 是從 a 走到 b 的一條路；\(\dot\gamma\) 是每一步的方向；\(\sqrt{\dot\gamma^\top G\dot\gamma}\) 是用當地的尺量這一步；\(\int\) 把每一步加起來；\(\inf\) 取所有路裡最短的 <sup class="cite">[1]</sup></li>
           <li>找最短路太花時間 → 式 (11) 只在中點 m 量一次尺，直接算 <sup class="cite">[1]</sup></li>
@@ -1532,6 +1650,14 @@
           \[ G_{DIAG}(m)=\mathrm{diag}\big(\lambda(m)\big)^2,\qquad
           d_{G_{DIAG}}(a,b)=\sqrt{\sum_{i=1}^{n}\lambda(m)_i^2\,\big(f_\theta(a)_i-f_\theta(b)_i\big)^2} \]
           <span class="eq-no">式 (13)(14)</span>
+        </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(G_{PSD},\ G_{DIAG}\)</b>半正定版、對角版的度量</span>
+          <span><b>\(\Lambda(m)\)</b>輸入中點 m、輸出 n×n 矩陣的線性層</span>
+          <span><b>\(\lambda(m)\)</b>輸出 n 個權重的線性層</span>
+          <span><b>\(\mathrm{diag}\)</b>把向量放到矩陣對角線</span>
+          <span><b>\(\lambda(m)_i\)</b>第 i 維的尺長</span>
+          <span><b>\(f_\theta(a)_i\)</b>a 的潛在向量第 i 個數字</span>
         </div>
         <ul class="small">
           <li>PSD（positive semi-definite，半正定）：寫成 \(\Lambda^\top\Lambda\) 保證量出的長度不會是負的 <sup class="cite">[1]</sup></li>
@@ -1558,6 +1684,15 @@
           \[ \hat L_{ER}(a,b)=\frac{L_0(a)+L_0(b)}{2}-h(\cdot,\cdot),\qquad L_0(x)=w^\top f_\theta(x)+\beta \]
           <span class="eq-no">式 (17)</span>
         </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(L_0\)</b>離音源 1 m 時的基準音量</span>
+          <span><b>\(\lVert a-b\rVert\)</b>a、b 的直線距離</span>
+          <span><b>\(h(\cdot,\cdot)\)</b>潛在距離（解碼器）</span>
+          <span><b>\(\hat L_{DS},\ \hat L_{ER}\)</b>預測的直達聲、早期反射音量</span>
+          <span><b>\(L_0(x)\)</b>隨位置變的基準音量</span>
+          <span><b>\(w,\ \beta\)</b>要學的權重向量、常數</span>
+          <span><b>\(w^\top f\)</b>內積：對應相乘再相加</span>
+        </div>
         <ul class="small">
           <li>\(L_0\)：離音源 1 公尺時的音量；直達聲 = 基準音量 − 「潛在距離」<sup class="cite">[1]</sup></li>
           <li>空曠處只看真實距離；有牆時，模型學到的潛在距離會變大 → 自動算出「被擋住變小聲」</li>
@@ -1576,6 +1711,13 @@
             <div class="formula">
               \[ \hat\tau_{ER/LR}(a,b)=K\,\sigma\big(f_\theta(a)^\top f_\theta(b)\big),\qquad \sigma(z)=\frac{1}{1+e^{-z}} \]
               <span class="eq-no">式 (18)</span>
+            </div>
+            <div class="syms" style="--cols: 2" aria-label="符號說明">
+              <span><b>\(\hat\tau\)</b>預測的衰減時間（s）</span>
+              <span><b>\(K\)</b>允許的最長衰減時間</span>
+              <span><b>\(f_\theta(a)^\top f_\theta(b)\)</b>兩個潛在向量的內積</span>
+              <span><b>\(\sigma(z)\)</b>sigmoid，把 z 壓到 0～1</span>
+              <span><b>\(e\)</b>自然常數 ≈ 2.718</span>
             </div>
             <svg viewBox="0 0 560 270" class="diagram" role="img" aria-label="sigmoid 函數曲線"><line x1="40" y1="220" x2="520" y2="220" class="grid-l"/><text x="4" y="226" class="lbl s">0</text><line x1="40" y1="130" x2="520" y2="130" class="grid-l"/><text x="4" y="136" class="lbl s">0.5</text><line x1="40" y1="40" x2="520" y2="40" class="grid-l"/><text x="4" y="46" class="lbl s">1</text><line x1="280" y1="30" x2="280" y2="230" class="grid-l"/><path d="M40.0,219.6 L50.0,219.4 L60.0,219.3 L70.0,219.1 L80.0,218.8 L90.0,218.5 L100.0,218.0 L110.0,217.5 L120.0,216.8 L130.0,215.9 L140.0,214.7 L150.0,213.3 L160.0,211.5 L170.0,209.2 L180.0,206.3 L190.0,202.8 L200.0,198.5 L210.0,193.4 L220.0,187.2 L230.0,179.9 L240.0,171.6 L250.0,162.3 L260.0,152.0 L270.0,141.2 L280.0,130.0 L290.0,118.8 L300.0,108.0 L310.0,97.7 L320.0,88.4 L330.0,80.1 L340.0,72.8 L350.0,66.6 L360.0,61.5 L370.0,57.2 L380.0,53.7 L390.0,50.8 L400.0,48.5 L410.0,46.7 L420.0,45.3 L430.0,44.1 L440.0,43.2 L450.0,42.5 L460.0,42.0 L470.0,41.5 L480.0,41.2 L490.0,40.9 L500.0,40.7 L510.0,40.6 L520.0,40.4" class="curve"/><circle cx="200" cy="198.54347403601884" r="7" class="dot-src"/><text x="214" y="222.54347403601884" class="lbl s">σ(-2)=0.12</text><circle cx="280" cy="130" r="7" class="dot-src"/><text x="294" y="136" class="lbl s">σ(0)=0.50</text><circle cx="360" cy="61.45652596398119" r="7" class="dot-src"/><text x="374" y="93.45652596398119" class="lbl s">σ(2)=0.88</text><text x="32" y="258" class="lbl s">-6</text><text x="112" y="258" class="lbl s">-4</text><text x="192" y="258" class="lbl s">-2</text><text x="272" y="258" class="lbl s">0</text><text x="352" y="258" class="lbl s">2</text><text x="432" y="258" class="lbl s">4</text><text x="512" y="258" class="lbl s">6</text></svg>
           </div>

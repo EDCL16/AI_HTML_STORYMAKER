@@ -804,6 +804,43 @@
         background: var(--accent-soft);
         border-color: var(--accent);
       }
+      /* 符號說明：公式裡每個符號代表什麼 */
+      .syms {
+        display: grid;
+        grid-template-columns: repeat(var(--cols, 3), auto);
+        justify-content: start;
+        gap: 0.1em 1.8em;
+        margin: calc(var(--u) * -0.7) 0 calc(var(--u) * 1.1);
+        padding: 0.35em 0.9em;
+        border-left: 4px solid var(--dsp);
+        background: var(--card);
+        border-radius: 0 8px 8px 0;
+        font-size: calc(var(--u) * 1.25);
+        line-height: 1.55;
+      }
+      .syms b {
+        color: var(--dsp);
+        margin-right: 0.45em;
+        font-weight: 400;
+      }
+      /* 公式頁的波形圖 + 計算步驟 */
+      .fig-steps {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: calc(var(--u) * 2.4);
+        align-items: center;
+      }
+      .fig-steps .dsp-fig {
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        padding: 0.6em 0.9em;
+        max-height: 34vh;
+      }
+      .fig-steps .dsp-fig svg {
+        max-height: calc(34vh - 1.2em);
+        font-family: 'Noto Sans TC', system-ui, sans-serif;
+      }
       .slide .ex,
       .slide .ex-steps {
         font-size: calc(var(--u) * 1.6);
@@ -1179,11 +1216,24 @@
           <div class="arrow">→</div>
           <div class="card use"><span class="io-k">遊戲中</span><p>δ 交給 VBAP，決定哪個喇叭比較大聲</p></div>
         </div>
-        <ol class="ex-steps">
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(\pi\)</b>a 到 b 聲音實際走的路（m）</span>
+          <span><b>\(c\)</b>聲速 343 m/s</span>
+          <span><b>\(t_0\)</b>a 發出聲音的時刻</span>
+          <span><b>\(t_{DS}\)</b>直達聲（第一個到的聲音）到 b 的時刻</span>
+          <span><b>\(\delta\)</b>聲音從哪個方向來（長度 1 的箭頭）</span>
+          <span><b>\(\nabla_b\pi\)</b>π 變大最快的方向（梯度）</span>
+          <span><b>\(-\)</b>負號：反過來，指向 π 變小的那邊</span>
+          <span><b>\(\lVert\nabla_b\pi\rVert\)</b>箭頭的長度；除掉它，只留方向</span>
+        </div>
+        <div class="fig-steps">
+          <figure class="dsp-fig"><svg viewBox="0 0 600 250" role="img" aria-label="IR 時間軸：發聲後 29 毫秒直達聲到達；比較 b 左右兩格的距離得到方向" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="h-dist" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--dsp)"/></marker></defs><line x1="30" y1="140" x2="380" y2="140" style="stroke:var(--fg);stroke-width:2"/><text x="380" y="164" style="fill:var(--muted);font-size:15px;font-weight:500" text-anchor="end">t（ms）</text><line x1="30" y1="140" x2="30" y2="100" style="stroke:var(--src);stroke-width:4;stroke-dasharray:4 4"/><text x="30" y="164" style="fill:var(--fg);font-size:15px;font-weight:500" text-anchor="middle">t<tspan dy="4" style="font-size:11px">0</tspan> = 0</text><text x="24" y="90" style="fill:var(--src);font-size:15px;font-weight:500" text-anchor="start">a 發聲</text><line x1="194.3" y1="140" x2="194.3" y2="30" style="stroke:var(--src);stroke-width:5"/><text x="194.3" y="164" style="fill:var(--fg);font-size:15px;font-weight:500" text-anchor="middle">t<tspan dy="4" style="font-size:11px">DS</tspan> = 29</text><text x="202.3" y="42" style="fill:var(--src);font-size:15px;font-weight:500" text-anchor="start">直達聲</text><line x1="228.3" y1="140" x2="228.3" y2="85" style="stroke:var(--accent);stroke-width:3"/><line x1="251" y1="140" x2="251" y2="98" style="stroke:var(--accent);stroke-width:3"/><line x1="279.3" y1="140" x2="279.3" y2="92" style="stroke:var(--accent);stroke-width:3"/><line x1="302" y1="140" x2="302" y2="110" style="stroke:var(--accent);stroke-width:3"/><line x1="324.7" y1="140" x2="324.7" y2="114" style="stroke:var(--accent);stroke-width:3"/><line x1="341.7" y1="140" x2="341.7" y2="122" style="stroke:var(--accent);stroke-width:3"/><line x1="358.7" y1="140" x2="358.7" y2="126" style="stroke:var(--accent);stroke-width:3"/><text x="296.3" y="78" style="fill:var(--accent);font-size:15px;font-weight:500" text-anchor="middle">反射</text><line x1="32" y1="188" x2="192.3" y2="188" style="stroke:var(--dsp);stroke-width:3" marker-start="url(#h-dist)" marker-end="url(#h-dist)"/><text x="142.2" y="216" style="fill:var(--dsp);font-size:16px;font-weight:700" text-anchor="start">Δt = 0.029 s × 343 m/s ≈ 10 m</text><text x="497" y="30" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="middle">b 和左右兩格的 π（m）</text><rect x="404" y="46" width="58" height="52" rx="6" style="fill:var(--card);stroke:var(--accent);stroke-width:2"/><text x="433" y="78" style="fill:var(--fg);font-size:16px;font-weight:500" text-anchor="middle">9.86</text><rect x="466" y="46" width="58" height="52" rx="6" style="fill:var(--card);stroke:var(--rcv);stroke-width:3"/><text x="495" y="78" style="fill:var(--fg);font-size:16px;font-weight:700" text-anchor="middle">10.00</text><rect x="528" y="46" width="58" height="52" rx="6" style="fill:var(--card);stroke:var(--muted);stroke-width:2"/><text x="557" y="78" style="fill:var(--fg);font-size:16px;font-weight:500" text-anchor="middle">10.14</text><text x="495" y="120" style="fill:var(--rcv);font-size:16px;font-weight:700" text-anchor="middle">b</text><line x1="495" y1="148" x2="414" y2="148" style="stroke:var(--dsp);stroke-width:4" marker-end="url(#h-dist)"/><text x="505" y="154" style="fill:var(--dsp);font-size:20px;font-weight:700" text-anchor="start">δ</text><text x="495" y="182" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="middle">往左 π 變小</text><text x="495" y="202" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="middle">→ 聲音從左邊來</text></svg></figure>
+          <ol class="ex-steps">
           <li>直達聲晚 0.029 s 到 → π = 343 × 0.029 ≈ 10 m，比直線多 2 m，多出來的是繞牆 <sup class="cite">[1]</sup></li>
           <li>b 左邊一格 π = 9.86 m，右邊一格 10.14 m → 往左走距離變短</li>
           <li>δ 指向左邊 → 聲音從牆角那側傳來，VBAP 調大左喇叭 <sup class="cite">[1][4]</sup></li>
-        </ol>
+          </ol>
+        </div>
         <p class="callout">白話：看直達聲晚多久到，就知道走了多遠；比一比旁邊幾格哪邊比較近，就知道聲音從哪來</p>
         <aside class="notes">
           c 是聲速 343 m/s，t0 是發聲時間。距離乘出來是 10 m，比直線的 8 m 多，因為聲音要繞過牆。方向的公式看起來複雜，意思很簡單：∇π 是距離增加最快的方向，前面加負號就是距離減少最快的方向，也就是聲音來的方向；除以長度只是把它變成單位向量。電腦裡用左右兩格的差去算，跟山上找最陡的坡一樣。這一頁的數字是我編的示意。
@@ -1202,11 +1252,22 @@
           <div class="arrow">→</div>
           <div class="card use"><span class="io-k">遊戲中</span><p>換成倍數 \(A=10^{L/20}\)，乘在音效上（增益）</p></div>
         </div>
-        <ol class="ex-steps">
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(L_{DS}\)</b>直達聲音量（dB）</span>
+          <span><b>\(e(t)\)</b>時刻 t 的能量 = IR 振幅 h(t) 的平方</span>
+          <span><b>\(t_{DS}\)</b>直達聲到達的時刻，從這裡開始加</span>
+          <span><b>\(\textstyle\int\!\cdots dt\)</b>把這 15 ms 的能量全部加起來</span>
+          <span><b>\(10\log_{10}\)</b>把能量換成 dB</span>
+          <span><b>\(A\)</b>音效振幅要乘的倍數（振幅用 20，能量用 10）</span>
+        </div>
+        <div class="fig-steps">
+          <figure class="dsp-fig"><svg viewBox="0 0 600 250" role="img" aria-label="IR 波形與直達聲後 15 毫秒的能量，加總後換成 dB，再把音效振幅乘 0.5" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="h-level" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--dsp)"/></marker></defs><rect x="186.3" y="6" width="101" height="196" style="fill:var(--dsp-soft)"/><text x="236.8" y="22" style="fill:var(--dsp);font-size:14px;font-weight:700" text-anchor="middle">15 ms 視窗</text><line x1="30" y1="66" x2="380" y2="66" style="stroke:var(--line);stroke-width:2"/><text x="30" y="22" style="fill:var(--muted);font-size:15px;font-weight:500" text-anchor="start">h(t) 振幅</text><line x1="194.3" y1="66" x2="194.3" y2="30" style="stroke:var(--src);stroke-width:4"/><line x1="217" y1="66" x2="217" y2="88.5" style="stroke:var(--src);stroke-width:4"/><line x1="239.7" y1="66" x2="239.7" y2="53.4" style="stroke:var(--src);stroke-width:4"/><line x1="262.3" y1="66" x2="262.3" y2="75" style="stroke:var(--src);stroke-width:4"/><line x1="296.3" y1="66" x2="296.3" y2="57.9" style="stroke:var(--muted);stroke-width:4"/><line x1="313.3" y1="66" x2="313.3" y2="72.3" style="stroke:var(--muted);stroke-width:4"/><line x1="330.3" y1="66" x2="330.3" y2="60.6" style="stroke:var(--muted);stroke-width:4"/><line x1="347.3" y1="66" x2="347.3" y2="70.5" style="stroke:var(--muted);stroke-width:4"/><line x1="364.3" y1="66" x2="364.3" y2="62.4" style="stroke:var(--muted);stroke-width:4"/><line x1="30" y1="186" x2="380" y2="186" style="stroke:var(--fg);stroke-width:2"/><text x="30" y="110" style="fill:var(--muted);font-size:15px;font-weight:500" text-anchor="start">e(t) = h²</text><line x1="194.3" y1="186" x2="194.3" y2="138" style="stroke:var(--dsp);stroke-width:7"/><text x="194.3" y="132" style="fill:var(--fg);font-size:12px;font-weight:500" text-anchor="middle">.16</text><line x1="217" y1="186" x2="217" y2="167.3" style="stroke:var(--dsp);stroke-width:7"/><text x="217" y="161.3" style="fill:var(--fg);font-size:12px;font-weight:500" text-anchor="middle">.063</text><line x1="239.7" y1="186" x2="239.7" y2="180.1" style="stroke:var(--dsp);stroke-width:7"/><line x1="262.3" y1="186" x2="262.3" y2="183" style="stroke:var(--dsp);stroke-width:7"/><line x1="296.3" y1="186" x2="296.3" y2="183.6" style="stroke:var(--line);stroke-width:7"/><line x1="313.3" y1="186" x2="313.3" y2="184.5" style="stroke:var(--line);stroke-width:7"/><line x1="330.3" y1="186" x2="330.3" y2="184.9" style="stroke:var(--line);stroke-width:7"/><line x1="347.3" y1="186" x2="347.3" y2="185.3" style="stroke:var(--line);stroke-width:7"/><line x1="364.3" y1="186" x2="364.3" y2="185.5" style="stroke:var(--line);stroke-width:7"/><text x="194.3" y="208" style="fill:var(--fg);font-size:15px;font-weight:500" text-anchor="middle">t<tspan dy="4" style="font-size:11px">DS</tspan></text><text x="279.3" y="208" style="fill:var(--fg);font-size:15px;font-weight:500" text-anchor="middle">+15 ms</text><text x="186.3" y="238" style="fill:var(--dsp);font-size:16px;font-weight:700" text-anchor="start">加總 ≈ 0.25 → 10 log₁₀ → −6 dB</text><text x="414" y="22" style="fill:var(--muted);font-size:15px;font-weight:500" text-anchor="start">原本的音效</text><line x1="414" y1="68" x2="582" y2="68" style="stroke:var(--line);stroke-width:1"/><path d="M414,68L416.1,63L418.2,58.1L420.3,53.5L422.4,49.2L424.5,45.4L426.6,42.1L428.7,39.5L430.8,37.6L432.9,36.4L435,36L437.1,36.4L439.2,37.6L441.3,39.5L443.4,42.1L445.5,45.4L447.6,49.2L449.7,53.5L451.8,58.1L453.9,63L456,68L458.1,73L460.2,77.9L462.3,82.5L464.4,86.8L466.5,90.6L468.6,93.9L470.7,96.5L472.8,98.4L474.9,99.6L477,100L479.1,99.6L481.2,98.4L483.3,96.5L485.4,93.9L487.5,90.6L489.6,86.8L491.7,82.5L493.8,77.9L495.9,73L498,68L500.1,63L502.2,58.1L504.3,53.5L506.4,49.2L508.5,45.4L510.6,42.1L512.7,39.5L514.8,37.6L516.9,36.4L519,36L521.1,36.4L523.2,37.6L525.3,39.5L527.4,42.1L529.5,45.4L531.6,49.2L533.7,53.5L535.8,58.1L537.9,63L540,68L542.1,73L544.2,77.9L546.3,82.5L548.4,86.8L550.5,90.6L552.6,93.9L554.7,96.5L556.8,98.4L558.9,99.6L561,100L563.1,99.6L565.2,98.4L567.3,96.5L569.4,93.9L571.5,90.6L573.6,86.8L575.7,82.5L577.8,77.9L579.9,73L582,68" style="fill:none;stroke:var(--fg);stroke-width:3"/><line x1="498" y1="106" x2="498" y2="136" style="stroke:var(--dsp);stroke-width:3" marker-end="url(#h-level)"/><text x="508" y="128" style="fill:var(--dsp);font-size:16px;font-weight:700" text-anchor="start">× A = 0.5</text><line x1="414" y1="170" x2="582" y2="170" style="stroke:var(--line);stroke-width:1"/><path d="M414,170L416.1,167.5L418.2,165.1L420.3,162.7L422.4,160.6L424.5,158.7L426.6,157.1L428.7,155.7L430.8,154.8L432.9,154.2L435,154L437.1,154.2L439.2,154.8L441.3,155.7L443.4,157.1L445.5,158.7L447.6,160.6L449.7,162.7L451.8,165.1L453.9,167.5L456,170L458.1,172.5L460.2,174.9L462.3,177.3L464.4,179.4L466.5,181.3L468.6,182.9L470.7,184.3L472.8,185.2L474.9,185.8L477,186L479.1,185.8L481.2,185.2L483.3,184.3L485.4,182.9L487.5,181.3L489.6,179.4L491.7,177.3L493.8,174.9L495.9,172.5L498,170L500.1,167.5L502.2,165.1L504.3,162.7L506.4,160.6L508.5,158.7L510.6,157.1L512.7,155.7L514.8,154.8L516.9,154.2L519,154L521.1,154.2L523.2,154.8L525.3,155.7L527.4,157.1L529.5,158.7L531.6,160.6L533.7,162.7L535.8,165.1L537.9,167.5L540,170L542.1,172.5L544.2,174.9L546.3,177.3L548.4,179.4L550.5,181.3L552.6,182.9L554.7,184.3L556.8,185.2L558.9,185.8L561,186L563.1,185.8L565.2,185.2L567.3,184.3L569.4,182.9L571.5,181.3L573.6,179.4L575.7,177.3L577.8,174.9L579.9,172.5L582,170" style="fill:none;stroke:var(--accent);stroke-width:3"/><text x="414" y="214" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">振幅剩一半，比較小聲</text></svg></figure>
+          <ol class="ex-steps">
           <li>能量是振幅的平方；把這 15 ms 內每個取樣的能量加起來 = 0.25 <sup class="cite">[1]</sup></li>
           <li>取 log 換成 dB：\(L = 10\log_{10}0.25 \approx -6\) dB</li>
           <li>遊戲播放時：\(A = 10^{-6/20} \approx 0.5\)，音效振幅乘 0.5，聽起來被牆擋小聲了 <sup class="cite">[1]</sup></li>
-        </ol>
+          </ol>
+        </div>
         <p class="callout">白話：把直達聲那一小段的能量加總，就知道多大聲；遊戲再把 dB 換回倍數，調整音效音量</p>
         <aside class="notes">
           dB 是用 log 表示大小，因為耳朵對音量的感覺本來就接近 log。能量用 10 log，振幅用 20 log，所以換回振幅時是除以 20。早期反射的音量算法一樣，只是時間窗換成直達聲之後的 100 ms。0.25 這個數字是示意。
@@ -1219,20 +1280,22 @@
         <div class="io">
           <div class="card"><span class="io-k">輸入</span><p>整條 IR 的能量 \(h^2\)</p></div>
           <div class="arrow">→</div>
-          <div class="card io-f"><span class="io-k">公式</span>\[ S(t)=\int_t^{\infty}\! h^2(\tau)\,d\tau,\quad \tau=-\frac{60}{s} \]</div>
+          <div class="card io-f"><span class="io-k">公式</span>\[ S(t)=\int_t^{\infty}\! h^2(u)\,du,\quad \tau=-\frac{60}{s} \]</div>
           <div class="arrow">→</div>
           <div class="card"><span class="io-k">得到</span><p>衰減時間 τ（秒）</p></div>
           <div class="arrow">→</div>
           <div class="card use"><span class="io-k">遊戲中</span><p>決定小、中、大三種房間回音的混合比例</p></div>
         </div>
-        <div class="two top">
-          <table class="data calc">
-            <tr><th>時間</th><th>這段能量</th><th>往後累加 S</th><th>S（dB）</th></tr>
-            <tr><td>0 ms</td><td>4</td><td>8</td><td>0</td></tr>
-            <tr><td>75 ms</td><td>2</td><td>4</td><td>−3</td></tr>
-            <tr><td>150 ms</td><td>1</td><td>2</td><td>−6</td></tr>
-            <tr><td>225 ms</td><td>1</td><td>1</td><td>−9</td></tr>
-          </table>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(h(u)\)</b>IR 在時刻 u 的振幅，平方就是能量</span>
+          <span><b>\(S(t)\)</b>從 t 到最後還剩多少能量</span>
+          <span><b>\(u\)</b>加總用的時間，從 t 一路到 IR 結束</span>
+          <span><b>\(s\)</b>S 換成 dB 後的斜率（dB/s，是負數）</span>
+          <span><b>\(60\)</b>掉 60 dB，能量只剩百萬分之一</span>
+          <span><b>\(\tau\)</b>衰減時間（s）：回音多久消失</span>
+        </div>
+        <div class="fig-steps">
+                    <figure class="dsp-fig"><svg viewBox="0 0 600 290" role="img" aria-label="每 75 毫秒的能量從尾巴往前累加，換成 dB 後是每 75 毫秒掉 3 dB 的直線" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="h-decay" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--dsp)"/></marker></defs><text x="4" y="14" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">灰：這段能量　金線：往後累加 S</text><rect x="68" y="80" width="112" height="32" style="fill:var(--line)"/><rect x="68" y="40" width="112" height="3" style="fill:var(--dsp)"/><text x="124" y="130" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">能量 4</text><text x="124" y="34" style="fill:var(--dsp);font-size:14px;font-weight:700" text-anchor="middle">S=8</text><rect x="188" y="96" width="112" height="16" style="fill:var(--line)"/><rect x="188" y="76" width="112" height="3" style="fill:var(--dsp)"/><text x="244" y="130" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">能量 2</text><text x="244" y="70" style="fill:var(--dsp);font-size:14px;font-weight:700" text-anchor="middle">S=4</text><rect x="308" y="104" width="112" height="8" style="fill:var(--line)"/><rect x="308" y="94" width="112" height="3" style="fill:var(--dsp)"/><text x="364" y="130" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">能量 1</text><text x="364" y="88" style="fill:var(--dsp);font-size:14px;font-weight:700" text-anchor="middle">S=2</text><rect x="428" y="104" width="112" height="8" style="fill:var(--line)"/><rect x="428" y="103" width="112" height="3" style="fill:var(--dsp)"/><text x="484" y="130" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">能量 1</text><text x="484" y="97" style="fill:var(--dsp);font-size:14px;font-weight:700" text-anchor="middle">S=1</text><line x1="64" y1="112" x2="544" y2="112" style="stroke:var(--fg);stroke-width:2"/><line x1="537.6" y1="144" x2="80" y2="144" style="stroke:var(--dsp);stroke-width:2;stroke-dasharray:5 4" marker-end="url(#h-decay)"/><text x="552" y="140" style="fill:var(--dsp);font-size:13px;font-weight:500" text-anchor="start">從尾巴</text><text x="552" y="156" style="fill:var(--dsp);font-size:13px;font-weight:500" text-anchor="start">往前加</text><line x1="64" y1="166" x2="64" y2="254.5" style="stroke:var(--fg);stroke-width:2"/><line x1="64" y1="254.5" x2="544" y2="254.5" style="stroke:var(--fg);stroke-width:2"/><line x1="59" y1="172" x2="64" y2="172" style="stroke:var(--fg);stroke-width:2"/><text x="55" y="177" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="end">0</text><line x1="59" y1="194.5" x2="64" y2="194.5" style="stroke:var(--fg);stroke-width:2"/><text x="55" y="199.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="end">-3</text><line x1="59" y1="217" x2="64" y2="217" style="stroke:var(--fg);stroke-width:2"/><text x="55" y="222" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="end">-6</text><line x1="59" y1="239.5" x2="64" y2="239.5" style="stroke:var(--fg);stroke-width:2"/><text x="55" y="244.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="end">-9</text><text x="4" y="202" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">S</text><text x="4" y="220" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="start">(dB)</text><line x1="64" y1="172" x2="504" y2="254.5" style="stroke:var(--dsp);stroke-width:3;stroke-dasharray:2 0"/><circle cx="64" cy="172" r="6" style="fill:var(--dsp)"/><text x="64" y="272.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="middle">0</text><circle cx="184" cy="194.5" r="6" style="fill:var(--dsp)"/><text x="184" y="272.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="middle">75</text><circle cx="304" cy="217" r="6" style="fill:var(--dsp)"/><text x="304" y="272.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="middle">150</text><circle cx="424" cy="239.5" r="6" style="fill:var(--dsp)"/><text x="424" y="272.5" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="middle">225</text><text x="544" y="272.5" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="end">ms</text><text x="286" y="178" style="fill:var(--dsp);font-size:15px;font-weight:700" text-anchor="start">斜率 s = −3 dB / 75 ms = −40 dB/s</text><text x="286" y="198" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">照這個速度，掉 60 dB 要 1.5 s</text></svg></figure>
           <ol class="ex-steps">
             <li>從最後一段往前加，得到 S <sup class="cite">[3]</sup></li>
             <li>每 75 ms 掉 3 dB → 斜率 s = −40 dB/s</li>
@@ -1257,14 +1320,16 @@
           <div class="arrow">→</div>
           <div class="card use"><span class="io-k">遊戲中</span><p>和直達聲一起送到喇叭播放</p></div>
         </div>
-        <div class="two top">
-          <table class="data calc">
-            <tr><th>輸出</th><th>計算</th><th>結果</th></tr>
-            <tr><td>y[0]</td><td>1 × 1</td><td>1.00</td></tr>
-            <tr><td>y[1]</td><td>1 × 0.6 + 0.5 × 1</td><td>1.10</td></tr>
-            <tr><td>y[2]</td><td>1 × 0.3 + 0.5 × 0.6</td><td>0.60</td></tr>
-            <tr><td>y[3]</td><td>0.5 × 0.3</td><td>0.15</td></tr>
-          </table>
+        <div class="syms" style="--cols: 2" aria-label="符號說明">
+          <span><b>\(x[k]\)</b>音效的第 k 個取樣</span>
+          <span><b>\(h[m]\)</b>房間 IR 的第 m 個取樣：晚 m 格的回音有多大</span>
+          <span><b>\(n\)</b>現在算的是輸出的第幾個取樣</span>
+          <span><b>\(n-k\)</b>第 k 個取樣發出後，過了幾格</span>
+          <span><b>\(\textstyle\sum_k\)</b>把每個取樣帶出的回音都加起來</span>
+          <span><b>\(y[n]\)</b>輸出的第 n 個取樣</span>
+        </div>
+        <div class="fig-steps">
+                    <figure class="dsp-fig"><svg viewBox="0 0 600 300" role="img" aria-label="卷積：音效每個取樣各複製一份縮小的房間 IR，錯開後疊加成輸出" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="h-conv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--dsp)"/></marker></defs><text x="104" y="45" style="fill:var(--fg);font-size:15px;font-weight:700" text-anchor="end">x 音效</text><line x1="116" y1="40" x2="456.4" y2="40" style="stroke:var(--line);stroke-width:1"/><line x1="130" y1="40" x2="130" y2="8" style="stroke:var(--fg);stroke-width:4"/><circle cx="130" cy="8" r="5" style="fill:var(--fg)"/><text x="139" y="13" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">1</text><line x1="226" y1="40" x2="226" y2="24" style="stroke:var(--fg);stroke-width:4"/><circle cx="226" cy="24" r="5" style="fill:var(--fg)"/><text x="235" y="29" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.5</text><text x="104" y="95" style="fill:var(--dsp);font-size:15px;font-weight:700" text-anchor="end">h 房間 IR</text><line x1="116" y1="90" x2="456.4" y2="90" style="stroke:var(--line);stroke-width:1"/><line x1="130" y1="90" x2="130" y2="58" style="stroke:var(--dsp);stroke-width:4"/><circle cx="130" cy="58" r="5" style="fill:var(--dsp)"/><text x="139" y="63" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">1</text><line x1="226" y1="90" x2="226" y2="70.8" style="stroke:var(--dsp);stroke-width:4"/><circle cx="226" cy="70.8" r="5" style="fill:var(--dsp)"/><text x="235" y="75.8" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.6</text><line x1="322" y1="90" x2="322" y2="80.4" style="stroke:var(--dsp);stroke-width:4"/><circle cx="322" cy="80.4" r="5" style="fill:var(--dsp)"/><text x="331" y="85.4" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.3</text><text x="104" y="145" style="fill:var(--accent);font-size:15px;font-weight:700" text-anchor="end">x[0] × h</text><line x1="116" y1="140" x2="456.4" y2="140" style="stroke:var(--line);stroke-width:1"/><line x1="130" y1="140" x2="130" y2="108" style="stroke:var(--accent);stroke-width:4"/><circle cx="130" cy="108" r="5" style="fill:var(--accent)"/><text x="139" y="113" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">1</text><line x1="226" y1="140" x2="226" y2="120.8" style="stroke:var(--accent);stroke-width:4"/><circle cx="226" cy="120.8" r="5" style="fill:var(--accent)"/><text x="235" y="125.8" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.6</text><line x1="322" y1="140" x2="322" y2="130.4" style="stroke:var(--accent);stroke-width:4"/><circle cx="322" cy="130.4" r="5" style="fill:var(--accent)"/><text x="331" y="135.4" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.3</text><text x="104" y="195" style="fill:var(--rcv);font-size:15px;font-weight:700" text-anchor="end">x[1] × h</text><line x1="116" y1="190" x2="456.4" y2="190" style="stroke:var(--line);stroke-width:1"/><line x1="226" y1="190" x2="226" y2="174" style="stroke:var(--rcv);stroke-width:4"/><circle cx="226" cy="174" r="5" style="fill:var(--rcv)"/><text x="235" y="179" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.5</text><line x1="322" y1="190" x2="322" y2="180.4" style="stroke:var(--rcv);stroke-width:4"/><circle cx="322" cy="180.4" r="5" style="fill:var(--rcv)"/><text x="331" y="185.4" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.3</text><line x1="418" y1="190" x2="418" y2="185.2" style="stroke:var(--rcv);stroke-width:4"/><circle cx="418" cy="185.2" r="5" style="fill:var(--rcv)"/><text x="427" y="190.2" style="fill:var(--fg);font-size:13px;font-weight:500" text-anchor="start">0.15</text><text x="104" y="273" style="fill:var(--fg);font-size:15px;font-weight:700" text-anchor="end">y 輸出</text><line x1="116" y1="268" x2="456.4" y2="268" style="stroke:var(--fg);stroke-width:2"/><rect x="121" y="236" width="18" height="32" style="fill:var(--accent)"/><text x="144" y="241" style="fill:var(--fg);font-size:13px;font-weight:700" text-anchor="start">1.00</text><text x="130" y="288" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">n = 0</text><rect x="217" y="248.8" width="18" height="19.2" style="fill:var(--accent)"/><rect x="217" y="232.8" width="18" height="16" style="fill:var(--rcv)"/><text x="240" y="237.8" style="fill:var(--fg);font-size:13px;font-weight:700" text-anchor="start">1.10</text><text x="226" y="288" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">n = 1</text><rect x="313" y="258.4" width="18" height="9.6" style="fill:var(--accent)"/><rect x="313" y="248.8" width="18" height="9.6" style="fill:var(--rcv)"/><text x="336" y="253.8" style="fill:var(--fg);font-size:13px;font-weight:700" text-anchor="start">0.60</text><text x="322" y="288" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">n = 2</text><rect x="409" y="263.2" width="18" height="4.8" style="fill:var(--rcv)"/><text x="432" y="268.2" style="fill:var(--fg);font-size:13px;font-weight:700" text-anchor="start">0.15</text><text x="418" y="288" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">n = 3</text><text x="466" y="196" style="fill:var(--rcv);font-size:14px;font-weight:500" text-anchor="start">晚一格</text><text x="466" y="236" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">綠藍疊起來</text><text x="466" y="254" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">就是 y</text></svg></figure>
           <ol class="ex-steps">
             <li>音效 x = [1, 0.5]，房間 IR h = [1, 0.6, 0.3]</li>
             <li>每個取樣都帶出一串變小的回音，錯開疊加</li>

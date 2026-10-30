@@ -2,6 +2,7 @@ import { type DesignSystem, type Page, type SlideMeta, Step, Steps } from '@open
 import type { CSSProperties, ReactNode } from 'react';
 import fig1 from './assets/ref1-fig1.png';
 import fig2 from './assets/ref1-fig2.png';
+import { convFig, decayFig, distFig, levelFig } from './dsp-figs';
 
 // 配色與 HTML 精簡版相同：灰綠底、青綠主色；DSP 用琥珀色，音源紅、聽者藍（與原論文圖一致）
 export const design: DesignSystem = {
@@ -71,8 +72,9 @@ const ChapterBar = ({ on }: { on: number }) => (
   </div>
 );
 
-const Frame = ({ ch, title, children }: { ch: number; title: string; children: ReactNode }) => (
-  <div style={{ ...fill, padding: `170px ${PAD_X}px 100px` }}>
+// tight：內容多的公式頁，標題上下留白縮小
+const Frame = ({ ch, title, tight, children }: { ch: number; title: string; tight?: boolean; children: ReactNode }) => (
+  <div style={{ ...fill, padding: `${tight ? 150 : 170}px ${PAD_X}px ${tight ? 60 : 100}px` }}>
     {ch > 0 && <ChapterBar on={ch} />}
     <div style={{ width: 72, height: 8, borderRadius: 4, background: 'var(--osd-accent)', marginBottom: 20 }} />
     <h2
@@ -81,7 +83,7 @@ const Frame = ({ ch, title, children }: { ch: number; title: string; children: R
         fontSize: 64,
         fontWeight: 900,
         lineHeight: 1.2,
-        margin: '0 0 48px',
+        margin: tight ? '0 0 22px' : '0 0 48px',
       }}
     >
       {title}
@@ -291,24 +293,6 @@ const Frac = ({ top, bottom }: { top: ReactNode; bottom: ReactNode }) => (
     <span style={{ padding: '0 8px', borderBottom: '2px solid currentColor' }}>{top}</span>
     <span style={{ padding: '0 8px' }}>{bottom}</span>
   </span>
-);
-
-const CalcHead = ({ a, b, cc, d, cols }: { a: string; b: string; cc: string; d?: string; cols: string }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: cols, fontSize: 26, color: c.muted, padding: '0 12px 10px', borderBottom: `2px solid ${c.line}`, textAlign: 'right' }}>
-    <span style={{ textAlign: 'left' }}>{a}</span>
-    <span>{b}</span>
-    <span>{cc}</span>
-    {d && <span>{d}</span>}
-  </div>
-);
-
-const CalcRow = ({ a, b, cc, d, cols }: { a: ReactNode; b: string; cc: string; d?: string; cols: string }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: cols, fontSize: 30, padding: '12px 12px', borderBottom: `2px solid ${c.line}`, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-    <span style={{ textAlign: 'left', fontWeight: 800, color: 'var(--osd-accent)' }}>{a}</span>
-    <span>{b}</span>
-    <span>{cc}</span>
-    {d && <span>{d}</span>}
-  </div>
 );
 
 const svgText: CSSProperties = { fill: 'var(--osd-text)', fontSize: 22, fontWeight: 700 };
@@ -592,13 +576,50 @@ const IoBox = ({ label, kind = 'plain', wide, children }: { label: string; kind?
 const IoArrow = () => <div style={{ alignSelf: 'center', fontSize: 40, color: c.muted }}>→</div>;
 
 const IoRow = ({ children }: { children: ReactNode }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1.75fr auto 1fr auto 1.1fr', gap: 14, alignItems: 'stretch', marginBottom: 34 }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1.75fr auto 1fr auto 1.1fr', gap: 14, alignItems: 'stretch', marginBottom: 30 }}>
     {children}
   </div>
 );
 
 const ExSteps = ({ children }: { children: ReactNode }) => (
   <ol style={{ fontSize: 30, lineHeight: 1.5, margin: 0, paddingLeft: 48, display: 'grid', gap: 10, listStyleType: 'decimal' }}>{children}</ol>
+);
+
+// 符號說明：公式裡每個符號代表什麼
+const Syms = ({ cols, items }: { cols: number; items: [ReactNode, string][] }) => (
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: `repeat(${cols}, auto)`,
+      justifyContent: 'start',
+      gap: '2px 40px',
+      margin: '-12px 0 18px',
+      padding: '8px 20px',
+      borderLeft: `5px solid ${c.dsp}`,
+      background: c.card,
+      borderRadius: '0 10px 10px 0',
+      fontSize: 22,
+      lineHeight: 1.45,
+    }}
+  >
+    {items.map(([sym, text], i) => (
+      <span key={i}>
+        <span style={{ fontFamily: mathFont, fontStyle: 'italic', color: c.dsp, marginRight: 10 }}>{sym}</span>
+        {text}
+      </span>
+    ))}
+  </div>
+);
+
+// 公式頁下半部：左邊波形圖、右邊計算步驟
+const FigSteps = ({ svg, h, children }: { svg: string; h: number; children: ReactNode }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: 40, alignItems: 'center' }}>
+    <div
+      style={{ background: c.card, border: `2px solid ${c.line}`, borderRadius: 12, padding: '10px 14px', fontFamily: 'var(--osd-font-body)', ['--fig-h' as string]: `${h}px` }}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+    {children}
+  </div>
 );
 
 const Lane = ({ title, kind, children }: { title: string; kind: 'dsp' | 'ml'; children: ReactNode }) => (
@@ -661,7 +682,7 @@ const StartIr: Page = () => (
 );
 
 const DistDir: Page = () => (
-  <Frame ch={3} title="距離與方向的計算">
+  <Frame ch={3} title="距離與方向的計算" tight>
     <IoRow>
       <IoBox label="輸入">
         IR 裡直達聲到達的時刻 <M>t</M>
@@ -683,6 +704,20 @@ const DistDir: Page = () => (
         δ 交給 VBAP，決定哪個喇叭比較大聲
       </IoBox>
     </IoRow>
+    <Syms
+      cols={3}
+      items={[
+        [<>π</>, 'a 到 b 聲音實際走的路（m）'],
+        [<>c</>, '聲速 343 m/s'],
+        [<>t<sub>0</sub></>, 'a 發出聲音的時刻'],
+        [<>t<sub>DS</sub></>, '直達聲（第一個到的聲音）到 b 的時刻'],
+        [<>δ</>, '聲音從哪個方向來（長度 1 的箭頭）'],
+        [<>∇π</>, 'π 變大最快的方向（梯度）'],
+        [<>−</>, '負號：反過來，指向 π 變小的那邊'],
+        [<>‖∇π‖</>, '箭頭的長度；除掉它，只留方向'],
+      ]}
+    />
+    <FigSteps svg={distFig} h={250}>
     <ExSteps>
       <li>
         直達聲晚 0.029 s 到 → π = 343 × 0.029 ≈ 10 m，比直線多 2 m，多出來的是繞牆
@@ -694,12 +729,13 @@ const DistDir: Page = () => (
         <Cite n="[1][4]" />
       </li>
     </ExSteps>
+    </FigSteps>
     <Callout>白話：看直達聲晚多久到，就知道走了多遠；比一比旁邊幾格哪邊比較近，就知道聲音從哪來</Callout>
   </Frame>
 );
 
 const LevelCalc: Page = () => (
-  <Frame ch={3} title="音量的計算">
+  <Frame ch={3} title="音量的計算" tight>
     <IoRow>
       <IoBox label="輸入">直達聲之後 15 ms 內的能量 e(t)</IoBox>
       <IoArrow />
@@ -716,6 +752,18 @@ const LevelCalc: Page = () => (
         換成倍數 A = 10<sup>L/20</sup>，乘在音效上（增益）
       </IoBox>
     </IoRow>
+    <Syms
+      cols={3}
+      items={[
+        [<>L<sub>DS</sub></>, '直達聲音量（dB）'],
+        [<>e(t)</>, '時刻 t 的能量 = 振幅 h(t) 的平方'],
+        [<>t<sub>DS</sub></>, '直達聲到達的時刻，從這裡開始加'],
+        [<>∫ … dt</>, '把這 15 ms 的能量全部加起來'],
+        [<>10 log<sub>10</sub></>, '把能量換成 dB'],
+        [<>A</>, '音效振幅的倍數（振幅用 20，能量用 10）'],
+      ]}
+    />
+    <FigSteps svg={levelFig} h={280}>
     <ExSteps>
       <li>
         能量是振幅的平方；把這 15 ms 內每個取樣的能量加起來 = 0.25
@@ -727,14 +775,13 @@ const LevelCalc: Page = () => (
         <Cite n="[1]" />
       </li>
     </ExSteps>
+    </FigSteps>
     <Callout>白話：把直達聲那一小段的能量加總，就知道多大聲；遊戲再把 dB 換回倍數，調整音效音量</Callout>
   </Frame>
 );
 
-const DECAY_COLS = '1fr 1fr 1fr 1fr';
-
 const DecayCalc: Page = () => (
-  <Frame ch={3} title="衰減時間的計算">
+  <Frame ch={3} title="衰減時間的計算" tight>
     <IoRow>
       <IoBox label="輸入">
         整條 IR 的能量 <M>h</M>
@@ -745,7 +792,7 @@ const DecayCalc: Page = () => (
         <M>S</M>(<M>t</M>) =
         <BigOp op="∫" lo={<M>t</M>} hi="∞" />
         <M>h</M>
-        <sup>2</sup> <M>dτ</M>,&nbsp;&nbsp;<M>τ</M> = −
+        <sup>2</sup>(<M>u</M>) <M>du</M>,&nbsp;&nbsp;<M>τ</M> = −
         <Frac top="60" bottom={<M>s</M>} />
       </IoBox>
       <IoArrow />
@@ -755,14 +802,18 @@ const DecayCalc: Page = () => (
         決定小、中、大三種房間回音的混合比例
       </IoBox>
     </IoRow>
-    <TwoCol cols="1fr 1fr">
-      <div>
-        <CalcHead cols={DECAY_COLS} a="時間" b="這段能量" cc="往後累加 S" d="S（dB）" />
-        <CalcRow cols={DECAY_COLS} a="0 ms" b="4" cc="8" d="0" />
-        <CalcRow cols={DECAY_COLS} a="75 ms" b="2" cc="4" d="−3" />
-        <CalcRow cols={DECAY_COLS} a="150 ms" b="1" cc="2" d="−6" />
-        <CalcRow cols={DECAY_COLS} a="225 ms" b="1" cc="1" d="−9" />
-      </div>
+    <Syms
+      cols={3}
+      items={[
+        [<>h(u)</>, 'IR 在時刻 u 的振幅，平方就是能量'],
+        [<>S(t)</>, '從 t 到最後還剩多少能量'],
+        [<>u</>, '加總用的時間，從 t 一路到 IR 結束'],
+        [<>s</>, 'S 換成 dB 後的斜率（dB/s，是負數）'],
+        [<>60</>, '掉 60 dB，能量只剩百萬分之一'],
+        [<>τ</>, '衰減時間（s）：回音多久消失'],
+      ]}
+    />
+    <FigSteps svg={decayFig} h={330}>
       <ExSteps>
         <li>
           從最後一段往前加，得到 S
@@ -774,15 +825,13 @@ const DecayCalc: Page = () => (
           <Cite n="[1]" />
         </li>
       </ExSteps>
-    </TwoCol>
+    </FigSteps>
     <Callout>白話：從 IR 尾巴往前累加能量，量曲線掉多快，就知道回音多久消失</Callout>
   </Frame>
 );
 
-const CONV_COLS = '160px 1fr 160px';
-
 const ConvCalc: Page = () => (
-  <Frame ch={3} title="卷積的計算">
+  <Frame ch={3} title="卷積的計算" tight>
     <IoRow>
       <IoBox label="輸入">音效 x，加上依 τ 混好的房間 IR h</IoBox>
       <IoArrow />
@@ -798,14 +847,18 @@ const ConvCalc: Page = () => (
         和直達聲一起送到喇叭播放
       </IoBox>
     </IoRow>
-    <TwoCol cols="1fr 1fr">
-      <div>
-        <CalcHead cols={CONV_COLS} a="輸出" b="計算" cc="結果" />
-        <CalcRow cols={CONV_COLS} a="y[0]" b="1 × 1" cc="1.00" />
-        <CalcRow cols={CONV_COLS} a="y[1]" b="1 × 0.6 + 0.5 × 1" cc="1.10" />
-        <CalcRow cols={CONV_COLS} a="y[2]" b="1 × 0.3 + 0.5 × 0.6" cc="0.60" />
-        <CalcRow cols={CONV_COLS} a="y[3]" b="0.5 × 0.3" cc="0.15" />
-      </div>
+    <Syms
+      cols={3}
+      items={[
+        [<>x[k]</>, '音效的第 k 個取樣'],
+        [<>h[m]</>, '房間 IR 第 m 個取樣：晚 m 格的回音多大'],
+        [<>n</>, '現在算的是輸出的第幾個取樣'],
+        [<>n − k</>, '第 k 個取樣發出後，過了幾格'],
+        [<>Σ<sub>k</sub></>, '把每個取樣帶出的回音都加起來'],
+        [<>y[n]</>, '輸出的第 n 個取樣'],
+      ]}
+    />
+    <FigSteps svg={convFig} h={350}>
       <ExSteps>
         <li>音效 x = [1, 0.5]，房間 IR h = [1, 0.6, 0.3]</li>
         <li>每個取樣都帶出一串變小的回音，錯開疊加</li>
@@ -814,7 +867,7 @@ const ConvCalc: Page = () => (
           <Cite n="[1]" />
         </li>
       </ExSteps>
-    </TwoCol>
+    </FigSteps>
     <Callout>白話：卷積就是把每個聲音都複製成一串回音，再全部加起來</Callout>
   </Frame>
 );
