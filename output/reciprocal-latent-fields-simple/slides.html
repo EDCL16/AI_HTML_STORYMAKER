@@ -406,33 +406,6 @@
         font-size: 16px;
       }
 
-      /* ---- 每頁頂端的章節進度列：五個章節，目前所在的章節亮起來 ---- */
-      .slide .chapters {
-        position: absolute;
-        top: calc(var(--u) * 2.2);
-        left: calc(var(--u) * 7);
-        right: calc(var(--u) * 7);
-        display: flex;
-        gap: calc(var(--u) * 0.6);
-        list-style: none;
-        padding: 0 !important;
-      }
-      .slide .chapters li {
-        flex: 1;
-        font-size: calc(var(--u) * 1.05);
-        color: var(--muted);
-        border-top: 4px solid var(--line);
-        padding-top: 0.35em;
-      }
-      .slide .chapters li.on {
-        color: var(--accent);
-        font-weight: 700;
-        border-top-color: var(--accent);
-      }
-      .slide .chapters li.done {
-        border-top-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-      }
-
       /* ---- 版型 ---- */
       .callout {
         border: 2px solid var(--accent);
@@ -686,9 +659,6 @@
         }
         .flow .arrow {
           transform: rotate(90deg);
-        }
-        .chapters {
-          display: none !important;
         }
       }
       @media print {
@@ -952,7 +922,6 @@
       </section>
 
       <section class="slide" data-ch="0">
-        <ol class="chapters" aria-label="章節進度"><li class="">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>研究主題</h2>
         <div class="flow">
           <div class="card">
@@ -985,7 +954,6 @@
       </section>
 
       <section class="slide" data-ch="0">
-        <ol class="chapters" aria-label="章節進度"><li class="">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>報告架構</h2>
         <div class="cards" style="--n: 5">
           <div class="card">
@@ -1025,12 +993,10 @@
       </section>
 
       <section class="slide section" data-ch="1">
-        <ol class="chapters" aria-label="章節進度"><li class="on">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h1>基本觀念</h1>
       </section>
 
       <section class="slide" data-ch="1">
-        <ol class="chapters" aria-label="章節進度"><li class="on">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>聲音的傳播路徑</h2>
         <div class="two">
           <svg viewBox="0 0 600 340" class="diagram" role="img" aria-label="音源經直達、反射、繞射三條路徑到聽者">
@@ -1061,7 +1027,6 @@
       </section>
 
       <section class="slide" data-ch="1">
-        <ol class="chapters" aria-label="章節進度"><li class="on">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>脈衝響應</h2>
         <div class="two">
           <div><svg viewBox="0 0 600 320" class="diagram" role="img" aria-label="脈衝響應示意：直達聲、早期反射、晚期殘響"><line x1="50" y1="250" x2="570" y2="250" class="axis"/><line x1="60" y1="250" x2="60" y2="40" class="stem-ds"/><line x1="90" y1="250" x2="90" y2="135" class="stem-er"/><line x1="112" y1="250" x2="112" y2="162" class="stem-er"/><line x1="128" y1="250" x2="128" y2="151" class="stem-er"/><line x1="151" y1="250" x2="151" y2="181" class="stem-er"/><line x1="168" y1="250" x2="168" y2="187" class="stem-er"/><line x1="185" y1="250" x2="185" y2="218.0" class="stem-lr"/><line x1="191" y1="250" x2="191" y2="218.4" class="stem-lr"/><line x1="197" y1="250" x2="197" y2="217.5" class="stem-lr"/><line x1="203" y1="250" x2="203" y2="227.5" class="stem-lr"/><line x1="209" y1="250" x2="209" y2="210.1" class="stem-lr"/><line x1="215" y1="250" x2="215" y2="208.4" class="stem-lr"/><line x1="221" y1="250" x2="221" y2="230.4" class="stem-lr"/><line x1="227" y1="250" x2="227" y2="215.6" class="stem-lr"/><line x1="233" y1="250" x2="233" y2="231.8" class="stem-lr"/><line x1="239" y1="250" x2="239" y2="230.2" class="stem-lr"/><line x1="245" y1="250" x2="245" y2="218.9" class="stem-lr"/><line x1="251" y1="250" x2="251" y2="230.9" class="stem-lr"/><line x1="257" y1="250" x2="257" y2="230.1" class="stem-lr"/><line x1="263" y1="250" x2="263" y2="231.2" class="stem-lr"/><line x1="269" y1="250" x2="269" y2="229.2" class="stem-lr"/><line x1="275" y1="250" x2="275" y2="228.2" class="stem-lr"/><line x1="281" y1="250" x2="281" y2="233.2" class="stem-lr"/><line x1="287" y1="250" x2="287" y2="232.7" class="stem-lr"/><line x1="293" y1="250" x2="293" y2="230.8" class="stem-lr"/><line x1="299" y1="250" x2="299" y2="235.5" class="stem-lr"/><line x1="305" y1="250" x2="305" y2="239.7" class="stem-lr"/><line x1="311" y1="250" x2="311" y2="232.7" class="stem-lr"/><line x1="317" y1="250" x2="317" y2="233.1" class="stem-lr"/><line x1="323" y1="250" x2="323" y2="242.2" class="stem-lr"/><line x1="329" y1="250" x2="329" y2="239.7" class="stem-lr"/><line x1="335" y1="250" x2="335" y2="242.0" class="stem-lr"/><line x1="341" y1="250" x2="341" y2="238.1" class="stem-lr"/><line x1="347" y1="250" x2="347" y2="243.4" class="stem-lr"/><line x1="353" y1="250" x2="353" y2="241.1" class="stem-lr"/><line x1="359" y1="250" x2="359" y2="236.8" class="stem-lr"/><line x1="365" y1="250" x2="365" y2="238.4" class="stem-lr"/><line x1="371" y1="250" x2="371" y2="239.6" class="stem-lr"/><line x1="377" y1="250" x2="377" y2="238.4" class="stem-lr"/><line x1="383" y1="250" x2="383" y2="245.2" class="stem-lr"/><line x1="389" y1="250" x2="389" y2="243.4" class="stem-lr"/><line x1="395" y1="250" x2="395" y2="241.2" class="stem-lr"/><line x1="401" y1="250" x2="401" y2="245.9" class="stem-lr"/><line x1="407" y1="250" x2="407" y2="245.1" class="stem-lr"/><line x1="413" y1="250" x2="413" y2="241.9" class="stem-lr"/><line x1="419" y1="250" x2="419" y2="245.8" class="stem-lr"/><line x1="425" y1="250" x2="425" y2="245.5" class="stem-lr"/><line x1="431" y1="250" x2="431" y2="243.0" class="stem-lr"/><line x1="437" y1="250" x2="437" y2="243.9" class="stem-lr"/><line x1="443" y1="250" x2="443" y2="243.4" class="stem-lr"/><line x1="449" y1="250" x2="449" y2="244.6" class="stem-lr"/><line x1="455" y1="250" x2="455" y2="246.9" class="stem-lr"/><line x1="461" y1="250" x2="461" y2="246.0" class="stem-lr"/><line x1="467" y1="250" x2="467" y2="245.8" class="stem-lr"/><line x1="473" y1="250" x2="473" y2="246.0" class="stem-lr"/><line x1="479" y1="250" x2="479" y2="246.7" class="stem-lr"/><line x1="485" y1="250" x2="485" y2="247.3" class="stem-lr"/><line x1="491" y1="250" x2="491" y2="246.5" class="stem-lr"/><line x1="497" y1="250" x2="497" y2="247.1" class="stem-lr"/><line x1="503" y1="250" x2="503" y2="248.2" class="stem-lr"/><line x1="509" y1="250" x2="509" y2="246.6" class="stem-lr"/><line x1="515" y1="250" x2="515" y2="248.2" class="stem-lr"/><line x1="521" y1="250" x2="521" y2="248.5" class="stem-lr"/><line x1="527" y1="250" x2="527" y2="247.2" class="stem-lr"/><line x1="533" y1="250" x2="533" y2="247.9" class="stem-lr"/><line x1="539" y1="250" x2="539" y2="247.7" class="stem-lr"/><line x1="545" y1="250" x2="545" y2="248.3" class="stem-lr"/><line x1="551" y1="250" x2="551" y2="247.2" class="stem-lr"/><line x1="557" y1="250" x2="557" y2="248.7" class="stem-lr"/><line x1="563" y1="250" x2="563" y2="248.7" class="stem-lr"/><line x1="569" y1="250" x2="569" y2="249.0" class="stem-lr"/>
@@ -1080,7 +1045,6 @@
       </section>
 
       <section class="slide" data-ch="1">
-        <ol class="chapters" aria-label="章節進度"><li class="on">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>聲學參數</h2>
         <table class="data">
           <tr>
@@ -1118,12 +1082,10 @@
       </section>
 
       <section class="slide section" data-ch="2">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="on">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h1>研究動機</h1>
       </section>
 
       <section class="slide" data-ch="2">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="on">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>Wave coding 的記憶體問題</h2>
         <div class="two">
           <ul>
@@ -1146,12 +1108,10 @@
       </section>
 
       <section class="slide section" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h1>DSP 的應用</h1>
       </section>
 
       <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>系統架構與 DSP 位置</h2>
         <div class="flow">
           <div class="card dsp">
@@ -1181,7 +1141,6 @@
       </section>
 
       <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>計算的起點：脈衝響應</h2>
         <div class="two">
           <div class="ir-small"><svg viewBox="0 0 600 320" class="diagram" role="img" aria-label="脈衝響應示意：直達聲、早期反射、晚期殘響"><line x1="50" y1="250" x2="570" y2="250" class="axis"/><line x1="60" y1="250" x2="60" y2="40" class="stem-ds"/><line x1="90" y1="250" x2="90" y2="135" class="stem-er"/><line x1="112" y1="250" x2="112" y2="162" class="stem-er"/><line x1="128" y1="250" x2="128" y2="151" class="stem-er"/><line x1="151" y1="250" x2="151" y2="181" class="stem-er"/><line x1="168" y1="250" x2="168" y2="187" class="stem-er"/><line x1="185" y1="250" x2="185" y2="218.0" class="stem-lr"/><line x1="191" y1="250" x2="191" y2="218.4" class="stem-lr"/><line x1="197" y1="250" x2="197" y2="217.5" class="stem-lr"/><line x1="203" y1="250" x2="203" y2="227.5" class="stem-lr"/><line x1="209" y1="250" x2="209" y2="210.1" class="stem-lr"/><line x1="215" y1="250" x2="215" y2="208.4" class="stem-lr"/><line x1="221" y1="250" x2="221" y2="230.4" class="stem-lr"/><line x1="227" y1="250" x2="227" y2="215.6" class="stem-lr"/><line x1="233" y1="250" x2="233" y2="231.8" class="stem-lr"/><line x1="239" y1="250" x2="239" y2="230.2" class="stem-lr"/><line x1="245" y1="250" x2="245" y2="218.9" class="stem-lr"/><line x1="251" y1="250" x2="251" y2="230.9" class="stem-lr"/><line x1="257" y1="250" x2="257" y2="230.1" class="stem-lr"/><line x1="263" y1="250" x2="263" y2="231.2" class="stem-lr"/><line x1="269" y1="250" x2="269" y2="229.2" class="stem-lr"/><line x1="275" y1="250" x2="275" y2="228.2" class="stem-lr"/><line x1="281" y1="250" x2="281" y2="233.2" class="stem-lr"/><line x1="287" y1="250" x2="287" y2="232.7" class="stem-lr"/><line x1="293" y1="250" x2="293" y2="230.8" class="stem-lr"/><line x1="299" y1="250" x2="299" y2="235.5" class="stem-lr"/><line x1="305" y1="250" x2="305" y2="239.7" class="stem-lr"/><line x1="311" y1="250" x2="311" y2="232.7" class="stem-lr"/><line x1="317" y1="250" x2="317" y2="233.1" class="stem-lr"/><line x1="323" y1="250" x2="323" y2="242.2" class="stem-lr"/><line x1="329" y1="250" x2="329" y2="239.7" class="stem-lr"/><line x1="335" y1="250" x2="335" y2="242.0" class="stem-lr"/><line x1="341" y1="250" x2="341" y2="238.1" class="stem-lr"/><line x1="347" y1="250" x2="347" y2="243.4" class="stem-lr"/><line x1="353" y1="250" x2="353" y2="241.1" class="stem-lr"/><line x1="359" y1="250" x2="359" y2="236.8" class="stem-lr"/><line x1="365" y1="250" x2="365" y2="238.4" class="stem-lr"/><line x1="371" y1="250" x2="371" y2="239.6" class="stem-lr"/><line x1="377" y1="250" x2="377" y2="238.4" class="stem-lr"/><line x1="383" y1="250" x2="383" y2="245.2" class="stem-lr"/><line x1="389" y1="250" x2="389" y2="243.4" class="stem-lr"/><line x1="395" y1="250" x2="395" y2="241.2" class="stem-lr"/><line x1="401" y1="250" x2="401" y2="245.9" class="stem-lr"/><line x1="407" y1="250" x2="407" y2="245.1" class="stem-lr"/><line x1="413" y1="250" x2="413" y2="241.9" class="stem-lr"/><line x1="419" y1="250" x2="419" y2="245.8" class="stem-lr"/><line x1="425" y1="250" x2="425" y2="245.5" class="stem-lr"/><line x1="431" y1="250" x2="431" y2="243.0" class="stem-lr"/><line x1="437" y1="250" x2="437" y2="243.9" class="stem-lr"/><line x1="443" y1="250" x2="443" y2="243.4" class="stem-lr"/><line x1="449" y1="250" x2="449" y2="244.6" class="stem-lr"/><line x1="455" y1="250" x2="455" y2="246.9" class="stem-lr"/><line x1="461" y1="250" x2="461" y2="246.0" class="stem-lr"/><line x1="467" y1="250" x2="467" y2="245.8" class="stem-lr"/><line x1="473" y1="250" x2="473" y2="246.0" class="stem-lr"/><line x1="479" y1="250" x2="479" y2="246.7" class="stem-lr"/><line x1="485" y1="250" x2="485" y2="247.3" class="stem-lr"/><line x1="491" y1="250" x2="491" y2="246.5" class="stem-lr"/><line x1="497" y1="250" x2="497" y2="247.1" class="stem-lr"/><line x1="503" y1="250" x2="503" y2="248.2" class="stem-lr"/><line x1="509" y1="250" x2="509" y2="246.6" class="stem-lr"/><line x1="515" y1="250" x2="515" y2="248.2" class="stem-lr"/><line x1="521" y1="250" x2="521" y2="248.5" class="stem-lr"/><line x1="527" y1="250" x2="527" y2="247.2" class="stem-lr"/><line x1="533" y1="250" x2="533" y2="247.9" class="stem-lr"/><line x1="539" y1="250" x2="539" y2="247.7" class="stem-lr"/><line x1="545" y1="250" x2="545" y2="248.3" class="stem-lr"/><line x1="551" y1="250" x2="551" y2="247.2" class="stem-lr"/><line x1="557" y1="250" x2="557" y2="248.7" class="stem-lr"/><line x1="563" y1="250" x2="563" y2="248.7" class="stem-lr"/><line x1="569" y1="250" x2="569" y2="249.0" class="stem-lr"/>
@@ -1205,7 +1164,6 @@
       </section>
 
       <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>距離與方向的計算</h2>
         <div class="io">
           <div class="card"><span class="io-k">輸入</span><p>IR 裡直達聲到達的時刻 \(t_{DS}\)</p></div>
@@ -1241,7 +1199,6 @@
       </section>
 
       <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>音量的計算</h2>
         <div class="io">
           <div class="card"><span class="io-k">輸入</span><p>直達聲之後 15 ms 內的能量 \(e(t)\)</p></div>
@@ -1275,7 +1232,6 @@
       </section>
 
       <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>衰減時間的計算</h2>
         <div class="io">
           <div class="card"><span class="io-k">輸入</span><p>整條 IR 的能量 \(h^2\)</p></div>
@@ -1309,7 +1265,6 @@
       </section>
 
       <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>卷積的計算</h2>
         <div class="io">
           <div class="card"><span class="io-k">輸入</span><p>音效 x，加上依 τ 混好的房間 IR h</p></div>
@@ -1343,7 +1298,6 @@
       </section>
 
       <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>DSP 在論文中的工作</h2>
         <div class="lanes">
           <div class="lane dsp">
@@ -1380,12 +1334,10 @@
       </section>
 
       <section class="slide section" data-ch="4">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="on">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h1>RLF 方法</h1>
       </section>
 
       <section class="slide" data-ch="4">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="on">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>潛在向量與距離</h2>
         <div class="two wide-right">
           <ul>
@@ -1408,7 +1360,6 @@
       </section>
 
       <section class="slide" data-ch="4">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="on">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>聲學互易性</h2>
         <div class="two">
           <svg viewBox="0 0 600 260" class="diagram" role="img" aria-label="a 傳到 b 與 b 傳到 a 結果相同">
@@ -1443,7 +1394,6 @@
       </section>
 
       <section class="slide" data-ch="4">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="on">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>RLF 架構</h2>
         <figure>
           <img src="images/ref1-fig1.png" alt="原論文圖 1：RLF 推論流程與重建的六種聲學參數" style="max-height: 38vh" />
@@ -1460,12 +1410,10 @@
       </section>
 
       <section class="slide section" data-ch="5">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
         <h1>實驗結果與意義</h1>
       </section>
 
       <section class="slide" data-ch="5">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
         <h2>實驗結果</h2>
         <div class="stats">
           <div class="card">
@@ -1494,7 +1442,6 @@
       </section>
 
       <section class="slide" data-ch="5">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
         <h2>研究意義</h2>
         <div class="cards">
           <div class="card">
@@ -1517,7 +1464,6 @@
       </section>
 
       <section class="slide" data-ch="5">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
         <h2>研究限制</h2>
         <div class="compare">
           <div class="col">
@@ -1542,7 +1488,6 @@
       </section>
 
       <section class="slide" data-ch="5">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
         <h2>結論</h2>
         <ul>
           <li>問題：wave coding 算得準，但一張地圖要 182 GB <sup class="cite">[1]</sup></li>
@@ -1555,7 +1500,6 @@
       </section>
 
       <section class="slide" data-ch="5">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
         <h2>參考資料</h2>
         <ol class="refs">
           <li>
@@ -1591,8 +1535,6 @@
     <div class="edge-nav next" id="edge-next" aria-hidden="true">›</div>
 
     <div id="hud">
-      <a href="../" target="_top">目錄</a>
-      <a href="../reciprocal-latent-fields/research.html" target="_top">參考資料</a>
       <a href="slides.pdf" download title="下載 PDF">PDF</a>
       <a href="slides.pptx" download title="下載 PowerPoint">PPT</a>
       <span id="counter"></span>

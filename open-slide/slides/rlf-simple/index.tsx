@@ -46,36 +46,9 @@ const Cite = ({ n }: { n: string }) => (
   </sup>
 );
 
-const ChapterItem = ({ n, label, on }: { n: number; label: string; on: number }) => (
-  <div
-    style={{
-      flex: 1,
-      borderTop: `6px solid ${n === on ? 'var(--osd-accent)' : n < on ? '#8fc2bc' : c.line}`,
-      paddingTop: 10,
-      fontSize: 24,
-      fontWeight: n === on ? 700 : 400,
-      color: n === on ? 'var(--osd-accent)' : c.muted,
-    }}
-  >
-    {n}. {label}
-  </div>
-);
-
-// 每頁頂端的章節進度列，目前所在的章節亮起來
-const ChapterBar = ({ on }: { on: number }) => (
-  <div style={{ position: 'absolute', top: 48, left: PAD_X, right: PAD_X, display: 'flex', gap: 16 }}>
-    <ChapterItem n={1} label="基本觀念" on={on} />
-    <ChapterItem n={2} label="研究動機" on={on} />
-    <ChapterItem n={3} label="DSP 的應用" on={on} />
-    <ChapterItem n={4} label="RLF 方法" on={on} />
-    <ChapterItem n={5} label="實驗結果與意義" on={on} />
-  </div>
-);
-
-// tight：內容多的公式頁，標題上下留白縮小
-const Frame = ({ ch, title, tight, children }: { ch: number; title: string; tight?: boolean; children: ReactNode }) => (
-  <div style={{ ...fill, padding: `${tight ? 150 : 170}px ${PAD_X}px ${tight ? 60 : 100}px` }}>
-    {ch > 0 && <ChapterBar on={ch} />}
+// ch 是頁面所屬章節（只用來分組，不顯示）；tight：內容多的公式頁，標題上下留白縮小
+const Frame = ({ title, tight, children }: { ch: number; title: string; tight?: boolean; children: ReactNode }) => (
+  <div style={{ ...fill, padding: `${tight ? 80 : 110}px ${PAD_X}px ${tight ? 60 : 100}px` }}>
     <div style={{ width: 72, height: 8, borderRadius: 4, background: 'var(--osd-accent)', marginBottom: 20 }} />
     <h2
       style={{
@@ -92,9 +65,8 @@ const Frame = ({ ch, title, tight, children }: { ch: number; title: string; tigh
   </div>
 );
 
-const SectionPage = ({ ch, title }: { ch: number; title: string }) => (
+const SectionPage = ({ title }: { ch: number; title: string }) => (
   <div style={{ ...fill, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <ChapterBar on={ch} />
     <h1
       style={{
         fontFamily: 'var(--osd-font-display)',

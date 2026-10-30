@@ -105,7 +105,7 @@ description: 把一個主題或使用者的看法做成單一 HTML 檔的簡報�
 1. 複製 `assets/template.html`（與本 SKILL.md 同目錄）作為基底，**保留其 CSS 與 JS**，只替換 `<main id="deck">` 內的 `<section class="slide">`，並改 `<title>`、`<meta name="description">`（一句話簡介）、`<meta name="date">`（今天日期）與 `<meta name="category">`（分類）——首頁會讀這四個欄位。
    - **分類**：只能用使用者設定的分類標籤，清單在 `scripts/build-site.mjs` 的 `CATEGORIES`（目前只有「資訊」）。不要自己新增分類，也不要分得太細。主題對不上任何標籤時就不寫 `category`，首頁會把它列在「其他」；使用者要新增標籤時，再加進 `CATEGORIES`。
 2. 輸出到 `output/<主題>/slides.html`，與 research.md 放在同一個主題資料夾（目錄不存在就建立）。`<主題>` 用簡短的英文 kebab-case（會成為網址），與 research-sources 用的資料夾名稱一致。
-3. 範本右下角有「目錄」與「參考資料」連結；該主題沒有 research.md 時，刪掉「參考資料」那個連結。
+3. 每一頁不要放「目錄」「參考資料」連結，也不要放章節進度列；參考資料只放在最後一頁。
 4. 每頁可加講者備註：`<aside class="notes">...</aside>`（按 `N` 顯示 / 隱藏）。
 5. **依主題調整外觀**：範本的米白加橘色只是預設值。製作前先參考 `frontend-design` skill，為主題定出配色與字體（可從 `theme-factory` 挑選）。做法是在範本的 `<style>` 之後再加一段 `<style>`，覆蓋 `:root` 的色票（淺色與深色兩組都要寫），不要改動範本原本的 CSS。
 6. 有數學式時，從 cdnjs 載入 KaTeX（`katex.min.css`、`katex.min.js`、`contrib/auto-render.min.js`），用 `\( \)` 與 `\[ \]` 標記。
