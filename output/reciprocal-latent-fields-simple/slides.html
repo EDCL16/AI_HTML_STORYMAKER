@@ -765,6 +765,127 @@
       .dsp-sum table.data td:first-child {
         color: var(--dsp);
       }
+      /* ---- 公式頁：輸入 → 公式 → 得到 → 遊戲中 ---- */
+      .io {
+        display: grid;
+        grid-template-columns: 1fr auto 1.7fr auto 1fr auto 1.1fr;
+        gap: calc(var(--u) * 0.8);
+        align-items: stretch;
+        margin-bottom: calc(var(--u) * 1.6);
+      }
+      .io .arrow {
+        align-self: center;
+        color: var(--muted);
+        font-size: calc(var(--u) * 2.2);
+      }
+      .io .card {
+        padding: 0.5em 0.8em;
+      }
+      .slide .io .card p {
+        font-size: calc(var(--u) * 1.5);
+        margin: 0;
+      }
+      .io-k {
+        display: block;
+        font-size: calc(var(--u) * 1.15);
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        margin-bottom: 0.2em;
+      }
+      .io .io-f {
+        border-color: var(--dsp);
+        font-size: calc(var(--u) * 1.6);
+      }
+      .io .io-f .katex-display {
+        margin: 0.2em 0;
+      }
+      .io .use {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+      }
+      .slide .ex,
+      .slide .ex-steps {
+        font-size: calc(var(--u) * 1.6);
+      }
+      .slide p.ex {
+        margin-top: 0.8em;
+        border: 2px dashed var(--line);
+        border-radius: 10px;
+        padding: 0.5em 0.9em;
+      }
+      .ex b {
+        color: var(--dsp);
+        margin-right: 0.8em;
+      }
+      .slide .ex-steps {
+        display: grid;
+        gap: 0.35em;
+        margin: 0;
+        padding-left: 1.4em;
+        list-style: decimal;
+      }
+      .slide .ex-steps li {
+        font-size: calc(var(--u) * 1.6);
+      }
+      .slide .ex-steps li::marker {
+        color: var(--dsp);
+        font-weight: 700;
+      }
+      /* ---- 完整流程圖 ---- */
+      .lanes {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        gap: calc(var(--u) * 1.2);
+        align-items: stretch;
+      }
+      .lane {
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        padding: 0.6em 0.8em;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35em;
+      }
+      .lane.dsp {
+        border-color: var(--dsp);
+      }
+      .lane.ml {
+        border-color: var(--accent);
+      }
+      .lane h3 {
+        font-size: calc(var(--u) * 1.8);
+        margin: 0 0 0.2em;
+      }
+      .lane.dsp h3 {
+        color: var(--dsp);
+      }
+      .lane.ml h3 {
+        color: var(--accent);
+      }
+      .lane .chip {
+        width: 100%;
+        box-sizing: border-box;
+        text-align: center;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.3em 0.5em;
+        font-size: calc(var(--u) * 1.5);
+      }
+      .lane .down {
+        color: var(--muted);
+        font-size: calc(var(--u) * 1.3);
+      }
+      .lane-arrow {
+        align-self: center;
+        color: var(--muted);
+        font-size: calc(var(--u) * 2.4);
+      }
+      .ir-small svg.diagram {
+        max-height: calc(var(--u) * 20);
+      }
     </style>
     <script>
       try {
@@ -1018,114 +1139,123 @@
           DSP 用在頭尾兩端，中間的儲存方式是機器學習。RLF 改的只有中間那一格 <sup class="cite">[1]</sup>
         </p>
         <aside class="notes">
-          這頁回答「DSP 用在哪裡」。左邊開發時，用 DSP 把物理模擬的結果變成參數；右邊遊戲執行時，用 DSP 把參數變回聲音。中間怎麼存，是 RLF 的貢獻。接下來兩頁各講一端。
+          這頁回答「DSP 用在哪裡」。左邊開發時，用 DSP 把物理模擬的結果變成參數；右邊遊戲執行時，用 DSP 把參數變回聲音。中間怎麼存，是 RLF 的貢獻。接下來先講左邊開發時怎麼算，再講右邊怎麼播，最後回到一張完整的流程圖。
         </aside>
       </section>
 
       <section class="slide" data-ch="3">
         <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
-        <h2>聲學參數的萃取</h2>
-        <ol class="steps">
-          <li>
-            <span><b>波動模擬</b>：把空間切成 0.137 m 的格子、時間切成約 0.23 ms 一步，算 2 秒的聲波，得到每一格的 IR。用的方法是 FDTD（Finite-Difference Time-Domain，有限差分時域法）<sup class="cite">[1][5]</sup></span>
-          </li>
-          <li>
-            <span><b>時間窗</b>：把 IR 切成直達聲（前 15 ms）、早期反射（之後 100 ms）和晚期殘響，各自加總能量換成 dB <sup class="cite">[1]</sup></span>
-          </li>
-          <li>
-            <span><b>Schroeder 積分</b>：從 IR 尾端往前累加能量，畫出平滑的衰減曲線，量它下降的斜率得到衰減時間 <sup class="cite">[1][3]</sup></span>
-          </li>
-          <li>
-            <span><b>梯度</b>：看路徑距離往哪邊變短最快，那就是聲音傳來的方向 <sup class="cite">[1]</sup></span>
-          </li>
-        </ol>
-        <p class="callout">做完這四步，一段 IR 就變成上一章的四個聲學參數</p>
-        <aside class="notes">
-          第一步是取樣：電腦只能存一格一格的值。論文只模擬到 500 Hz，這個頻率的波長是 0.686 m，切 5 格就是 0.137 m。時間步要夠小，否則數值會發散。第二步的時間窗就是把一段錄音切三段分別算音量。第三步是 1965 年 Schroeder 提出的量殘響方法。第四步像在山上找最陡的方向，不用另外存方向，從距離就推得出來。第二、三步的公式在接下來兩頁。
-        </aside>
-      </section>
-
-      <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
-        <h2>距離與音量的計算</h2>
-        <div class="formula">
-          \[ \pi(a,b)=c\,(t_{DS}-t_0),\qquad L_{DS}=10\log_{10}\!\int_{t_{DS}}^{t_{DS}+15\,\mathrm{ms}} e(t)\,dt,\qquad A=10^{L/20} \]
-        </div>
-        <div class="two top">
+        <h2>計算的起點：脈衝響應</h2>
+        <div class="two">
+          <div class="ir-small"><svg viewBox="0 0 600 320" class="diagram" role="img" aria-label="脈衝響應示意：直達聲、早期反射、晚期殘響"><line x1="50" y1="250" x2="570" y2="250" class="axis"/><line x1="60" y1="250" x2="60" y2="40" class="stem-ds"/><line x1="90" y1="250" x2="90" y2="135" class="stem-er"/><line x1="112" y1="250" x2="112" y2="162" class="stem-er"/><line x1="128" y1="250" x2="128" y2="151" class="stem-er"/><line x1="151" y1="250" x2="151" y2="181" class="stem-er"/><line x1="168" y1="250" x2="168" y2="187" class="stem-er"/><line x1="185" y1="250" x2="185" y2="218.0" class="stem-lr"/><line x1="191" y1="250" x2="191" y2="218.4" class="stem-lr"/><line x1="197" y1="250" x2="197" y2="217.5" class="stem-lr"/><line x1="203" y1="250" x2="203" y2="227.5" class="stem-lr"/><line x1="209" y1="250" x2="209" y2="210.1" class="stem-lr"/><line x1="215" y1="250" x2="215" y2="208.4" class="stem-lr"/><line x1="221" y1="250" x2="221" y2="230.4" class="stem-lr"/><line x1="227" y1="250" x2="227" y2="215.6" class="stem-lr"/><line x1="233" y1="250" x2="233" y2="231.8" class="stem-lr"/><line x1="239" y1="250" x2="239" y2="230.2" class="stem-lr"/><line x1="245" y1="250" x2="245" y2="218.9" class="stem-lr"/><line x1="251" y1="250" x2="251" y2="230.9" class="stem-lr"/><line x1="257" y1="250" x2="257" y2="230.1" class="stem-lr"/><line x1="263" y1="250" x2="263" y2="231.2" class="stem-lr"/><line x1="269" y1="250" x2="269" y2="229.2" class="stem-lr"/><line x1="275" y1="250" x2="275" y2="228.2" class="stem-lr"/><line x1="281" y1="250" x2="281" y2="233.2" class="stem-lr"/><line x1="287" y1="250" x2="287" y2="232.7" class="stem-lr"/><line x1="293" y1="250" x2="293" y2="230.8" class="stem-lr"/><line x1="299" y1="250" x2="299" y2="235.5" class="stem-lr"/><line x1="305" y1="250" x2="305" y2="239.7" class="stem-lr"/><line x1="311" y1="250" x2="311" y2="232.7" class="stem-lr"/><line x1="317" y1="250" x2="317" y2="233.1" class="stem-lr"/><line x1="323" y1="250" x2="323" y2="242.2" class="stem-lr"/><line x1="329" y1="250" x2="329" y2="239.7" class="stem-lr"/><line x1="335" y1="250" x2="335" y2="242.0" class="stem-lr"/><line x1="341" y1="250" x2="341" y2="238.1" class="stem-lr"/><line x1="347" y1="250" x2="347" y2="243.4" class="stem-lr"/><line x1="353" y1="250" x2="353" y2="241.1" class="stem-lr"/><line x1="359" y1="250" x2="359" y2="236.8" class="stem-lr"/><line x1="365" y1="250" x2="365" y2="238.4" class="stem-lr"/><line x1="371" y1="250" x2="371" y2="239.6" class="stem-lr"/><line x1="377" y1="250" x2="377" y2="238.4" class="stem-lr"/><line x1="383" y1="250" x2="383" y2="245.2" class="stem-lr"/><line x1="389" y1="250" x2="389" y2="243.4" class="stem-lr"/><line x1="395" y1="250" x2="395" y2="241.2" class="stem-lr"/><line x1="401" y1="250" x2="401" y2="245.9" class="stem-lr"/><line x1="407" y1="250" x2="407" y2="245.1" class="stem-lr"/><line x1="413" y1="250" x2="413" y2="241.9" class="stem-lr"/><line x1="419" y1="250" x2="419" y2="245.8" class="stem-lr"/><line x1="425" y1="250" x2="425" y2="245.5" class="stem-lr"/><line x1="431" y1="250" x2="431" y2="243.0" class="stem-lr"/><line x1="437" y1="250" x2="437" y2="243.9" class="stem-lr"/><line x1="443" y1="250" x2="443" y2="243.4" class="stem-lr"/><line x1="449" y1="250" x2="449" y2="244.6" class="stem-lr"/><line x1="455" y1="250" x2="455" y2="246.9" class="stem-lr"/><line x1="461" y1="250" x2="461" y2="246.0" class="stem-lr"/><line x1="467" y1="250" x2="467" y2="245.8" class="stem-lr"/><line x1="473" y1="250" x2="473" y2="246.0" class="stem-lr"/><line x1="479" y1="250" x2="479" y2="246.7" class="stem-lr"/><line x1="485" y1="250" x2="485" y2="247.3" class="stem-lr"/><line x1="491" y1="250" x2="491" y2="246.5" class="stem-lr"/><line x1="497" y1="250" x2="497" y2="247.1" class="stem-lr"/><line x1="503" y1="250" x2="503" y2="248.2" class="stem-lr"/><line x1="509" y1="250" x2="509" y2="246.6" class="stem-lr"/><line x1="515" y1="250" x2="515" y2="248.2" class="stem-lr"/><line x1="521" y1="250" x2="521" y2="248.5" class="stem-lr"/><line x1="527" y1="250" x2="527" y2="247.2" class="stem-lr"/><line x1="533" y1="250" x2="533" y2="247.9" class="stem-lr"/><line x1="539" y1="250" x2="539" y2="247.7" class="stem-lr"/><line x1="545" y1="250" x2="545" y2="248.3" class="stem-lr"/><line x1="551" y1="250" x2="551" y2="247.2" class="stem-lr"/><line x1="557" y1="250" x2="557" y2="248.7" class="stem-lr"/><line x1="563" y1="250" x2="563" y2="248.7" class="stem-lr"/><line x1="569" y1="250" x2="569" y2="249.0" class="stem-lr"/>
+<text x="50" y="28" class="lbl s">① 直達聲</text><text x="110" y="140" class="lbl s">② 早期反射</text><text x="300" y="170" class="lbl s">③ 晚期殘響（越來越小）</text>
+<text x="510" y="280" class="lbl s">時間 →</text><text x="50" y="280" class="lbl s">0</text></svg></div>
           <table class="data">
-            <tr><th>符號</th><th>意思</th></tr>
-            <tr><td>\(t_0,\ t_{DS}\)</td><td>發聲時間、直達聲到達時間</td></tr>
-            <tr><td>\(c\)</td><td>聲速，約 343 m/s</td></tr>
-            <tr><td>\(e(t)\)</td><td>IR 每一刻的能量（振幅平方）</td></tr>
-            <tr><td>\(L,\ A\)</td><td>音量（dB）、振幅的倍數</td></tr>
+            <tr><th>遊戲想知道</th><th>看 IR 的哪裡</th><th>得到</th></tr>
+            <tr><td>聲音走多遠</td><td>第一個聲音何時到</td><td>距離 π</td></tr>
+            <tr><td>從哪個方向來</td><td>旁邊幾格的 π 怎麼變</td><td>方向 δ</td></tr>
+            <tr><td>聽起來多大聲</td><td>前 15 ms 有多少能量</td><td>音量 L</td></tr>
+            <tr><td>回音多久消失</td><td>能量掉得多快</td><td>衰減時間 τ</td></tr>
           </table>
-          <ul>
-            <li>距離：晚 0.029 s 到 → 0.029 × 343 ≈ 10 m，包含繞路 <sup class="cite">[1]</sup></li>
-            <li>音量：前 15 ms 的能量加起來，取 log 換成 dB <sup class="cite">[1]</sup></li>
-            <li>倍數：−6 dB → \(10^{-6/20}\approx 0.50\)，振幅剩一半</li>
-          </ul>
         </div>
-        <p class="callout">白話：看直達聲晚多久到，就知道走了多遠；把它前 15 ms 的能量加總，就知道多大聲</p>
+        <p class="ex">
+          <b>接下來的例子</b>音源 a 在牆後，聽者 b 站在牆角附近，直線 8 m。一條 IR 從頭算到底（數字是示意）
+        </p>
+        <p class="callout">四個參數都從同一條 IR 算出來；方向比較特別，是拿算好的距離再推一次</p>
         <aside class="notes">
-          π 是路徑距離，L_DS 是直達聲音量，兩個都出自論文。積分在電腦裡就是把那 15 ms 內每個取樣的平方加起來。最後一條 A = 10 的 L/20 次方，是把 dB 換回乘法倍數，遊戲播放時會用到。早期反射音量的算法一樣，只是時間窗換成之後的 100 ms。−6 dB 的例子是我算的。
+          前面講過，IR 就是在 a 拍一下手、在 b 錄到的整段聲音。開發時用 FDTD 波動模擬，在電腦裡把每一對位置的 IR 都算出來：空間切成 0.137 m 的格子、時間每步約 0.23 ms，算 2 秒。接下來三頁照這張表的順序，一個問題一頁，每頁都講四件事：輸入是什麼、套什麼公式、得到什麼、遊戲裡拿來做什麼。例子全部用同一個場景，數字會一路接下去。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>距離與方向的計算</h2>
+        <div class="io">
+          <div class="card"><span class="io-k">輸入</span><p>IR 裡直達聲到達的時刻 \(t_{DS}\)</p></div>
+          <div class="arrow">→</div>
+          <div class="card io-f"><span class="io-k">公式</span>\[ \pi=c\,(t_{DS}-t_0),\quad \delta=-\frac{\nabla_b\pi}{\lVert\nabla_b\pi\rVert} \]</div>
+          <div class="arrow">→</div>
+          <div class="card"><span class="io-k">得到</span><p>距離 π、方向 δ</p></div>
+          <div class="arrow">→</div>
+          <div class="card use"><span class="io-k">遊戲中</span><p>δ 交給 VBAP，決定哪個喇叭比較大聲</p></div>
+        </div>
+        <ol class="ex-steps">
+          <li>直達聲晚 0.029 s 到 → π = 343 × 0.029 ≈ 10 m，比直線多 2 m，多出來的是繞牆 <sup class="cite">[1]</sup></li>
+          <li>b 左邊一格 π = 9.86 m，右邊一格 10.14 m → 往左走距離變短</li>
+          <li>δ 指向左邊 → 聲音從牆角那側傳來，VBAP 調大左喇叭 <sup class="cite">[1][4]</sup></li>
+        </ol>
+        <p class="callout">白話：看直達聲晚多久到，就知道走了多遠；比一比旁邊幾格哪邊比較近，就知道聲音從哪來</p>
+        <aside class="notes">
+          c 是聲速 343 m/s，t0 是發聲時間。距離乘出來是 10 m，比直線的 8 m 多，因為聲音要繞過牆。方向的公式看起來複雜，意思很簡單：∇π 是距離增加最快的方向，前面加負號就是距離減少最快的方向，也就是聲音來的方向；除以長度只是把它變成單位向量。電腦裡用左右兩格的差去算，跟山上找最陡的坡一樣。這一頁的數字是我編的示意。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>音量的計算</h2>
+        <div class="io">
+          <div class="card"><span class="io-k">輸入</span><p>直達聲之後 15 ms 內的能量 \(e(t)\)</p></div>
+          <div class="arrow">→</div>
+          <div class="card io-f"><span class="io-k">公式</span>\[ L_{DS}=10\log_{10}\!\int_{t_{DS}}^{t_{DS}+15\,\mathrm{ms}}\! e(t)\,dt \]</div>
+          <div class="arrow">→</div>
+          <div class="card"><span class="io-k">得到</span><p>直達聲音量 \(L_{DS}\)（dB）</p></div>
+          <div class="arrow">→</div>
+          <div class="card use"><span class="io-k">遊戲中</span><p>換成倍數 \(A=10^{L/20}\)，乘在音效上（增益）</p></div>
+        </div>
+        <ol class="ex-steps">
+          <li>能量是振幅的平方；把這 15 ms 內每個取樣的能量加起來 = 0.25 <sup class="cite">[1]</sup></li>
+          <li>取 log 換成 dB：\(L = 10\log_{10}0.25 \approx -6\) dB</li>
+          <li>遊戲播放時：\(A = 10^{-6/20} \approx 0.5\)，音效振幅乘 0.5，聽起來被牆擋小聲了 <sup class="cite">[1]</sup></li>
+        </ol>
+        <p class="callout">白話：把直達聲那一小段的能量加總，就知道多大聲；遊戲再把 dB 換回倍數，調整音效音量</p>
+        <aside class="notes">
+          dB 是用 log 表示大小，因為耳朵對音量的感覺本來就接近 log。能量用 10 log，振幅用 20 log，所以換回振幅時是除以 20。早期反射的音量算法一樣，只是時間窗換成直達聲之後的 100 ms。0.25 這個數字是示意。
         </aside>
       </section>
 
       <section class="slide" data-ch="3">
         <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>衰減時間的計算</h2>
-        <div class="formula">
-          \[ S(t)=\int_t^{\infty} h^2(\tau)\,d\tau,\qquad \tau_{ER/LR}=-\frac{60}{s_{ER/LR}} \]
+        <div class="io">
+          <div class="card"><span class="io-k">輸入</span><p>整條 IR 的能量 \(h^2\)</p></div>
+          <div class="arrow">→</div>
+          <div class="card io-f"><span class="io-k">公式</span>\[ S(t)=\int_t^{\infty}\! h^2(\tau)\,d\tau,\quad \tau=-\frac{60}{s} \]</div>
+          <div class="arrow">→</div>
+          <div class="card"><span class="io-k">得到</span><p>衰減時間 τ（秒）</p></div>
+          <div class="arrow">→</div>
+          <div class="card use"><span class="io-k">遊戲中</span><p>決定小、中、大三種房間回音的混合比例</p></div>
         </div>
         <div class="two top">
           <table class="data calc">
-            <tr><th>取樣 n</th><th>能量 e[n]</th><th>S[n]</th><th>S（dB）</th></tr>
-            <tr><td>0</td><td>4</td><td>8</td><td>0.0</td></tr>
-            <tr><td>1</td><td>2</td><td>4</td><td>−3.0</td></tr>
-            <tr><td>2</td><td>1</td><td>2</td><td>−6.0</td></tr>
-            <tr><td>3</td><td>1</td><td>1</td><td>−9.0</td></tr>
+            <tr><th>時間</th><th>這段能量</th><th>往後累加 S</th><th>S（dB）</th></tr>
+            <tr><td>0 ms</td><td>4</td><td>8</td><td>0</td></tr>
+            <tr><td>75 ms</td><td>2</td><td>4</td><td>−3</td></tr>
+            <tr><td>150 ms</td><td>1</td><td>2</td><td>−6</td></tr>
+            <tr><td>225 ms</td><td>1</td><td>1</td><td>−9</td></tr>
           </table>
-          <ul>
-            <li>\(S[n]\)：從最後一個取樣往前加總，曲線只會往下 <sup class="cite">[3]</sup></li>
-            <li>\(s\)：S 曲線的斜率，每秒掉幾 dB <sup class="cite">[1]</sup></li>
-            <li>斜率 −40 dB/s → \(\tau = 60/40 = 1.5\) 秒，回音要 1.5 秒才降 60 dB</li>
-          </ul>
+          <ol class="ex-steps">
+            <li>從最後一段往前加，得到 S <sup class="cite">[3]</sup></li>
+            <li>每 75 ms 掉 3 dB → 斜率 s = −40 dB/s</li>
+            <li>τ = 60 / 40 = 1.5 s：回音要 1.5 秒才降 60 dB <sup class="cite">[1]</sup></li>
+          </ol>
         </div>
-        <p class="callout">白話：從 IR 尾巴往前累加能量，量曲線掉得多快，就知道回音多久會消失</p>
+        <p class="callout">白話：從 IR 尾巴往前累加能量，量曲線掉多快，就知道回音多久消失</p>
         <aside class="notes">
-          直接看 IR 的話，聲音忽大忽小，很難量斜率。Schroeder 的做法是從尾巴往前加，加出來的曲線很平滑，只會往下。左表是我編的 4 個取樣：8、4、2、1，每一步剛好掉 3 dB。在 dB 圖上畫一條直線，斜率就是 s。論文分兩段量：早期衰減和晚期衰減，所以有 ER、LR 兩個 τ。
-        </aside>
-      </section>
-
-      <section class="slide" data-ch="3">
-        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
-        <h2>遊戲中的聲音渲染</h2>
-        <div class="cards">
-          <div class="card dsp">
-            <h3>增益</h3>
-            <p>把直達聲的 dB 換成倍數，乘在原始音效上。例：−6 dB 約等於乘 0.5 <sup class="cite">[1]</sup></p>
-          </div>
-          <div class="card dsp">
-            <h3>卷積殘響</h3>
-            <p>準備小、中、大三種房間的 IR，各和音效做卷積，再依衰減時間混合 <sup class="cite">[1]</sup></p>
-          </div>
-          <div class="card dsp">
-            <h3>VBAP</h3>
-            <p>Vector Base Amplitude Panning：調整各喇叭的音量，把直達聲擺到到達方向 <sup class="cite">[1][4]</sup></p>
-          </div>
-        </div>
-        <p class="callout">遊戲執行時只做這三件事，物理模擬在開發時就算完了</p>
-        <aside class="notes">
-          卷積可以理解成把乾淨的聲音「套上」某個空間的回音。殘響有三分之一跟直達聲同方向，三分之二從四面八方來。這三件事的運算量都很小，所以適合在遊戲裡即時做。下一頁用數字看卷積怎麼算。
+          直接看 IR 的話，聲音忽大忽小，很難量斜率。Schroeder 1965 年的做法是從尾巴往前加，曲線就變得平滑、只會往下。斜率 s 的單位是每秒掉幾 dB，τ 就是掉 60 dB 要花幾秒。論文分早期、晚期兩段各量一次。得到的 τ 在遊戲裡決定三種房間回音怎麼混，下一頁看混好的回音怎麼套到音效上。表裡的數字是示意。
         </aside>
       </section>
 
       <section class="slide" data-ch="3">
         <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>卷積的計算</h2>
-        <div class="formula">
-          \[ y[n]=\sum_{k} x[k]\,h[n-k],\qquad x_{dry}(t)=10^{L_{DS}/20}\,x_{in}(t) \]
-          <span class="eq-no">右式：論文式 (2)</span>
+        <div class="io">
+          <div class="card"><span class="io-k">輸入</span><p>音效 x，加上依 τ 混好的房間 IR h</p></div>
+          <div class="arrow">→</div>
+          <div class="card io-f"><span class="io-k">公式</span>\[ y[n]=\sum_{k} x[k]\,h[n-k] \]</div>
+          <div class="arrow">→</div>
+          <div class="card"><span class="io-k">得到</span><p>帶回音的聲音 y</p></div>
+          <div class="arrow">→</div>
+          <div class="card use"><span class="io-k">遊戲中</span><p>和直達聲一起送到喇叭播放</p></div>
         </div>
         <div class="two top">
           <table class="data calc">
@@ -1135,44 +1265,52 @@
             <tr><td>y[2]</td><td>1 × 0.3 + 0.5 × 0.6</td><td>0.60</td></tr>
             <tr><td>y[3]</td><td>0.5 × 0.3</td><td>0.15</td></tr>
           </table>
-          <ul>
-            <li>音效 \(x = [1,\ 0.5]\)，房間的 IR \(h = [1,\ 0.6,\ 0.3]\)</li>
-            <li>每個取樣都帶出一串變小的回音，錯開疊加起來</li>
-            <li>直達聲不做卷積，只乘上倍數 \(10^{L_{DS}/20}\) <sup class="cite">[1]</sup></li>
-          </ul>
+          <ol class="ex-steps">
+            <li>音效 x = [1, 0.5]，房間 IR h = [1, 0.6, 0.3]</li>
+            <li>每個取樣都帶出一串變小的回音，錯開疊加</li>
+            <li>2 個取樣變成 4 個，多出來的尾巴就是回音 <sup class="cite">[1]</sup></li>
+          </ol>
         </div>
         <p class="callout">白話：卷積就是把每個聲音都複製成一串回音，再全部加起來</p>
         <aside class="notes">
-          左表的數字是我舉的小例子，用程式驗算過。原本只有 2 個取樣的聲音，做完卷積變成 4 個，多出來的尾巴就是回音。論文的式 (3) 把音效分別和小、中、大三種房間的 IR 做卷積，再依衰減時間決定三者的比例，原理就是這一頁的加總。
+          前面三頁是開發時把 IR 變成數字，這一頁是遊戲時把數字變回聲音。論文的式 (3) 準備了小、中、大三種房間的 IR，依衰減時間 τ 決定三者的比例，再和音效做卷積。直達聲不做卷積，只乘上一頁算出的倍數 A，再由 VBAP 依方向 δ 分給喇叭。表裡的數字是我舉的小例子，用程式驗算過。
         </aside>
       </section>
 
       <section class="slide" data-ch="3">
         <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
         <h2>DSP 在論文中的工作</h2>
-        <div class="two top dsp-sum">
-          <div>
-            <h3>開發時：IR → 聲學參數</h3>
-            <table class="data">
-              <tr><td>FDTD 波動模擬</td><td>場景 → 每個格點的 IR <sup class="cite">[1][5]</sup></td></tr>
-              <tr><td>到達時間、時間窗</td><td>IR → 路徑距離、音量 <sup class="cite">[1]</sup></td></tr>
-              <tr><td>Schroeder 積分</td><td>IR → 早期、晚期衰減時間 <sup class="cite">[1][3]</sup></td></tr>
-              <tr><td>梯度</td><td>路徑距離 → 到達方向 <sup class="cite">[1]</sup></td></tr>
-            </table>
+        <div class="lanes">
+          <div class="lane dsp">
+            <h3>開發時（DSP）</h3>
+            <div class="chip">地圖幾何</div>
+            <div class="down">↓ FDTD 波動模擬</div>
+            <div class="chip">每對位置的 IR</div>
+            <div class="down">↓ 前三頁的公式</div>
+            <div class="chip">π、δ、L、τ</div>
           </div>
-          <div>
-            <h3>遊戲時：參數 → 聲音</h3>
-            <table class="data">
-              <tr><td>三線性內插</td><td>周圍 8 個格點 → 該位置的向量 <sup class="cite">[1]</sup></td></tr>
-              <tr><td>增益</td><td>直達聲 dB → 乘上的倍數 <sup class="cite">[1]</sup></td></tr>
-              <tr><td>卷積殘響</td><td>音效套上三種房間的 IR → 回音 <sup class="cite">[1]</sup></td></tr>
-              <tr><td>VBAP</td><td>到達方向 → 各喇叭的音量 <sup class="cite">[1][4]</sup></td></tr>
-            </table>
+          <div class="lane-arrow">→</div>
+          <div class="lane ml">
+            <h3>儲存（RLF）</h3>
+            <div class="chip">每對位置一組參數<br />182 GB</div>
+            <div class="down">↓ 學成每格 16 個數字</div>
+            <div class="chip">潛在向量網格<br />14 MB</div>
+            <div class="down">↓ 三線性內插、算距離</div>
+            <div class="chip">查出 π、δ、L、τ</div>
+          </div>
+          <div class="lane-arrow">→</div>
+          <div class="lane dsp">
+            <h3>遊戲時（DSP）</h3>
+            <div class="chip">L → 乘倍數（增益）</div>
+            <div class="chip">τ → 卷積套回音</div>
+            <div class="chip">δ → VBAP 分配喇叭</div>
+            <div class="down">↓</div>
+            <div class="chip">玩家聽到的聲音</div>
           </div>
         </div>
-        <p class="callout">DSP 負責把聲音變成數字、再把數字變回聲音；RLF 負責把中間的數字存小</p>
+        <p class="callout">DSP 負責把聲音變成數字、再把數字變回聲音；RLF 負責把中間的數字存小 <sup class="cite">[1]</sup></p>
         <aside class="notes">
-          被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊四項在開發時做，把波動模擬出來的 IR 變成聲學參數，這些參數就是 RLF 的訓練資料。右邊四項在遊戲執行時做：先用三線性內插查出音源和聽者的向量，RLF 算出參數後，再用增益、卷積、VBAP 播出聲音。論文自己的新東西只有中間的儲存方式，前後都是既有的 DSP 方法。
+          被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊在開發時：模擬出 IR，用前面三頁的公式算出四個參數。中間是問題所在：每一對位置都要存一組，WAL 地圖要 182 GB，RLF 把它學成每格 16 個數字，只要 14 MB。右邊在遊戲時：查出參數後，音量拿去乘倍數，衰減時間拿去決定回音、做卷積，方向交給 VBAP。論文自己的新東西只有中間那一欄，左右兩欄都是既有的 DSP 方法。
         </aside>
       </section>
 

@@ -311,13 +311,6 @@ const CalcRow = ({ a, b, cc, d, cols }: { a: ReactNode; b: string; cc: string; d
   </div>
 );
 
-const SymRow = ({ sym, meaning }: { sym: ReactNode; meaning: string }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', fontSize: 30, padding: '12px 12px', borderBottom: `2px solid ${c.line}` }}>
-    <span style={{ color: 'var(--osd-accent)', fontFamily: mathFont, fontStyle: 'italic' }}>{sym}</span>
-    <span>{meaning}</span>
-  </div>
-);
-
 const svgText: CSSProperties = { fill: 'var(--osd-text)', fontSize: 22, fontWeight: 700 };
 const svgSmall: CSSProperties = { fill: 'var(--osd-text)', fontSize: 19, fontWeight: 500 };
 
@@ -576,78 +569,165 @@ const Pipeline: Page = () => (
   </Frame>
 );
 
-const Extract: Page = () => (
-  <Frame ch={3} title="聲學參數的萃取">
-    <Steps>
-      <Step>
-        <StepRow n={1} label="波動模擬（FDTD）">
-          空間切成 0.137 m 的格子、每步 0.23 ms，算 2 秒的聲波
-          <Cite n="[1][5]" />
-        </StepRow>
-      </Step>
-      <Step>
-        <StepRow n={2} label="時間窗">
-          IR 切成直達聲、早期反射、晚期殘響，各算能量換成 dB
-          <Cite n="[1]" />
-        </StepRow>
-      </Step>
-      <Step>
-        <StepRow n={3} label="Schroeder 積分">
-          從尾端往前累加能量，量下降的斜率得到衰減時間
-          <Cite n="[1][3]" />
-        </StepRow>
-      </Step>
-      <Step>
-        <StepRow n={4} label="梯度">
-          路徑距離變短最快的方向，就是聲音傳來的方向
-          <Cite n="[1]" />
-        </StepRow>
-      </Step>
-    </Steps>
-    <div style={{ fontSize: 24, color: c.muted, marginTop: 14 }}>
-      FDTD = Finite-Difference Time-Domain（有限差分時域法）
+// ---------- 公式頁共用：輸入 → 公式 → 得到 → 遊戲中 ----------
+
+const IoBox = ({ label, kind = 'plain', wide, children }: { label: string; kind?: 'plain' | 'formula' | 'use'; wide?: boolean; children: ReactNode }) => (
+  <div
+    style={{
+      background: kind === 'use' ? c.soft : c.card,
+      border: `2px solid ${kind === 'formula' ? c.dsp : kind === 'use' ? 'var(--osd-accent)' : c.line}`,
+      borderRadius: 12,
+      padding: '14px 20px',
+      fontSize: wide ? 34 : 27,
+      lineHeight: 1.45,
+      fontFamily: wide ? mathFont : undefined,
+      whiteSpace: wide ? 'nowrap' : undefined,
+    }}
+  >
+    <div style={{ fontFamily: 'var(--osd-font-body)', fontSize: 20, fontWeight: 700, color: c.muted, letterSpacing: 2, marginBottom: 6 }}>{label}</div>
+    {children}
+  </div>
+);
+
+const IoArrow = () => <div style={{ alignSelf: 'center', fontSize: 40, color: c.muted }}>→</div>;
+
+const IoRow = ({ children }: { children: ReactNode }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1.75fr auto 1fr auto 1.1fr', gap: 14, alignItems: 'stretch', marginBottom: 34 }}>
+    {children}
+  </div>
+);
+
+const ExSteps = ({ children }: { children: ReactNode }) => (
+  <ol style={{ fontSize: 30, lineHeight: 1.5, margin: 0, paddingLeft: 48, display: 'grid', gap: 10, listStyleType: 'decimal' }}>{children}</ol>
+);
+
+const Lane = ({ title, kind, children }: { title: string; kind: 'dsp' | 'ml'; children: ReactNode }) => (
+  <div
+    style={{
+      border: `3px solid ${kind === 'dsp' ? c.dsp : 'var(--osd-accent)'}`,
+      borderRadius: 'var(--osd-radius)',
+      padding: '20px 24px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 10,
+    }}
+  >
+    <div style={{ fontSize: 34, fontWeight: 800, color: kind === 'dsp' ? c.dsp : 'var(--osd-accent)', marginBottom: 6 }}>{title}</div>
+    {children}
+  </div>
+);
+
+const Chip = ({ children }: { children: ReactNode }) => (
+  <div style={{ width: '100%', boxSizing: 'border-box', textAlign: 'center', background: c.card, border: `2px solid ${c.line}`, borderRadius: 10, padding: '8px 12px', fontSize: 28, lineHeight: 1.4 }}>
+    {children}
+  </div>
+);
+
+const Down = ({ children }: { children?: ReactNode }) => <div style={{ fontSize: 24, color: c.muted }}>↓ {children}</div>;
+
+const QRow = ({ q, where, out }: { q: string; where: string; out: string }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 190px', fontSize: 28, lineHeight: 1.45, padding: '13px 12px', borderBottom: `2px solid ${c.line}` }}>
+    <span style={{ fontWeight: 800, color: 'var(--osd-accent)' }}>{q}</span>
+    <span>{where}</span>
+    <span>{out}</span>
+  </div>
+);
+
+// ---------- DSP 章節 ----------
+
+const StartIr: Page = () => (
+  <Frame ch={3} title="計算的起點：脈衝響應">
+    <TwoCol cols="0.9fr 1.1fr">
+      <IrChart />
+      <div>
+        <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 190px', fontSize: 24, color: c.muted, padding: '0 12px 10px', borderBottom: `2px solid ${c.line}` }}>
+          <span>遊戲想知道</span>
+          <span>看 IR 的哪裡</span>
+          <span>得到</span>
+        </div>
+        <QRow q="聲音走多遠" where="第一個聲音何時到" out="距離 π" />
+        <QRow q="從哪個方向來" where="旁邊幾格的 π 怎麼變" out="方向 δ" />
+        <QRow q="聽起來多大聲" where="前 15 ms 有多少能量" out="音量 L" />
+        <QRow q="回音多久消失" where="能量掉得多快" out="衰減時間 τ" />
+      </div>
+    </TwoCol>
+    <div style={{ marginTop: 30, border: `3px dashed ${c.line}`, borderRadius: 12, padding: '14px 24px', fontSize: 28 }}>
+      <b style={{ color: c.dsp, marginRight: 20 }}>接下來的例子</b>
+      音源 a 在牆後，聽者 b 站在牆角附近，直線 8 m。一條 IR 從頭算到底（數字是示意）
     </div>
-    <Callout>四步做完，一段 IR 就變成四個聲學參數</Callout>
+    <Callout>四個參數都從同一條 IR 算出來；方向比較特別，是拿算好的距離再推一次</Callout>
+  </Frame>
+);
+
+const DistDir: Page = () => (
+  <Frame ch={3} title="距離與方向的計算">
+    <IoRow>
+      <IoBox label="輸入">
+        IR 裡直達聲到達的時刻 <M>t</M>
+        <sub>DS</sub>
+      </IoBox>
+      <IoArrow />
+      <IoBox label="公式" kind="formula" wide>
+        <M>π</M> = <M>c</M> (<M>t</M>
+        <sub>DS</sub> − <M>t</M>
+        <sub>0</sub>)
+        <br />
+        <M>δ</M> = −
+        <Frac top={<>∇<M>π</M></>} bottom={<>‖∇<M>π</M>‖</>} />
+      </IoBox>
+      <IoArrow />
+      <IoBox label="得到">距離 π、方向 δ</IoBox>
+      <IoArrow />
+      <IoBox label="遊戲中" kind="use">
+        δ 交給 VBAP，決定哪個喇叭比較大聲
+      </IoBox>
+    </IoRow>
+    <ExSteps>
+      <li>
+        直達聲晚 0.029 s 到 → π = 343 × 0.029 ≈ 10 m，比直線多 2 m，多出來的是繞牆
+        <Cite n="[1]" />
+      </li>
+      <li>b 左邊一格 π = 9.86 m，右邊一格 10.14 m → 往左走距離變短</li>
+      <li>
+        δ 指向左邊 → 聲音從牆角那側傳來，VBAP 調大左喇叭
+        <Cite n="[1][4]" />
+      </li>
+    </ExSteps>
+    <Callout>白話：看直達聲晚多久到，就知道走了多遠；比一比旁邊幾格哪邊比較近，就知道聲音從哪來</Callout>
   </Frame>
 );
 
 const LevelCalc: Page = () => (
-  <Frame ch={3} title="距離與音量的計算">
-    <FormulaBox>
-      <span>
-        <M>π</M>(<M>a</M>, <M>b</M>) = <M>c</M> (<M>t</M><sub>DS</sub> − <M>t</M><sub>0</sub>)
-      </span>
-      <span>
-        <M>L</M><sub>DS</sub> = 10 log<sub>10</sub>
-        <BigOp op="∫" lo={<><M>t</M><sub>DS</sub></>} hi={<><M>t</M><sub>DS</sub> + 15 ms</>} />
+  <Frame ch={3} title="音量的計算">
+    <IoRow>
+      <IoBox label="輸入">直達聲之後 15 ms 內的能量 e(t)</IoBox>
+      <IoArrow />
+      <IoBox label="公式" kind="formula" wide>
+        <M>L</M>
+        <sub>DS</sub> = 10 log<sub>10</sub>
+        <BigOp op="∫" lo={<><M>t</M><sub>DS</sub></>} hi={<><M>t</M><sub>DS</sub>+15 ms</>} />
         <M>e</M>(<M>t</M>) <M>dt</M>
-      </span>
-      <span>
-        <M>A</M> = 10<sup><M>L</M>/20</sup>
-      </span>
-    </FormulaBox>
-    <TwoCol cols="1fr 1fr">
-      <div>
-        <SymRow sym={<>t<sub>0</sub>, t<sub>DS</sub></>} meaning="發聲時間、直達聲到達時間" />
-        <SymRow sym="c" meaning="聲速，約 343 m/s" />
-        <SymRow sym="e(t)" meaning="IR 每一刻的能量（振幅平方）" />
-        <SymRow sym="L, A" meaning="音量（dB）、振幅的倍數" />
-      </div>
-      <Bullets size={30}>
-        <li>
-          距離：晚 0.029 s 到 → 0.029 × 343 ≈ 10 m，包含繞路
-          <Cite n="[1]" />
-        </li>
-        <li>
-          音量：前 15 ms 的能量加起來，取 log 換成 dB
-          <Cite n="[1]" />
-        </li>
-        <li>
-          倍數：−6 dB → 10<sup>−6/20</sup> ≈ 0.50，振幅剩一半
-        </li>
-      </Bullets>
-    </TwoCol>
-    <Callout>白話：看直達聲晚多久到，就知道走了多遠；把它前 15 ms 的能量加總，就知道多大聲</Callout>
+      </IoBox>
+      <IoArrow />
+      <IoBox label="得到">直達聲音量 L（dB）</IoBox>
+      <IoArrow />
+      <IoBox label="遊戲中" kind="use">
+        換成倍數 A = 10<sup>L/20</sup>，乘在音效上（增益）
+      </IoBox>
+    </IoRow>
+    <ExSteps>
+      <li>
+        能量是振幅的平方；把這 15 ms 內每個取樣的能量加起來 = 0.25
+        <Cite n="[1]" />
+      </li>
+      <li>取 log 換成 dB：L = 10 log₁₀ 0.25 ≈ −6 dB</li>
+      <li>
+        遊戲播放時：A = 10<sup>−6/20</sup> ≈ 0.5，音效振幅乘 0.5，聽起來被牆擋小聲了
+        <Cite n="[1]" />
+      </li>
+    </ExSteps>
+    <Callout>白話：把直達聲那一小段的能量加總，就知道多大聲；遊戲再把 dB 換回倍數，調整音效音量</Callout>
   </Frame>
 );
 
@@ -655,60 +735,47 @@ const DECAY_COLS = '1fr 1fr 1fr 1fr';
 
 const DecayCalc: Page = () => (
   <Frame ch={3} title="衰減時間的計算">
-    <FormulaBox>
-      <span>
+    <IoRow>
+      <IoBox label="輸入">
+        整條 IR 的能量 <M>h</M>
+        <sup>2</sup>
+      </IoBox>
+      <IoArrow />
+      <IoBox label="公式" kind="formula" wide>
         <M>S</M>(<M>t</M>) =
         <BigOp op="∫" lo={<M>t</M>} hi="∞" />
         <M>h</M>
-        <sup>2</sup>(<M>τ</M>) <M>dτ</M>
-      </span>
-      <span>
-        <M>τ</M>
-        <sub>ER/LR</sub> = −
-        <Frac top="60" bottom={<><M>s</M><sub>ER/LR</sub></>} />
-      </span>
-    </FormulaBox>
+        <sup>2</sup> <M>dτ</M>,&nbsp;&nbsp;<M>τ</M> = −
+        <Frac top="60" bottom={<M>s</M>} />
+      </IoBox>
+      <IoArrow />
+      <IoBox label="得到">衰減時間 τ（秒）</IoBox>
+      <IoArrow />
+      <IoBox label="遊戲中" kind="use">
+        決定小、中、大三種房間回音的混合比例
+      </IoBox>
+    </IoRow>
     <TwoCol cols="1fr 1fr">
       <div>
-        <CalcHead cols={DECAY_COLS} a="取樣 n" b="能量 e[n]" cc="S[n]" d="S（dB）" />
-        <CalcRow cols={DECAY_COLS} a="0" b="4" cc="8" d="0.0" />
-        <CalcRow cols={DECAY_COLS} a="1" b="2" cc="4" d="−3.0" />
-        <CalcRow cols={DECAY_COLS} a="2" b="1" cc="2" d="−6.0" />
-        <CalcRow cols={DECAY_COLS} a="3" b="1" cc="1" d="−9.0" />
+        <CalcHead cols={DECAY_COLS} a="時間" b="這段能量" cc="往後累加 S" d="S（dB）" />
+        <CalcRow cols={DECAY_COLS} a="0 ms" b="4" cc="8" d="0" />
+        <CalcRow cols={DECAY_COLS} a="75 ms" b="2" cc="4" d="−3" />
+        <CalcRow cols={DECAY_COLS} a="150 ms" b="1" cc="2" d="−6" />
+        <CalcRow cols={DECAY_COLS} a="225 ms" b="1" cc="1" d="−9" />
       </div>
-      <Bullets size={30}>
+      <ExSteps>
         <li>
-          S[n]：從最後一個取樣往前加總，曲線只會往下
+          從最後一段往前加，得到 S
           <Cite n="[3]" />
         </li>
+        <li>每 75 ms 掉 3 dB → 斜率 s = −40 dB/s</li>
         <li>
-          s：S 曲線的斜率，每秒掉幾 dB
+          τ = 60 / 40 = 1.5 s：回音要 1.5 秒才降 60 dB
           <Cite n="[1]" />
         </li>
-        <li>斜率 −40 dB/s → τ = 60 / 40 = 1.5 秒，回音要 1.5 秒才降 60 dB</li>
-      </Bullets>
+      </ExSteps>
     </TwoCol>
-    <Callout>白話：從 IR 尾巴往前累加能量，量曲線掉得多快，就知道回音多久會消失</Callout>
-  </Frame>
-);
-
-const Render: Page = () => (
-  <Frame ch={3} title="遊戲中的聲音渲染">
-    <Row3>
-      <Card title="增益" kind="dsp">
-        把 dB 換成倍數乘上音效，−6 dB 約等於乘 0.5
-        <Cite n="[1]" />
-      </Card>
-      <Card title="卷積殘響" kind="dsp">
-        小、中、大三種房間的 IR 和音效做卷積，再依衰減時間混合
-        <Cite n="[1]" />
-      </Card>
-      <Card title="VBAP" kind="dsp">
-        Vector Base Amplitude Panning：調各喇叭音量，把聲音擺到到達方向
-        <Cite n="[1][4]" />
-      </Card>
-    </Row3>
-    <Callout>遊戲執行時只做這三件事，物理模擬在開發時就算完了</Callout>
+    <Callout>白話：從 IR 尾巴往前累加能量，量曲線掉多快，就知道回音多久消失</Callout>
   </Frame>
 );
 
@@ -716,23 +783,21 @@ const CONV_COLS = '160px 1fr 160px';
 
 const ConvCalc: Page = () => (
   <Frame ch={3} title="卷積的計算">
-    <FormulaBox note="右式：論文式 (2)">
-      <span>
+    <IoRow>
+      <IoBox label="輸入">音效 x，加上依 τ 混好的房間 IR h</IoBox>
+      <IoArrow />
+      <IoBox label="公式" kind="formula" wide>
         <M>y</M>[<M>n</M>] =
         <BigOp op="Σ" lo={<M>k</M>} />
         <M>x</M>[<M>k</M>] <M>h</M>[<M>n</M> − <M>k</M>]
-      </span>
-      <span>
-        <M>x</M>
-        <sub>dry</sub>(<M>t</M>) = 10
-        <sup>
-          <M>L</M>
-          <sub>DS</sub>/20
-        </sup>{' '}
-        <M>x</M>
-        <sub>in</sub>(<M>t</M>)
-      </span>
-    </FormulaBox>
+      </IoBox>
+      <IoArrow />
+      <IoBox label="得到">帶回音的聲音 y</IoBox>
+      <IoArrow />
+      <IoBox label="遊戲中" kind="use">
+        和直達聲一起送到喇叭播放
+      </IoBox>
+    </IoRow>
     <TwoCol cols="1fr 1fr">
       <div>
         <CalcHead cols={CONV_COLS} a="輸出" b="計算" cc="結果" />
@@ -741,73 +806,50 @@ const ConvCalc: Page = () => (
         <CalcRow cols={CONV_COLS} a="y[2]" b="1 × 0.3 + 0.5 × 0.6" cc="0.60" />
         <CalcRow cols={CONV_COLS} a="y[3]" b="0.5 × 0.3" cc="0.15" />
       </div>
-      <Bullets size={30}>
-        <li>音效 x = [1, 0.5]，房間的 IR h = [1, 0.6, 0.3]</li>
-        <li>每個取樣都帶出一串變小的回音，錯開疊加起來</li>
+      <ExSteps>
+        <li>音效 x = [1, 0.5]，房間 IR h = [1, 0.6, 0.3]</li>
+        <li>每個取樣都帶出一串變小的回音，錯開疊加</li>
         <li>
-          直達聲不做卷積，只乘上倍數 10<sup>L/20</sup>
+          2 個取樣變成 4 個，多出來的尾巴就是回音
           <Cite n="[1]" />
         </li>
-      </Bullets>
+      </ExSteps>
     </TwoCol>
     <Callout>白話：卷積就是把每個聲音都複製成一串回音，再全部加起來</Callout>
   </Frame>
 );
 
-const SumHead = ({ children }: { children: ReactNode }) => (
-  <div style={{ fontSize: 36, fontWeight: 800, color: c.dsp, marginBottom: 14 }}>{children}</div>
-);
-
-const SumRow = ({ name, children }: { name: string; children: ReactNode }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '290px 1fr', fontSize: 30, lineHeight: 1.5, padding: '14px 12px', borderBottom: `2px solid ${c.line}` }}>
-    <span style={{ fontWeight: 800, color: c.dsp }}>{name}</span>
-    <span>{children}</span>
-  </div>
-);
-
 const DspSummary: Page = () => (
   <Frame ch={3} title="DSP 在論文中的工作">
-    <TwoCol cols="1fr 1fr">
-      <div>
-        <SumHead>開發時：IR → 聲學參數</SumHead>
-        <SumRow name="FDTD 波動模擬">
-          場景 → 每個格點的 IR
-          <Cite n="[1][5]" />
-        </SumRow>
-        <SumRow name="到達時間、時間窗">
-          IR → 路徑距離、音量
-          <Cite n="[1]" />
-        </SumRow>
-        <SumRow name="Schroeder 積分">
-          IR → 早期、晚期衰減時間
-          <Cite n="[1][3]" />
-        </SumRow>
-        <SumRow name="梯度">
-          路徑距離 → 到達方向
-          <Cite n="[1]" />
-        </SumRow>
-      </div>
-      <div>
-        <SumHead>遊戲時：參數 → 聲音</SumHead>
-        <SumRow name="三線性內插">
-          周圍 8 個格點 → 該位置的向量
-          <Cite n="[1]" />
-        </SumRow>
-        <SumRow name="增益">
-          直達聲 dB → 乘上的倍數
-          <Cite n="[1]" />
-        </SumRow>
-        <SumRow name="卷積殘響">
-          音效套上三種房間的 IR → 回音
-          <Cite n="[1]" />
-        </SumRow>
-        <SumRow name="VBAP">
-          到達方向 → 各喇叭的音量
-          <Cite n="[1][4]" />
-        </SumRow>
-      </div>
-    </TwoCol>
-    <Callout>DSP 負責把聲音變成數字、再把數字變回聲音；RLF 負責把中間的數字存小</Callout>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', gap: 24, alignItems: 'stretch' }}>
+      <Lane title="開發時（DSP）" kind="dsp">
+        <Chip>地圖幾何</Chip>
+        <Down>FDTD 波動模擬</Down>
+        <Chip>每對位置的 IR</Chip>
+        <Down>前三頁的公式</Down>
+        <Chip>π、δ、L、τ</Chip>
+      </Lane>
+      <IoArrow />
+      <Lane title="儲存（RLF）" kind="ml">
+        <Chip>每對位置一組參數 182 GB</Chip>
+        <Down>學成每格 16 個數字</Down>
+        <Chip>潛在向量網格 14 MB</Chip>
+        <Down>三線性內插、算距離</Down>
+        <Chip>查出 π、δ、L、τ</Chip>
+      </Lane>
+      <IoArrow />
+      <Lane title="遊戲時（DSP）" kind="dsp">
+        <Chip>L → 乘倍數（增益）</Chip>
+        <Chip>τ → 卷積套回音</Chip>
+        <Chip>δ → VBAP 分配喇叭</Chip>
+        <Down />
+        <Chip>玩家聽到的聲音</Chip>
+      </Lane>
+    </div>
+    <Callout>
+      DSP 負責把聲音變成數字、再把數字變回聲音；RLF 負責把中間的數字存小
+      <Cite n="[1]" />
+    </Callout>
   </Frame>
 );
 
@@ -1056,10 +1098,10 @@ export default [
   Memory,
   S3,
   Pipeline,
-  Extract,
+  StartIr,
+  DistDir,
   LevelCalc,
   DecayCalc,
-  Render,
   ConvCalc,
   DspSummary,
   S4,
@@ -1085,17 +1127,13 @@ export const notes: (string | undefined)[] = [
   undefined,
   'wave coding 的資料量跟「音源位置數 × 聽者位置數」成正比。比較小的測試地圖 Audio Gym 也要 3.1 GB。方法夠準，只是存不下，RLF 改的就是儲存這一段。',
   undefined,
-  '這頁回答「DSP 用在哪裡」。左邊開發時，用 DSP 把物理模擬的結果變成參數；右邊遊戲執行時，用 DSP 把參數變回聲音。中間怎麼存，是 RLF 的貢獻。接下來兩頁各講一端。',
-  `第一步是取樣：電腦只能存一格一格的值。論文只模擬到 500 Hz，波長 0.686 m，切 5 格就是 0.137 m。時間步要夠小，否則數值會發散。
-第二步把一段錄音切三段：前 15 ms 算直達聲，之後 100 ms 算早期反射。
-第三步是 1965 年 Schroeder 提出的量殘響方法。
-第四步像在山上找最陡的方向，不用另外存方向，從距離就推得出來。
-第二、三步的公式在接下來兩頁。`,
-  'π 是路徑距離，L_DS 是直達聲音量，兩個都出自論文。積分在電腦裡就是把那 15 ms 內每個取樣的平方加起來。A = 10 的 L/20 次方，是把 dB 換回乘法倍數，遊戲播放時會用到。早期反射音量的算法一樣，只是時間窗換成之後的 100 ms。−6 dB 的例子是我算的。',
-  '直接看 IR 的話，聲音忽大忽小，很難量斜率。Schroeder 的做法是從尾巴往前加，加出來的曲線很平滑，只會往下。左表是我編的 4 個取樣：8、4、2、1，每一步剛好掉 3 dB。在 dB 圖上畫一條直線，斜率就是 s。論文分兩段量：早期衰減和晚期衰減，所以有 ER、LR 兩個 τ。',
-  '卷積可以理解成把乾淨的聲音「套上」某個空間的回音。殘響有三分之一跟直達聲同方向，三分之二從四面八方來。這三件事運算量都很小，適合在遊戲裡即時做。下一頁用數字看卷積怎麼算。',
-  '左表的數字是我舉的小例子，用程式驗算過。原本只有 2 個取樣的聲音，做完卷積變成 4 個，多出來的尾巴就是回音。論文的式 (3) 把音效分別和小、中、大三種房間的 IR 做卷積，再依衰減時間決定三者的比例，原理就是這一頁的加總。',
-  '被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊四項在開發時做，把波動模擬出來的 IR 變成聲學參數，這些參數就是 RLF 的訓練資料。右邊四項在遊戲執行時做：先用三線性內插查出音源和聽者的向量，RLF 算出參數後，再用增益、卷積、VBAP 播出聲音。論文自己的新東西只有中間的儲存方式，前後都是既有的 DSP 方法。',
+  '這頁回答「DSP 用在哪裡」。左邊開發時，用 DSP 把物理模擬的結果變成參數；右邊遊戲執行時，用 DSP 把參數變回聲音。中間怎麼存，是 RLF 的貢獻。接下來先講左邊開發時怎麼算，再講右邊怎麼播，最後回到一張完整的流程圖。',
+  '前面講過，IR 就是在 a 拍一下手、在 b 錄到的整段聲音。開發時用 FDTD 波動模擬，在電腦裡把每一對位置的 IR 都算出來：空間切成 0.137 m 的格子、時間每步約 0.23 ms，算 2 秒。接下來三頁照這張表的順序，一個問題一頁，每頁都講四件事：輸入是什麼、套什麼公式、得到什麼、遊戲裡拿來做什麼。例子全部用同一個場景，數字會一路接下去。',
+  'c 是聲速 343 m/s，t0 是發聲時間。距離乘出來是 10 m，比直線的 8 m 多，因為聲音要繞過牆。方向的公式看起來複雜，意思很簡單：∇π 是距離增加最快的方向，前面加負號就是距離減少最快的方向，也就是聲音來的方向；除以長度只是把它變成單位向量。電腦裡用左右兩格的差去算，跟山上找最陡的坡一樣。這一頁的數字是我編的示意。',
+  'dB 是用 log 表示大小，因為耳朵對音量的感覺本來就接近 log。能量用 10 log，振幅用 20 log，所以換回振幅時是除以 20。早期反射的音量算法一樣，只是時間窗換成直達聲之後的 100 ms。0.25 這個數字是示意。',
+  '直接看 IR 的話，聲音忽大忽小，很難量斜率。Schroeder 1965 年的做法是從尾巴往前加，曲線就變得平滑、只會往下。斜率 s 的單位是每秒掉幾 dB，τ 就是掉 60 dB 要花幾秒。論文分早期、晚期兩段各量一次。得到的 τ 在遊戲裡決定三種房間回音怎麼混，下一頁看混好的回音怎麼套到音效上。表裡的數字是示意。',
+  '前面三頁是開發時把 IR 變成數字，這一頁是遊戲時把數字變回聲音。論文的式 (3) 準備了小、中、大三種房間的 IR，依衰減時間 τ 決定三者的比例，再和音效做卷積。直達聲不做卷積，只乘上一頁算出的倍數 A，再由 VBAP 依方向 δ 分給喇叭。表裡的數字是我舉的小例子，用程式驗算過。',
+  '被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊在開發時：模擬出 IR，用前面三頁的公式算出四個參數。中間是問題所在：每一對位置都要存一組，WAL 地圖要 182 GB，RLF 把它學成每格 16 個數字，只要 14 MB。右邊在遊戲時：查出參數後，音量拿去乘倍數，衰減時間拿去決定回音、做卷積，方向交給 VBAP。論文自己的新東西只有中間那一欄，左右兩欄都是既有的 DSP 方法。',
   undefined,
   '舊方法存「a 到 b 的答案」，RLF 只存「a 的座標」和「b 的座標」，要用時再算距離。右圖是論文用 2 維示範：牆兩側的 A、B，在學出來的空間裡被放到洞的兩側，直線距離剛好等於繞路的距離。實際用的是 16 維。',
   'a 喊 b 聽，和 b 喊 a 聽，路徑距離、音量、衰減都一樣。作者選了一定對稱的距離函數，把這條物理規則直接寫進公式，模型就不可能違反。方向是例外：a 往 b 的方向和 b 往 a 的方向不一定剛好相反，所以方向是從距離的梯度推出來的。',
