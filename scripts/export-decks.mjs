@@ -2,6 +2,7 @@
 //   output/<主題>/slides.html → slides.pdf（文字可搜尋、公式為向量）
 //                              → slides.pptx（每頁一張投影片截圖，附講者備註）
 // 用法：npx playwright install chromium（第一次）→ npm run export
+//       只匯出部分簡報：npm run export -- <主題資料夾> ...
 import { readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -12,7 +13,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'output');
 const W = 1600;
 const H = 900;
 
-const dirs = readdirSync(root).filter((d) => existsSync(join(root, d, 'slides.html')));
+const only = process.argv.slice(2);
+const dirs = readdirSync(root).filter(
+  (d) => existsSync(join(root, d, 'slides.html')) && (!only.length || only.includes(d)),
+);
 
 const browser = await chromium.launch();
 // 一律用淺色主題匯出，比較適合列印與投影

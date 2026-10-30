@@ -1,0 +1,1327 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RLF 論文報告（精簡版）</title>
+    <meta name="description" content="20 分鐘看懂 Reciprocal Latent Fields：遊戲聲音資料從 182 GB 壓到 14 MB，以及 DSP 用在哪裡" />
+    <meta name="date" content="2026-10-30" />
+    <meta name="category" content="資訊" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #faf8f4;
+        --fg: #1f1d1a;
+        --muted: #6b665e;
+        --accent: #c2410c;
+        --accent-soft: #fde9dc;
+        --card: #ffffff;
+        --line: #e6e1d8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #17161a;
+          --fg: #f1eee8;
+          --muted: #a39e94;
+          --accent: #fb923c;
+          --accent-soft: #3a2518;
+          --card: #211f24;
+          --line: #34313a;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #17161a;
+        --fg: #f1eee8;
+        --muted: #a39e94;
+        --accent: #fb923c;
+        --accent-soft: #3a2518;
+        --card: #211f24;
+        --line: #34313a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Noto Sans TC', system-ui, sans-serif;
+        line-height: 1.6;
+        overflow: hidden;
+      }
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(24px, 6vw, 96px) clamp(16px, 8vw, 140px);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(12px);
+        transition:
+          opacity 0.35s ease,
+          transform 0.35s ease,
+          visibility 0.35s;
+        overflow-y: auto;
+      }
+      .slide.active {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+
+      .slide h1 {
+        font-size: clamp(32px, 5.5vw, 72px);
+        font-weight: 900;
+        line-height: 1.2;
+      }
+      .slide h2 {
+        font-size: clamp(24px, 3.6vw, 48px);
+        font-weight: 700;
+        line-height: 1.3;
+        margin-bottom: 0.8em;
+      }
+      .slide h2::before {
+        content: '';
+        display: block;
+        width: 48px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 3px;
+        margin-bottom: 0.5em;
+      }
+      .slide p,
+      .slide li {
+        font-size: clamp(17px, 2vw, 26px);
+      }
+      .slide ul,
+      .slide ol {
+        padding-left: 1.2em;
+        display: grid;
+        gap: 0.6em;
+      }
+      .slide li::marker {
+        color: var(--accent);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .cite {
+        color: var(--accent);
+        font-size: 0.6em;
+        font-weight: 700;
+        margin-left: 2px;
+      }
+
+      .cover {
+        background: linear-gradient(135deg, var(--accent-soft), var(--bg) 60%);
+      }
+      .cover .subtitle {
+        font-size: clamp(18px, 2.4vw, 30px);
+        color: var(--muted);
+        margin-top: 1em;
+      }
+      .cover .meta {
+        margin-top: 2.5em;
+        font-size: clamp(14px, 1.5vw, 18px);
+        color: var(--muted);
+      }
+
+      .section {
+        align-items: center;
+        text-align: center;
+      }
+      .section h1 {
+        color: var(--accent);
+      }
+
+      .big-number {
+        font-size: clamp(64px, 12vw, 160px);
+        font-weight: 900;
+        line-height: 1;
+        color: var(--accent);
+        letter-spacing: -0.02em;
+      }
+      .big-label {
+        font-size: clamp(18px, 2.4vw, 30px);
+        margin-top: 0.4em;
+      }
+
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(16px, 3vw, 40px);
+      }
+      .compare .col {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: clamp(16px, 2.5vw, 32px);
+      }
+      .compare .col h3 {
+        font-size: clamp(18px, 2.2vw, 28px);
+        margin-bottom: 0.6em;
+        color: var(--accent);
+      }
+      @media (max-width: 700px) {
+        .compare {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      blockquote {
+        font-size: clamp(22px, 3vw, 40px);
+        font-weight: 500;
+        line-height: 1.5;
+        border-left: 6px solid var(--accent);
+        padding-left: 1em;
+      }
+      blockquote cite {
+        display: block;
+        margin-top: 1em;
+        font-size: 0.5em;
+        color: var(--muted);
+        font-style: normal;
+      }
+
+      .refs {
+        font-size: clamp(13px, 1.4vw, 17px) !important;
+        gap: 0.5em !important;
+      }
+      .refs li {
+        font-size: inherit;
+      }
+      .refs a {
+        color: var(--accent);
+        word-break: break-all;
+      }
+
+      .notes {
+        display: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 48px;
+        max-height: 30vh;
+        overflow-y: auto;
+        background: var(--card);
+        border-top: 2px solid var(--accent);
+        padding: 16px clamp(16px, 8vw, 140px);
+        font-size: 16px;
+        color: var(--muted);
+      }
+      body.show-notes .slide.active .notes {
+        display: block;
+      }
+
+      #hud a {
+        color: var(--accent);
+        text-decoration: none;
+        margin-right: 4px;
+      }
+      #progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 4px;
+        background: var(--accent);
+        transition: width 0.3s;
+      }
+      #hud {
+        position: fixed;
+        bottom: 12px;
+        right: 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      #hud button {
+        background: var(--card);
+        color: var(--fg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      #hud button:hover {
+        border-color: var(--accent);
+      }
+
+      /* 點畫面左半部上一頁、右半部下一頁；滑鼠所在那一側顯示提示 */
+      #deck[data-side] {
+        cursor: pointer;
+      }
+      .edge-nav {
+        position: fixed;
+        top: 0;
+        bottom: 64px;
+        width: clamp(48px, 7vw, 120px);
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 40px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .edge-nav.prev {
+        left: 0;
+        background: linear-gradient(to right, var(--line), transparent);
+      }
+      .edge-nav.next {
+        right: 0;
+        background: linear-gradient(to left, var(--line), transparent);
+      }
+      #deck[data-side='prev'] ~ .edge-nav.prev,
+      #deck[data-side='next'] ~ .edge-nav.next {
+        opacity: 1;
+      }
+      .edge-nav[hidden] {
+        display: none;
+      }
+      @media (hover: none) {
+        .edge-nav {
+          display: none;
+        }
+      }
+
+      @media print {
+        body {
+          overflow: visible;
+        }
+        .slide {
+          position: relative;
+          opacity: 1;
+          visibility: visible;
+          transform: none;
+          height: 100vh;
+          page-break-after: always;
+          overflow: hidden;
+        }
+        #hud,
+        #progress,
+        .edge-nav,
+        .notes {
+          display: none !important;
+        }
+      }
+    </style>
+    <style>
+      /* ---- 本主題配色：與詳細版相同的灰綠底、青綠主色；音源紅、聽者藍（與原論文圖一致） ---- */
+      :root {
+        --bg: #f3f5f4;
+        --fg: #13201e;
+        --muted: #5b6967;
+        --accent: #0e7c74;
+        --accent-soft: #dcefec;
+        --card: #ffffff;
+        --line: #d9e2e0;
+        --src: #d6452f;
+        --rcv: #2c55c9;
+        --dsp: #b7791f;
+        --dsp-soft: #f6ead6;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #0e1514;
+          --fg: #e3ecea;
+          --muted: #93a5a2;
+          --accent: #3cc4b6;
+          --accent-soft: #143330;
+          --card: #152020;
+          --line: #24312f;
+          --src: #ff7a63;
+          --rcv: #7c9cff;
+          --dsp: #f2b84b;
+          --dsp-soft: #3a2c12;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #0e1514;
+        --fg: #e3ecea;
+        --muted: #93a5a2;
+        --accent: #3cc4b6;
+        --accent-soft: #143330;
+        --card: #152020;
+        --line: #24312f;
+        --src: #ff7a63;
+        --rcv: #7c9cff;
+        --dsp: #f2b84b;
+        --dsp-soft: #3a2c12;
+      }
+
+      /* ---- 字級與留白跟著「寬、高較小的一邊」縮放，任何視窗比例都不用捲動 ---- */
+      :root {
+        --u: min(1vw, 1.78vh);
+      }
+      .slide {
+        padding: calc(var(--u) * 7) calc(var(--u) * 7) calc(var(--u) * 5);
+        overflow: hidden;
+      }
+      .slide h1 {
+        font-size: calc(var(--u) * 4.4);
+      }
+      .slide h2 {
+        font-size: calc(var(--u) * 3.2);
+        margin-bottom: 0.6em;
+      }
+      .slide h2::before {
+        width: 1.2em;
+        height: 0.14em;
+        margin-bottom: 0.35em;
+      }
+      .slide p,
+      .slide li {
+        font-size: calc(var(--u) * 1.75);
+      }
+      .slide ul,
+      .slide ol {
+        gap: 0.45em;
+      }
+      .cover .subtitle {
+        font-size: calc(var(--u) * 2.2);
+      }
+      .cover .meta {
+        font-size: calc(var(--u) * 1.3);
+      }
+      .notes {
+        font-size: 16px;
+      }
+
+      /* ---- 每頁頂端的章節進度列：五個章節，目前所在的章節亮起來 ---- */
+      .slide .chapters {
+        position: absolute;
+        top: calc(var(--u) * 2.2);
+        left: calc(var(--u) * 7);
+        right: calc(var(--u) * 7);
+        display: flex;
+        gap: calc(var(--u) * 0.6);
+        list-style: none;
+        padding: 0 !important;
+      }
+      .slide .chapters li {
+        flex: 1;
+        font-size: calc(var(--u) * 1.05);
+        color: var(--muted);
+        border-top: 4px solid var(--line);
+        padding-top: 0.35em;
+      }
+      .slide .chapters li.on {
+        color: var(--accent);
+        font-weight: 700;
+        border-top-color: var(--accent);
+      }
+      .slide .chapters li.done {
+        border-top-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+      }
+
+      /* ---- 版型 ---- */
+      .callout {
+        border: 2px solid var(--accent);
+        background: var(--accent-soft);
+        border-radius: 10px;
+        padding: 0.6em 1em;
+        margin-top: 0.9em;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: calc(var(--u) * 3);
+        align-items: center;
+      }
+      .two.wide-right {
+        grid-template-columns: 1fr 1.1fr;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(var(--n, 3), 1fr);
+        gap: calc(var(--u) * 1.5);
+        align-items: stretch;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: calc(var(--u) * 1.6);
+      }
+      .card h3 {
+        font-size: calc(var(--u) * 2);
+        color: var(--accent);
+        margin-bottom: 0.35em;
+        line-height: 1.3;
+      }
+      .slide .card p {
+        font-size: calc(var(--u) * 1.5);
+      }
+      .card .num {
+        font-weight: 900;
+        color: var(--accent);
+        font-size: calc(var(--u) * 1.4);
+        display: block;
+        margin-bottom: 0.2em;
+      }
+      .card.dsp {
+        border: 2px solid var(--dsp);
+        background: var(--dsp-soft);
+      }
+      .card.dsp h3 {
+        color: var(--dsp);
+      }
+      .card.ml {
+        border: 2px solid var(--accent);
+        background: var(--accent-soft);
+      }
+      .tag {
+        display: inline-block;
+        font-size: calc(var(--u) * 1.1);
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 0.1em 0.7em;
+        margin-bottom: 0.5em;
+        color: var(--bg);
+        background: var(--dsp);
+      }
+      .tag.ml {
+        background: var(--accent);
+      }
+      .flow {
+        display: flex;
+        align-items: stretch;
+        gap: calc(var(--u) * 1);
+      }
+      .flow > .card {
+        flex: 1;
+      }
+      .flow .arrow {
+        align-self: center;
+        font-size: calc(var(--u) * 3);
+        color: var(--muted);
+      }
+      .steps {
+        list-style: none;
+        padding: 0 !important;
+        counter-reset: s;
+      }
+      .steps > li {
+        counter-increment: s;
+        display: grid;
+        grid-template-columns: 1.8em 1fr;
+        align-items: baseline;
+      }
+      .steps > li::before {
+        content: counter(s);
+        font-weight: 900;
+        color: var(--dsp);
+      }
+      .steps b {
+        color: var(--dsp);
+      }
+      table.data {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: calc(var(--u) * 1.6);
+      }
+      table.data th,
+      table.data td {
+        padding: 0.45em 0.7em;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+      table.data th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      table.data td:first-child {
+        font-weight: 700;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: calc(var(--u) * 1.5);
+      }
+      .stats .card {
+        text-align: center;
+      }
+      .big-number {
+        font-size: calc(var(--u) * 6);
+      }
+      .big-number.mid {
+        font-size: calc(var(--u) * 4.6);
+      }
+      .slide .big-label {
+        font-size: calc(var(--u) * 1.45);
+        color: var(--fg);
+      }
+      .slide .big-label.small {
+        font-size: calc(var(--u) * 1.25);
+        color: var(--muted);
+      }
+      .strike {
+        color: var(--muted);
+      }
+      figure {
+        margin: 0;
+        text-align: center;
+      }
+      figure img {
+        max-width: 100%;
+        object-fit: contain;
+        background: #fff;
+        border-radius: 10px;
+        padding: 6px;
+        border: 1px solid var(--line);
+      }
+      .slide figcaption {
+        font-size: calc(var(--u) * 1.15);
+        color: var(--muted);
+        margin-top: 0.4em;
+      }
+      .src {
+        color: var(--src);
+        font-weight: 700;
+      }
+      .rcv {
+        color: var(--rcv);
+        font-weight: 700;
+      }
+      svg.diagram {
+        width: 100%;
+        height: auto;
+        max-height: 46vh;
+      }
+      svg.diagram .room {
+        fill: var(--card);
+        stroke: var(--line);
+        stroke-width: 2;
+      }
+      svg.diagram .wall {
+        fill: var(--muted);
+      }
+      svg.diagram path,
+      svg.diagram .ln {
+        fill: none;
+        stroke-width: 4;
+      }
+      svg.diagram .p-direct {
+        stroke: var(--muted);
+        stroke-dasharray: 10 8;
+      }
+      svg.diagram .p-reflect {
+        stroke: var(--rcv);
+      }
+      svg.diagram .p-diffract {
+        stroke: var(--accent);
+      }
+      svg.diagram .dot-src {
+        fill: var(--src);
+      }
+      svg.diagram .dot-rcv {
+        fill: var(--rcv);
+      }
+      svg.diagram .lbl {
+        fill: var(--fg);
+        font-size: 22px;
+        font-weight: 700;
+      }
+      svg.diagram .lbl.s {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      svg.diagram .axis {
+        stroke: var(--fg);
+        stroke-width: 2;
+      }
+      svg.diagram .stem-ds {
+        stroke: var(--src);
+        stroke-width: 5;
+      }
+      svg.diagram .stem-er {
+        stroke: var(--accent);
+        stroke-width: 4;
+      }
+      svg.diagram .stem-lr {
+        stroke: var(--rcv);
+        stroke-width: 2;
+      }
+      svg.diagram .arr {
+        stroke: var(--accent);
+        stroke-width: 4;
+        fill: none;
+        marker-end: url(#ah);
+      }
+      svg.diagram .arr.back {
+        stroke: var(--dsp);
+        marker-end: url(#ah2);
+      }
+      @media (max-width: 700px) {
+        .two,
+        .two.wide-right,
+        .cards,
+        .stats {
+          grid-template-columns: 1fr;
+        }
+        .flow {
+          flex-direction: column;
+        }
+        .flow .arrow {
+          transform: rotate(90deg);
+        }
+        .chapters {
+          display: none !important;
+        }
+      }
+      @media print {
+        .slide {
+          overflow: hidden;
+        }
+      }
+      .slide .refs {
+        font-size: calc(var(--u) * 1.15) !important;
+        gap: 0.35em !important;
+      }
+      .slide .refs li {
+        font-size: inherit;
+      }
+    </style>
+    <script>
+      try {
+        const t = localStorage.getItem('theme');
+        if (t) document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="progress"></div>
+
+    <main id="deck">
+      <!-- 封面 -->
+      <section class="slide cover">
+        <h1>Reciprocal Latent Fields 論文報告</h1>
+        <p class="subtitle">預先計算聲音傳播的資料壓縮</p>
+        <p class="meta">
+          論文：Seuté、Vasudev、Richan、Buffoni（Ubisoft La Forge、Audiokinetic），SIGGRAPH 2026
+          <sup class="cite">[1]</sup><br />報告日期 2026-10-30
+        </p>
+        <aside class="notes">
+          這篇論文處理遊戲裡「聲音怎麼繞過牆、在房間裡迴盪」的問題。作者來自 Ubisoft，以及開發 Wwise 音效引擎的 Audiokinetic。論文全名有點長，後面簡稱 RLF。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="0">
+        <ol class="chapters" aria-label="章節進度"><li class="">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>研究主題</h2>
+        <div class="flow">
+          <div class="card">
+            <h3>真實的遊戲聲音</h3>
+            <p>聲音會被牆擋住、繞過牆角、在房間裡迴盪，玩家靠這些判斷自己在哪</p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="card">
+            <h3>資料太大</h3>
+            <p>
+              現有方法 wave coding 要先把聲音算好存起來，一張地圖就要 182 GB
+              <sup class="cite">[1]</sup>
+            </p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="card ml">
+            <h3>RLF 的做法</h3>
+            <p>
+              同一張地圖只要 14 MB，聽測時和原始模擬分不出差別
+              <sup class="cite">[1]</sup>
+            </p>
+          </div>
+        </div>
+        <p class="callout">
+          一句話：RLF 讓遊戲用很少的記憶體，就能播出照物理算出來的回音和遮擋效果
+        </p>
+        <aside class="notes">
+          先講整份報告的主線。遊戲想要真實的聲音，業界有一種很準的方法叫 wave coding，問題是資料量太大。這篇論文提出 RLF，把資料縮小一萬多倍，聽起來卻一樣。後面所有內容都是在解釋這三格。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="0">
+        <ol class="chapters" aria-label="章節進度"><li class="">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>報告架構</h2>
+        <div class="cards" style="--n: 5">
+          <div class="card">
+            <span class="num">1</span>
+            <h3>基本觀念</h3>
+            <p>聲音怎麼傳、脈衝響應、聲學參數</p>
+          </div>
+          <div class="card">
+            <span class="num">2</span>
+            <h3>研究動機</h3>
+            <p>舊方法為什麼存不下</p>
+          </div>
+          <div class="card dsp">
+            <span class="num">3</span>
+            <h3>DSP 的應用</h3>
+            <p>聲音變數字、數字變回聲音</p>
+          </div>
+          <div class="card ml">
+            <span class="num">4</span>
+            <h3>RLF 方法</h3>
+            <p>數字怎麼存得小</p>
+          </div>
+          <div class="card">
+            <span class="num">5</span>
+            <h3>實驗結果與意義</h3>
+            <p>省多少、準不準、有什麼用</p>
+          </div>
+        </div>
+        <ul style="margin-top: 1em">
+          <li>順序照「先懂名詞 → 再看問題 → 再看解法」排，每一段都用到前一段的內容</li>
+          <li>第 3 段是 DSP，第 4 段是這篇論文的新東西，兩者分開講</li>
+          <li>頁面最上方的進度列標示目前在第幾段</li>
+        </ul>
+        <aside class="notes">
+          這份報告有五段。第一段的三個名詞會一路用到最後，所以先講。第二段說舊方法卡在哪。第三段是 DSP，負責把聲音和數字互相轉換。第四段才是論文真正的貢獻：怎麼把這些數字存得很小。最後看結果和意義。
+        </aside>
+      </section>
+
+      <section class="slide section" data-ch="1">
+        <ol class="chapters" aria-label="章節進度"><li class="on">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h1>基本觀念</h1>
+      </section>
+
+      <section class="slide" data-ch="1">
+        <ol class="chapters" aria-label="章節進度"><li class="on">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>聲音的傳播路徑</h2>
+        <div class="two">
+          <svg viewBox="0 0 600 340" class="diagram" role="img" aria-label="音源經直達、反射、繞射三條路徑到聽者">
+            <rect x="10" y="10" width="580" height="320" rx="8" class="room" />
+            <rect x="280" y="150" width="24" height="180" class="wall" />
+            <path d="M90 250 L500 250" class="p-direct" />
+            <path d="M90 250 L300 22 L500 250" class="p-reflect" />
+            <path d="M90 250 Q 292 110 304 150 Q 330 200 500 250" class="p-diffract" />
+            <circle cx="90" cy="250" r="16" class="dot-src" />
+            <circle cx="500" cy="250" r="16" class="dot-rcv" />
+            <text x="58" y="300" class="lbl">音源 a</text>
+            <text x="466" y="300" class="lbl">聽者 b</text>
+            <text x="315" y="285" class="lbl s">① 直達（被牆擋）</text>
+            <text x="310" y="60" class="lbl s">② 反射</text>
+            <text x="320" y="135" class="lbl s">③ 繞射</text>
+            <text x="250" y="320" class="lbl s">牆</text>
+          </svg>
+          <ul>
+            <li>直達聲：走直線最先到，被牆擋住就變小聲</li>
+            <li>反射：撞到牆或天花板再彈過來，晚一點到；很多次反射疊在一起就是殘響</li>
+            <li>繞射：聲音波長長（100 Hz 約 3.4 m），會彎過牆角，躲在牆後還聽得到</li>
+          </ul>
+        </div>
+        <p class="callout">遊戲要算出每條路帶來多少聲音、多晚到、從哪個方向來</p>
+        <aside class="notes">
+          光的波長很短，被牆擋住就看不到；聲音的波長從幾公分到十幾公尺，會繞過障礙物。所以只用射線直線追蹤，算不出繞射。這也是後面要用「波動模擬」的原因。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="1">
+        <ol class="chapters" aria-label="章節進度"><li class="on">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>脈衝響應</h2>
+        <div class="two">
+          <div><svg viewBox="0 0 600 320" class="diagram" role="img" aria-label="脈衝響應示意：直達聲、早期反射、晚期殘響"><line x1="50" y1="250" x2="570" y2="250" class="axis"/><line x1="60" y1="250" x2="60" y2="40" class="stem-ds"/><line x1="90" y1="250" x2="90" y2="135" class="stem-er"/><line x1="112" y1="250" x2="112" y2="162" class="stem-er"/><line x1="128" y1="250" x2="128" y2="151" class="stem-er"/><line x1="151" y1="250" x2="151" y2="181" class="stem-er"/><line x1="168" y1="250" x2="168" y2="187" class="stem-er"/><line x1="185" y1="250" x2="185" y2="218.0" class="stem-lr"/><line x1="191" y1="250" x2="191" y2="218.4" class="stem-lr"/><line x1="197" y1="250" x2="197" y2="217.5" class="stem-lr"/><line x1="203" y1="250" x2="203" y2="227.5" class="stem-lr"/><line x1="209" y1="250" x2="209" y2="210.1" class="stem-lr"/><line x1="215" y1="250" x2="215" y2="208.4" class="stem-lr"/><line x1="221" y1="250" x2="221" y2="230.4" class="stem-lr"/><line x1="227" y1="250" x2="227" y2="215.6" class="stem-lr"/><line x1="233" y1="250" x2="233" y2="231.8" class="stem-lr"/><line x1="239" y1="250" x2="239" y2="230.2" class="stem-lr"/><line x1="245" y1="250" x2="245" y2="218.9" class="stem-lr"/><line x1="251" y1="250" x2="251" y2="230.9" class="stem-lr"/><line x1="257" y1="250" x2="257" y2="230.1" class="stem-lr"/><line x1="263" y1="250" x2="263" y2="231.2" class="stem-lr"/><line x1="269" y1="250" x2="269" y2="229.2" class="stem-lr"/><line x1="275" y1="250" x2="275" y2="228.2" class="stem-lr"/><line x1="281" y1="250" x2="281" y2="233.2" class="stem-lr"/><line x1="287" y1="250" x2="287" y2="232.7" class="stem-lr"/><line x1="293" y1="250" x2="293" y2="230.8" class="stem-lr"/><line x1="299" y1="250" x2="299" y2="235.5" class="stem-lr"/><line x1="305" y1="250" x2="305" y2="239.7" class="stem-lr"/><line x1="311" y1="250" x2="311" y2="232.7" class="stem-lr"/><line x1="317" y1="250" x2="317" y2="233.1" class="stem-lr"/><line x1="323" y1="250" x2="323" y2="242.2" class="stem-lr"/><line x1="329" y1="250" x2="329" y2="239.7" class="stem-lr"/><line x1="335" y1="250" x2="335" y2="242.0" class="stem-lr"/><line x1="341" y1="250" x2="341" y2="238.1" class="stem-lr"/><line x1="347" y1="250" x2="347" y2="243.4" class="stem-lr"/><line x1="353" y1="250" x2="353" y2="241.1" class="stem-lr"/><line x1="359" y1="250" x2="359" y2="236.8" class="stem-lr"/><line x1="365" y1="250" x2="365" y2="238.4" class="stem-lr"/><line x1="371" y1="250" x2="371" y2="239.6" class="stem-lr"/><line x1="377" y1="250" x2="377" y2="238.4" class="stem-lr"/><line x1="383" y1="250" x2="383" y2="245.2" class="stem-lr"/><line x1="389" y1="250" x2="389" y2="243.4" class="stem-lr"/><line x1="395" y1="250" x2="395" y2="241.2" class="stem-lr"/><line x1="401" y1="250" x2="401" y2="245.9" class="stem-lr"/><line x1="407" y1="250" x2="407" y2="245.1" class="stem-lr"/><line x1="413" y1="250" x2="413" y2="241.9" class="stem-lr"/><line x1="419" y1="250" x2="419" y2="245.8" class="stem-lr"/><line x1="425" y1="250" x2="425" y2="245.5" class="stem-lr"/><line x1="431" y1="250" x2="431" y2="243.0" class="stem-lr"/><line x1="437" y1="250" x2="437" y2="243.9" class="stem-lr"/><line x1="443" y1="250" x2="443" y2="243.4" class="stem-lr"/><line x1="449" y1="250" x2="449" y2="244.6" class="stem-lr"/><line x1="455" y1="250" x2="455" y2="246.9" class="stem-lr"/><line x1="461" y1="250" x2="461" y2="246.0" class="stem-lr"/><line x1="467" y1="250" x2="467" y2="245.8" class="stem-lr"/><line x1="473" y1="250" x2="473" y2="246.0" class="stem-lr"/><line x1="479" y1="250" x2="479" y2="246.7" class="stem-lr"/><line x1="485" y1="250" x2="485" y2="247.3" class="stem-lr"/><line x1="491" y1="250" x2="491" y2="246.5" class="stem-lr"/><line x1="497" y1="250" x2="497" y2="247.1" class="stem-lr"/><line x1="503" y1="250" x2="503" y2="248.2" class="stem-lr"/><line x1="509" y1="250" x2="509" y2="246.6" class="stem-lr"/><line x1="515" y1="250" x2="515" y2="248.2" class="stem-lr"/><line x1="521" y1="250" x2="521" y2="248.5" class="stem-lr"/><line x1="527" y1="250" x2="527" y2="247.2" class="stem-lr"/><line x1="533" y1="250" x2="533" y2="247.9" class="stem-lr"/><line x1="539" y1="250" x2="539" y2="247.7" class="stem-lr"/><line x1="545" y1="250" x2="545" y2="248.3" class="stem-lr"/><line x1="551" y1="250" x2="551" y2="247.2" class="stem-lr"/><line x1="557" y1="250" x2="557" y2="248.7" class="stem-lr"/><line x1="563" y1="250" x2="563" y2="248.7" class="stem-lr"/><line x1="569" y1="250" x2="569" y2="249.0" class="stem-lr"/>
+<text x="50" y="28" class="lbl s">① 直達聲</text><text x="110" y="140" class="lbl s">② 早期反射</text><text x="300" y="170" class="lbl s">③ 晚期殘響（越來越小）</text>
+<text x="510" y="280" class="lbl s">時間 →</text><text x="50" y="280" class="lbl s">0</text></svg></div>
+          <ul>
+            <li>在 a 拍一下手，b 錄到的整段聲音，叫脈衝響應（Impulse Response，IR）</li>
+            <li>可以把它想成這條路徑的聲音指紋：換個位置，指紋就不同</li>
+            <li>有了 IR，任何音效在這個位置聽起來的樣子都算得出來</li>
+          </ul>
+        </div>
+        <p class="callout">紅色是直達聲，綠色是早期反射，藍色是越來越小的晚期殘響</p>
+        <aside class="notes">
+          在大教堂拍手，會聽到「啪」之後一長串嗡嗡聲慢慢消失；在小房間拍手，回音很短。這段錄音就是 IR，它同時記錄了距離、遮擋和房間大小。左圖是示意圖，不是真實資料。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="1">
+        <ol class="chapters" aria-label="章節進度"><li class="on">1. 基本觀念</li><li class="">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>聲學參數</h2>
+        <table class="data">
+          <tr>
+            <th>參數</th>
+            <th>意思</th>
+            <th>例子</th>
+          </tr>
+          <tr>
+            <td>路徑距離</td>
+            <td>聲音實際走了多遠，包含繞路</td>
+            <td>直線 8 m，繞過牆要走 10 m</td>
+          </tr>
+          <tr>
+            <td>音量（dB）</td>
+            <td>直達聲、早期反射各有多大聲；dB = decibel（分貝）</td>
+            <td>隔一道牆，直達聲變小</td>
+          </tr>
+          <tr>
+            <td>衰減時間</td>
+            <td>回音多久會消失，分早期和晚期</td>
+            <td>大廳比小房間久</td>
+          </tr>
+          <tr>
+            <td>到達方向</td>
+            <td>聲音從哪個方向進耳朵；英文 Direction of Arrival（DOA）</td>
+            <td>躲在牆後，聲音從牆角傳來</td>
+          </tr>
+        </table>
+        <p class="callout">
+          整段 IR 太大，遊戲只存從 IR 算出的這幾個數字 <sup class="cite">[1][2]</sup>
+        </p>
+        <aside class="notes">
+          這四個數字就是後面一直講的「聲學參數」。wave coding 這個方法的做法，就是把每條 IR 壓成這幾個數字。例子欄的數字是我舉的例子，不是論文的資料。
+        </aside>
+      </section>
+
+      <section class="slide section" data-ch="2">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="on">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h1>研究動機</h1>
+      </section>
+
+      <section class="slide" data-ch="2">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="on">2. 研究動機</li><li class="">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>Wave coding 的記憶體問題</h2>
+        <div class="two">
+          <ul>
+            <li>即時模擬聲波太慢，業界改成開發時先算好、遊戲時查表 <sup class="cite">[1][2]</sup></li>
+            <li>答案取決於音源在哪、聽者在哪，等於一張「每一點到每一點」的大表格</li>
+            <li>像城市距離表：城市多 10 倍，表格就大 100 倍</li>
+          </ul>
+          <div class="card" style="text-align: center">
+            <div class="big-number">182 GB</div>
+            <p class="big-label">
+              Wave coding 在 WAL 地圖存一組參數的大小 <sup class="cite">[1]</sup>
+            </p>
+            <p class="big-label small">WAL = Wwise Audio Lab，208 × 10 × 185 m 的示範遊戲地圖 <sup class="cite">[7]</sup></p>
+          </div>
+        </div>
+        <p class="callout">wave coding 算得準，但地圖一大，表格就存不下</p>
+        <aside class="notes">
+          wave coding 的資料量跟「音源位置數 × 聽者位置數」成正比。比較小的測試地圖 Audio Gym 也要 3.1 GB。所以問題很清楚：方法夠準，但存不下。RLF 要解決的就是這件事。
+        </aside>
+      </section>
+
+      <section class="slide section" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h1>DSP 的應用</h1>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>系統架構與 DSP 位置</h2>
+        <div class="flow">
+          <div class="card dsp">
+            <span class="tag">DSP</span>
+            <h3>開發時：聲音變數字</h3>
+            <p>波動模擬得到每一點的 IR，再算出聲學參數</p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="card ml">
+            <span class="tag ml">機器學習</span>
+            <h3>儲存：RLF</h3>
+            <p>把參數壓進 14 MB 的網格，這是論文的新方法</p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="card dsp">
+            <span class="tag">DSP</span>
+            <h3>遊戲時：數字變聲音</h3>
+            <p>查出參數，調音量、套回音、擺方向，播給玩家聽</p>
+          </div>
+        </div>
+        <p class="callout">
+          DSP 用在頭尾兩端，中間的儲存方式是機器學習。RLF 改的只有中間那一格 <sup class="cite">[1]</sup>
+        </p>
+        <aside class="notes">
+          這頁回答「DSP 用在哪裡」。左邊開發時，用 DSP 把物理模擬的結果變成參數；右邊遊戲執行時，用 DSP 把參數變回聲音。中間怎麼存，是 RLF 的貢獻。接下來兩頁各講一端。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>聲學參數的萃取</h2>
+        <ol class="steps">
+          <li>
+            <span><b>波動模擬</b>：把空間切成 0.137 m 的格子、時間切成約 0.23 ms 一步，算 2 秒的聲波，得到每一格的 IR。用的方法是 FDTD（Finite-Difference Time-Domain，有限差分時域法）<sup class="cite">[1][5]</sup></span>
+          </li>
+          <li>
+            <span><b>時間窗</b>：把 IR 切成直達聲（前 15 ms）、早期反射（之後 100 ms）和晚期殘響，各自加總能量換成 dB <sup class="cite">[1]</sup></span>
+          </li>
+          <li>
+            <span><b>Schroeder 積分</b>：從 IR 尾端往前累加能量，畫出平滑的衰減曲線，量它下降的斜率得到衰減時間 <sup class="cite">[1][3]</sup></span>
+          </li>
+          <li>
+            <span><b>梯度</b>：看路徑距離往哪邊變短最快，那就是聲音傳來的方向 <sup class="cite">[1]</sup></span>
+          </li>
+        </ol>
+        <p class="callout">做完這四步，一段 IR 就變成上一章的四個聲學參數</p>
+        <aside class="notes">
+          第一步是取樣：電腦只能存一格一格的值。論文只模擬到 500 Hz，這個頻率的波長是 0.686 m，切 5 格就是 0.137 m。時間步要夠小，否則數值會發散。第二步的時間窗就是把一段錄音切三段分別算音量。第三步是 1965 年 Schroeder 提出的量殘響方法。第四步像在山上找最陡的方向，不用另外存方向，從距離就推得出來。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="on">3. DSP 的應用</li><li class="">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>遊戲中的聲音渲染</h2>
+        <div class="cards">
+          <div class="card dsp">
+            <h3>增益</h3>
+            <p>把直達聲的 dB 換成倍數，乘在原始音效上。例：−6 dB 約等於乘 0.5 <sup class="cite">[1]</sup></p>
+          </div>
+          <div class="card dsp">
+            <h3>卷積殘響</h3>
+            <p>準備小、中、大三種房間的 IR，各和音效做卷積，再依衰減時間混合 <sup class="cite">[1]</sup></p>
+          </div>
+          <div class="card dsp">
+            <h3>VBAP</h3>
+            <p>Vector Base Amplitude Panning：調整各喇叭的音量，把直達聲擺到到達方向 <sup class="cite">[1][4]</sup></p>
+          </div>
+        </div>
+        <p class="callout">遊戲執行時只做這三件事，物理模擬在開發時就算完了</p>
+        <aside class="notes">
+          卷積可以理解成把乾淨的聲音「套上」某個空間的回音。殘響有三分之一跟直達聲同方向，三分之二從四面八方來。這三件事的運算量都很小，所以適合在遊戲裡即時做。
+        </aside>
+      </section>
+
+      <section class="slide section" data-ch="4">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="on">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h1>RLF 方法</h1>
+      </section>
+
+      <section class="slide" data-ch="4">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="on">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>潛在向量與距離</h2>
+        <div class="two wide-right">
+          <ul>
+            <li>每個位置只存 16 個數字，叫潛在向量，可以想成這個位置的聲音座標</li>
+            <li>兩點座標的距離，就代表聲音實際要走的距離</li>
+            <li>右圖：A、B 隔著牆，要繞路，在座標空間裡就被拉開</li>
+          </ul>
+          <figure>
+            <img src="images/ref1-fig2.png" alt="原論文圖 2：2D 地圖與學到的 2D 潛在空間" style="max-height: 44vh" />
+            <figcaption>原論文 Figure 2：左為 2D 地圖（黃色是牆），右為學到的潛在空間 <sup class="cite">[1]</sup></figcaption>
+          </figure>
+        </div>
+        <p class="callout">
+          表格從「每一對位置」變成「每一個位置」，資料量從 N × N 降到 N × 16
+          <sup class="cite">[1]</sup>
+        </p>
+        <aside class="notes">
+          這是整篇論文的核心想法。舊方法存「a 到 b 的答案」，RLF 只存「a 的座標」和「b 的座標」，要用時再算距離。右圖是論文用 2 維示範：黃色牆兩側的 A、B，在學出來的空間裡被放到洞的兩側，直線距離剛好等於繞路的距離。實際用的是 16 維。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="4">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="on">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>聲學互易性</h2>
+        <div class="two">
+          <svg viewBox="0 0 600 260" class="diagram" role="img" aria-label="a 傳到 b 與 b 傳到 a 結果相同">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" style="fill: var(--accent); stroke: none" /></marker>
+              <marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" style="fill: var(--dsp); stroke: none" /></marker>
+            </defs>
+            <rect x="10" y="10" width="580" height="240" rx="8" class="room" />
+            <circle cx="110" cy="130" r="18" class="dot-src" />
+            <circle cx="490" cy="130" r="18" class="dot-rcv" />
+            <text x="96" y="190" class="lbl">a</text>
+            <text x="481" y="190" class="lbl">b</text>
+            <path d="M140 105 Q 300 40 460 105" class="arr" />
+            <path d="M460 155 Q 300 220 140 155" class="arr back" />
+            <text x="230" y="55" class="lbl s">a 喊、b 聽</text>
+            <text x="230" y="230" class="lbl s">b 喊、a 聽</text>
+          </svg>
+          <ul>
+            <li>物理定律：音源和聽者對調，IR 相同（方向除外）<sup class="cite">[1]</sup></li>
+            <li>RLF 的距離函數本身就對稱：h(x, y) = h(y, x)</li>
+            <li>模型算出來的結果一定滿足互易性，不必靠資料去學</li>
+          </ul>
+        </div>
+        <p class="callout">論文名稱的 Reciprocal（互易）就是指這個性質</p>
+        <aside class="notes">
+          a 喊 b 聽，和 b 喊 a 聽，路徑距離、音量、衰減都一樣。作者選了一定對稱的距離函數，把這條物理規則直接寫進公式，模型就不可能違反。方向是例外：a 往 b 的方向和 b 往 a 的方向不一定剛好相反，所以方向是從距離的梯度推出來的。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="4">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="on">4. RLF 方法</li><li class="">5. 實驗結果與意義</li></ol>
+        <h2>RLF 架構</h2>
+        <figure>
+          <img src="images/ref1-fig1.png" alt="原論文圖 1：RLF 推論流程與重建的六種聲學參數" style="max-height: 38vh" />
+          <figcaption>原論文 Figure 1：(a) 推論流程 (b) 一個音源對整張地圖算出的六種參數 <sup class="cite">[1]</sup></figcaption>
+        </figure>
+        <ol class="steps" style="margin-top: 0.6em">
+          <li><span>地圖鋪一層 3D 網格，每個格點存一組潛在向量 <sup class="cite">[1]</sup></span></li>
+          <li><span>音源 <span class="src">a</span>、聽者 <span class="rcv">b</span> 用三線性內插，從周圍 8 個格點估出自己的向量（這步是 DSP 的內插）</span></li>
+          <li><span>兩組向量送進距離函數 h，得到這對位置的聲學參數 <sup class="cite">[1]</sup></span></li>
+        </ol>
+        <aside class="notes">
+          左邊灰色是要學的網格，紅色是音源、藍色是聽者。位置通常落在格點之間，所以用周圍 8 個格點加權平均，這叫三線性內插，是 DSP 常用的技巧。右邊 6 張彩色地圖是同一個音源對整張地圖算出的結果：路徑距離、方向、直達聲音量、早期反射音量、早期和晚期衰減。
+        </aside>
+      </section>
+
+      <section class="slide section" data-ch="5">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
+        <h1>實驗結果與意義</h1>
+      </section>
+
+      <section class="slide" data-ch="5">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
+        <h2>實驗結果</h2>
+        <div class="stats">
+          <div class="card">
+            <div class="big-number mid">14 MB</div>
+            <p class="big-label">WAL 地圖一組參數的記憶體</p>
+            <p class="big-label small">wave coding 要 182 GB</p>
+          </div>
+          <div class="card">
+            <div class="big-number mid">46 μs</div>
+            <p class="big-label">查 100 組參數的時間</p>
+            <p class="big-label small">單一 CPU 核心；一格畫面約 16,667 μs</p>
+          </div>
+          <div class="card">
+            <div class="big-number mid">61.8</div>
+            <p class="big-label">聽測真實感分數（0–100）</p>
+            <p class="big-label small">原始模擬 62.6 分；28 位從業者評分</p>
+          </div>
+        </div>
+        <p class="callout">
+          記憶體小了一萬多倍，聽測分數只差 0.8 分，統計上沒有顯著差異（p = 0.41）
+          <sup class="cite">[1]</sup>
+        </p>
+        <aside class="notes">
+          46 μs 是論文裡對角黎曼版本的速度。一格畫面以每秒 60 格計算約 16,667 μs，46 μs 不到 0.3%，這是我自己的換算。聽測裡另有一個故意做差的版本只拿 27.7 分，用來確認評分者有認真聽。p = 0.41 表示 0.8 分的差距很可能只是隨機波動。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="5">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
+        <h2>研究意義</h2>
+        <div class="cards">
+          <div class="card">
+            <h3>大地圖也能用</h3>
+            <p>資料從 GB 降到 MB，照物理模擬的聲音有機會用在大型開放地圖 <sup class="cite">[1]</sup></p>
+          </div>
+          <div class="card">
+            <h3>物理規則寫進架構</h3>
+            <p>互易性由公式保證，模型不會學出違反物理的結果 <sup class="cite">[1]</sup></p>
+          </div>
+          <div class="card">
+            <h3>貼近實際產品</h3>
+            <p>作者來自 Ubisoft 和 Audiokinetic，測試場景是 Wwise 的示範地圖 <sup class="cite">[1][7]</sup></p>
+          </div>
+        </div>
+        <p class="callout">這篇研究把準確但太大的 wave coding，縮小到遊戲放得下的程度</p>
+        <aside class="notes">
+          第一點是最直接的好處。第二點是方法上的特色：與其讓模型自己學互易性，不如直接把它寫進公式。第三點：Audiokinetic 就是開發 Wwise 的公司，Wwise 是很多遊戲在用的音效引擎，所以這個方法離實際使用不遠。不過論文沒有說會放進哪個產品。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="5">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
+        <h2>研究限制</h2>
+        <div class="compare">
+          <div class="col">
+            <h3>限制</h3>
+            <ul>
+              <li>只支援不會變的場景，門開關、牆被炸掉都還不行 <sup class="cite">[1]</sup></li>
+              <li>182 GB 和 14 MB 都是未壓縮大小，wave coding 也能再壓縮 <sup class="cite">[1]</sup></li>
+              <li>模擬只到 500 Hz（我的觀察，論文沒有列為限制）</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>未來方向</h3>
+            <ul>
+              <li>延伸到會變動的場景 <sup class="cite">[1]</sup></li>
+              <li>存其他對稱、受地形影響的量，例如遊戲 AI 的尋路距離 <sup class="cite">[1]</sup></li>
+            </ul>
+          </div>
+        </div>
+        <aside class="notes">
+          最大的限制是靜態場景，換地圖或地形改變就要重新訓練。另外，作者比較的是未壓縮的大小，wave coding 本身也有壓縮的空間，所以「一萬多倍」是上限，實際差距會小一些。論文也沒有公開程式碼。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="5">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
+        <h2>結論</h2>
+        <ul>
+          <li>問題：wave coding 算得準，但一張地圖要 182 GB <sup class="cite">[1]</sup></li>
+          <li>DSP：開發時把聲音變成參數，遊戲時把參數變回聲音</li>
+          <li>RLF：每個位置存一組座標，14 MB 就夠，聽起來和原始模擬一樣 <sup class="cite">[1]</sup></li>
+        </ul>
+        <aside class="notes">
+          三句話收尾。如果被問 DSP 在哪裡，就回到「系統架構與 DSP 位置」那一頁：DSP 在頭尾，RLF 改的是中間的儲存方式。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="5">
+        <ol class="chapters" aria-label="章節進度"><li class="done">1. 基本觀念</li><li class="done">2. 研究動機</li><li class="done">3. DSP 的應用</li><li class="done">4. RLF 方法</li><li class="on">5. 實驗結果與意義</li></ol>
+        <h2>參考資料</h2>
+        <ol class="refs">
+          <li>
+            Seuté, Vasudev, Richan, Buffoni. Reciprocal Latent Fields for Precomputed Sound Propagation. SIGGRAPH Conference Papers ’26（圖片出自本文，CC BY-NC-ND 4.0）
+            <a href="https://arxiv.org/abs/2602.06937" target="_blank" rel="noopener">https://arxiv.org/abs/2602.06937</a>
+          </li>
+          <li>
+            Raghuvanshi, Snyder. Parametric Wave Field Coding for Precomputed Sound Propagation. ACM TOG 33(4), 2014
+            <a href="https://doi.org/10.1145/2601097.2601184" target="_blank" rel="noopener">https://doi.org/10.1145/2601097.2601184</a>
+          </li>
+          <li>
+            Schroeder. New Method of Measuring Reverberation Time. JASA 37(3), 1965
+            <a href="https://doi.org/10.1121/1.1909343" target="_blank" rel="noopener">https://doi.org/10.1121/1.1909343</a>
+          </li>
+          <li>Pulkki. Virtual Sound Source Positioning Using Vector Base Amplitude Panning. JAES 45(6), 456–466, 1997</li>
+          <li>
+            Hamilton. PFFDTD Software, 2021
+            <a href="https://github.com/bsxfun/pffdtd" target="_blank" rel="noopener">https://github.com/bsxfun/pffdtd</a>
+          </li>
+          <li>
+            Gruffaz, Sassen. Riemannian metric learning: Closer to you than you imagine. arXiv, 2025
+            <a href="https://arxiv.org/abs/2503.05321" target="_blank" rel="noopener">https://arxiv.org/abs/2503.05321</a>
+          </li>
+          <li>
+            Ashby. Introducing The Wwise Audio Lab (WAL). Audiokinetic, 2018
+            <a href="https://www.audiokinetic.com/en/learning/videos/twnpk0nrcs4/" target="_blank" rel="noopener">https://www.audiokinetic.com/en/learning/videos/twnpk0nrcs4/</a>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <div class="edge-nav prev" id="edge-prev" aria-hidden="true">‹</div>
+    <div class="edge-nav next" id="edge-next" aria-hidden="true">›</div>
+
+    <div id="hud">
+      <a href="../" target="_top">目錄</a>
+      <a href="../reciprocal-latent-fields/research.html" target="_top">參考資料</a>
+      <a href="slides.pdf" download title="下載 PDF">PDF</a>
+      <a href="slides.pptx" download title="下載 PowerPoint">PPT</a>
+      <span id="counter"></span>
+      <button id="prev" aria-label="上一頁">‹</button>
+      <button id="next" aria-label="下一頁">›</button>
+      <button id="theme" aria-label="切換深淺色">◐</button>
+    </div>
+
+    <script>
+      (() => {
+        const slides = [...document.querySelectorAll('.slide')];
+        const counter = document.getElementById('counter');
+        const progress = document.getElementById('progress');
+        const edgePrev = document.getElementById('edge-prev');
+        const edgeNext = document.getElementById('edge-next');
+        let i = 0;
+
+        function show(n) {
+          i = Math.max(0, Math.min(slides.length - 1, n));
+          slides.forEach((s, k) => s.classList.toggle('active', k === i));
+          counter.textContent = `${i + 1} / ${slides.length}`;
+          progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+          history.replaceState(null, '', `#${i + 1}`);
+          edgePrev.hidden = i === 0;
+          edgeNext.hidden = i === slides.length - 1;
+        }
+
+        document.addEventListener('keydown', (e) => {
+          // 在按鈕、選單、輸入框上操作時不翻頁
+          if (e.target.closest?.('button, select, input, textarea, [contenteditable]')) return;
+          if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) {
+            e.preventDefault();
+            show(i + 1);
+          } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+            e.preventDefault();
+            show(i - 1);
+          } else if (e.key === 'Home') show(0);
+          else if (e.key === 'End') show(slides.length - 1);
+          else if (e.key === 'f' || e.key === 'F') {
+            document.fullscreenElement
+              ? document.exitFullscreen()
+              : document.documentElement.requestFullscreen();
+          } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
+        });
+
+        // 嵌在首頁預覽中時，由首頁的按鈕切換深淺色，隱藏自己的按鈕
+        if (window.self !== window.top) document.getElementById("theme").hidden = true;
+
+        // 首頁或其他分頁切換主題時同步
+        addEventListener('storage', (e) => {
+          if (e.key === 'theme' && e.newValue) document.documentElement.dataset.theme = e.newValue;
+        });
+
+        // 滑鼠翻頁：右下角按鈕
+        document.getElementById('prev').onclick = () => show(i - 1);
+        document.getElementById('next').onclick = () => show(i + 1);
+
+        // 滑鼠翻頁：點投影片左半部上一頁、右半部下一頁
+        // 點連結、按鈕、選單、畫布等互動元件，或剛選取文字時不翻頁
+        const deck = document.getElementById('deck');
+        const NO_FLIP =
+          'a, button, select, input, textarea, label, canvas, summary, [contenteditable], .no-flip';
+        const sideOf = (e) => (e.clientX < innerWidth / 2 ? 'prev' : 'next');
+        deck.addEventListener('click', (e) => {
+          if (e.button !== 0 || e.target.closest(NO_FLIP)) return;
+          if (String(getSelection?.() ?? '').trim()) return;
+          show(i + (sideOf(e) === 'prev' ? -1 : 1));
+        });
+        deck.addEventListener('mousemove', (e) => {
+          if (e.target.closest(NO_FLIP)) delete deck.dataset.side;
+          else deck.dataset.side = sideOf(e);
+        });
+        deck.addEventListener('mouseleave', () => delete deck.dataset.side);
+
+        // 用滑鼠點過按鈕、改過選單後移開焦點，鍵盤左右鍵才能繼續翻頁
+        document.addEventListener('click', (e) => {
+          if (e.detail > 0) e.target.closest('button')?.blur();
+        });
+        document.addEventListener('change', (e) => {
+          if (e.target.matches('select')) e.target.blur();
+        });
+        document.getElementById('theme').onclick = () => {
+          const root = document.documentElement;
+          const dark = root.dataset.theme
+            ? root.dataset.theme === 'dark'
+            : matchMedia('(prefers-color-scheme: dark)').matches;
+          root.dataset.theme = dark ? 'light' : 'dark';
+          try {
+            localStorage.setItem('theme', root.dataset.theme);
+          } catch {}
+        };
+
+        let startX = null;
+        document.addEventListener(
+          'touchstart',
+          (e) => {
+            startX = e.touches[0].clientX;
+          },
+          { passive: true },
+        );
+        document.addEventListener('touchend', (e) => {
+          if (startX === null) return;
+          const dx = e.changedTouches[0].clientX - startX;
+          if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+          startX = null;
+        });
+
+        show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+      })();
+    </script>
+  </body>
+</html>
