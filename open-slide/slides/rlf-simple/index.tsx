@@ -292,11 +292,12 @@ const Cover: Page = () => (
         fontSize: 'var(--osd-size-hero)',
         fontWeight: 900,
         lineHeight: 1.1,
-        margin: '28px 0 36px',
+        margin: '28px 0 16px',
       }}
     >
       Reciprocal Latent Fields
     </h1>
+    <div style={{ fontSize: 34, fontWeight: 700, color: 'var(--osd-accent)', letterSpacing: '0.06em', marginBottom: 36 }}>RLF｜互易潛在場</div>
     <p style={{ fontSize: 46, margin: 0, color: c.muted }}>預先計算聲音傳播的資料壓縮</p>
     <p style={{ fontSize: 26, marginTop: 80, color: c.muted, lineHeight: 1.6 }}>
       Seuté、Vasudev、Richan、Buffoni（Ubisoft La Forge、Audiokinetic）

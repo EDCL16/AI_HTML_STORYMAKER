@@ -284,6 +284,9 @@ const indexScript = `
     $('v-open').href = url;
     $('v-refs').hidden = !d.hasResearch;
     $('v-refs').href = encodeURIComponent(dir) + '/research.html';
+    // PDF、PPT 由部署時的 npm run export 產生；簡報頁本身不放下載與日夜切換
+    $('v-pdf').href = encodeURIComponent(dir) + '/slides.pdf';
+    $('v-ppt').href = encodeURIComponent(dir) + '/slides.pptx';
     $('viewer-body').hidden = false;
     $('placeholder').hidden = true;
     if (frame.getAttribute('src') !== url) frame.src = url;
@@ -352,6 +355,8 @@ writeFileSync(
         <div class="actions">
           <a id="v-open" target="_blank" rel="noopener">開新分頁</a>
           <a id="v-refs" target="_blank" rel="noopener">參考資料</a>
+          <a id="v-pdf" download title="下載 PDF">PDF</a>
+          <a id="v-ppt" download title="下載 PowerPoint">PPT</a>
         </div>
       </header>
       <div class="frame-wrap"><iframe id="frame" title="簡報預覽"></iframe></div>

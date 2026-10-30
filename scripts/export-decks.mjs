@@ -1,4 +1,4 @@
-// 把每份簡報匯出成可下載的檔案（簡報右下角的「PDF」「PPT」連結會指向它們）：
+// 把每份簡報匯出成可下載的檔案（首頁簡報總覽的「PDF」「PPT」連結會指向它們）：
 //   output/<主題>/slides.html → slides.pdf（文字可搜尋、公式為向量）
 //                              → slides.pptx（每頁一張投影片截圖，附講者備註）
 // 用法：npx playwright install chromium（第一次）→ npm run export

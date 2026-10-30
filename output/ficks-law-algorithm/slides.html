@@ -229,11 +229,6 @@
         display: block;
       }
 
-      #hud a {
-        color: var(--accent);
-        text-decoration: none;
-        margin-right: 4px;
-      }
       #progress {
         position: fixed;
         top: 0;
@@ -262,6 +257,22 @@
         cursor: pointer;
         font-size: 16px;
       }
+      #home {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--card);
+        color: var(--fg);
+        text-decoration: none;
+        font-size: 18px;
+      }
+      #home[hidden] {
+        display: none;
+      }
+      #home:hover,
       #hud button:hover {
         border-color: var(--accent);
       }
@@ -2940,12 +2951,10 @@
     <div class="edge-nav next" id="edge-next" aria-hidden="true">›</div>
 
     <div id="hud">
-      <a href="slides.pdf" download title="下載 PDF">PDF</a>
-      <a href="slides.pptx" download title="下載 PowerPoint">PPT</a>
+      <a id="home" href="../" target="_top" title="回到簡報總覽" aria-label="回到簡報總覽">⌂</a>
       <span id="counter"></span>
       <button id="prev" aria-label="上一頁">‹</button>
       <button id="next" aria-label="下一頁">›</button>
-      <button id="theme" aria-label="切換深淺色">◐</button>
     </div>
 
     <script>
@@ -2985,8 +2994,8 @@
           } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
         });
 
-        // 嵌在首頁預覽中時，由首頁的按鈕切換深淺色，隱藏自己的按鈕
-        if (window.self !== window.top) document.getElementById("theme").hidden = true;
+        // 嵌在首頁預覽中時不需要「回到總覽」
+        if (window.self !== window.top) document.getElementById('home').hidden = true;
 
         // 首頁或其他分頁切換主題時同步
         addEventListener('storage', (e) => {
@@ -3021,16 +3030,6 @@
         document.addEventListener('change', (e) => {
           if (e.target.matches('select')) e.target.blur();
         });
-        document.getElementById('theme').onclick = () => {
-          const root = document.documentElement;
-          const dark = root.dataset.theme
-            ? root.dataset.theme === 'dark'
-            : matchMedia('(prefers-color-scheme: dark)').matches;
-          root.dataset.theme = dark ? 'light' : 'dark';
-          try {
-            localStorage.setItem('theme', root.dataset.theme);
-          } catch {}
-        };
 
         let startX = null;
         document.addEventListener(

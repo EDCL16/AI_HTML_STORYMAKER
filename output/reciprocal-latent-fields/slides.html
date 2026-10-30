@@ -128,6 +128,13 @@
       .cover {
         background: linear-gradient(135deg, var(--accent-soft), var(--bg) 60%);
       }
+      .cover .zh-name {
+        font-size: clamp(16px, 1.9vw, 24px);
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.06em;
+        margin-top: 0.4em;
+      }
       .cover .subtitle {
         font-size: clamp(18px, 2.4vw, 30px);
         color: var(--muted);
@@ -226,11 +233,6 @@
         display: block;
       }
 
-      #hud a {
-        color: var(--accent);
-        text-decoration: none;
-        margin-right: 4px;
-      }
       #progress {
         position: fixed;
         top: 0;
@@ -259,6 +261,22 @@
         cursor: pointer;
         font-size: 16px;
       }
+      #home {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--card);
+        color: var(--fg);
+        text-decoration: none;
+        font-size: 18px;
+      }
+      #home[hidden] {
+        display: none;
+      }
+      #home:hover,
       #hud button:hover {
         border-color: var(--accent);
       }
@@ -842,6 +860,7 @@
       <section class="slide cover">
         <p class="en">Reciprocal Latent Fields for Precomputed Sound Propagation</p>
         <h1>Reciprocal Latent Fields（RLF）</h1>
+        <p class="zh-name">RLF｜互易潛在場</p>
         <p class="subtitle">把遊戲地圖的聲音傳播資料，從 182 GB 壓成 14 MB 的方法</p>
         <p class="meta">
           論文：Seuté（Ubisoft La Forge）、Vasudev、Richan、Buffoni（Audiokinetic）・SIGGRAPH 2026
@@ -1983,10 +2002,10 @@
     <div class="edge-nav next" id="edge-next" aria-hidden="true">›</div>
 
     <div id="hud">
+      <a id="home" href="../" target="_top" title="回到簡報總覽" aria-label="回到簡報總覽">⌂</a>
       <span id="counter"></span>
       <button id="prev" aria-label="上一頁">‹</button>
       <button id="next" aria-label="下一頁">›</button>
-      <button id="theme" aria-label="切換深淺色">◐</button>
     </div>
 
     <script>
@@ -2026,8 +2045,8 @@
           } else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
         });
 
-        // 嵌在首頁預覽中時，由首頁的按鈕切換深淺色，隱藏自己的按鈕
-        if (window.self !== window.top) document.getElementById("theme").hidden = true;
+        // 嵌在首頁預覽中時不需要「回到總覽」
+        if (window.self !== window.top) document.getElementById('home').hidden = true;
 
         // 首頁或其他分頁切換主題時同步
         addEventListener('storage', (e) => {
@@ -2062,16 +2081,6 @@
         document.addEventListener('change', (e) => {
           if (e.target.matches('select')) e.target.blur();
         });
-        document.getElementById('theme').onclick = () => {
-          const root = document.documentElement;
-          const dark = root.dataset.theme
-            ? root.dataset.theme === 'dark'
-            : matchMedia('(prefers-color-scheme: dark)').matches;
-          root.dataset.theme = dark ? 'light' : 'dark';
-          try {
-            localStorage.setItem('theme', root.dataset.theme);
-          } catch {}
-        };
 
         let startX = null;
         document.addEventListener(
