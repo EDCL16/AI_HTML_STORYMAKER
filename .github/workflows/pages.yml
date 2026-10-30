@@ -6,6 +6,7 @@ on:
     paths:
       [
         'output/**',
+        'open-slide/**',
         'scripts/**',
         'package.json',
         'package-lock.json',
@@ -34,10 +35,21 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            open-slide/package-lock.json
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run export
+      # open-slide 版簡報：以 /<repo>/open-slide/ 為網址前綴建置，複製到 output/open-slide
+      - run: npm ci
+        working-directory: open-slide
+      - run: npm run build
+        working-directory: open-slide
+        env:
+          OPEN_SLIDE_BASE: /${{ github.event.repository.name }}/open-slide/
+      - run: npm run copy:open-slide
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

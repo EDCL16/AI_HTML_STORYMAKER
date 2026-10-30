@@ -5,6 +5,7 @@
   "scripts": {
     "build": "node scripts/build-site.mjs",
     "export": "node scripts/export-decks.mjs",
+    "copy:open-slide": "node scripts/copy-open-slide.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

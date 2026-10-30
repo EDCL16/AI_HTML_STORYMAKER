@@ -6,3 +6,5 @@ reference/
 # 由 npm run export 產生
 output/*/slides.pdf
 output/*/slides.pptx
+# 由 npm run copy:open-slide 產生
+output/open-slide/
