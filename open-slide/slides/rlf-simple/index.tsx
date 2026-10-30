@@ -2,7 +2,7 @@ import { type DesignSystem, type Page, type SlideMeta, Step, Steps } from '@open
 import type { CSSProperties, ReactNode } from 'react';
 import fig1 from './assets/ref1-fig1.png';
 import fig2 from './assets/ref1-fig2.png';
-import { convFig, decayFig, distFig, levelFig } from './dsp-figs';
+import { convFig, decayFig, distFig, levelFig, storageNewFig, storageOldFig } from './dsp-figs';
 
 // 配色與 HTML 精簡版相同：灰綠底、青綠主色；DSP 用琥珀色，音源紅、聽者藍（與原論文圖一致）
 export const design: DesignSystem = {
@@ -346,7 +346,6 @@ const Agenda: Page = () => (
       <Bullets size={32}>
         <li>順序是先懂名詞、再看問題、最後看解法，每段都用到前一段</li>
         <li>第 3 段是 DSP，第 4 段是論文的新方法，兩者分開講</li>
-        <li>每頁上方的進度列標示目前講到第幾段</li>
       </Bullets>
     </div>
   </Frame>
@@ -881,6 +880,50 @@ const DspSummary: Page = () => (
 
 const S4: Page = () => <SectionPage ch={4} title="RLF 方法" />;
 
+const DsCard = ({ title, svg, rlf }: { title: string; svg: string; rlf?: boolean }) => (
+  <div style={{ background: c.card, border: `2px solid ${rlf ? 'var(--osd-accent)' : c.line}`, borderRadius: 14, padding: '14px 22px 16px' }}>
+    <div style={{ fontSize: 30, fontWeight: 800, marginBottom: 6 }}>{title}</div>
+    <div style={{ fontFamily: 'var(--osd-font-body)' }} dangerouslySetInnerHTML={{ __html: svg }} />
+  </div>
+);
+
+const FlowBox = ({ children }: { children: ReactNode }) => (
+  <span style={{ background: c.card, border: `2px solid ${c.line}`, borderRadius: 10, padding: '4px 16px' }}>{children}</span>
+);
+
+const Storage: Page = () => (
+  <Frame ch={4} title="壓縮前後的資料結構" tight>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+      <DsCard title="舊方法：每一對位置存一格" svg={storageOldFig} />
+      <DsCard title="RLF：每一個位置存 16 個數字" svg={storageNewFig} rlf />
+    </div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, margin: '24px 0 20px', fontSize: 27 }}>
+      <b style={{ color: 'var(--osd-accent)' }}>查 a 到 b</b>
+      <FlowBox>a → <M>f</M>(<M>a</M>)</FlowBox>、<FlowBox>b → <M>f</M>(<M>b</M>)</FlowBox>
+      <span style={{ color: c.muted }}>→</span>
+      <FlowBox><M>h</M>(<M>f</M>(<M>a</M>), <M>f</M>(<M>b</M>))</FlowBox>
+      <span style={{ color: c.muted }}>→</span>
+      <FlowBox>π、L、τ</FlowBox>
+      <span style={{ color: c.muted }}>→</span>
+      <FlowBox>δ 從 π 的梯度推出，不用存</FlowBox>
+    </div>
+    <Syms
+      cols={2}
+      items={[
+        [<>f(a)</>, '位置 a 的潛在向量，16 個數字，從周圍格點內插'],
+        [<>h</>, '對稱的距離函數：a、b 對調，結果一樣（互易）'],
+        [<>π, L, τ</>, '距離、音量、衰減時間，每種各一張網格'],
+        [<>4 B</>, '一個數字用 4 bytes（float32）存'],
+      ]}
+    />
+    <div style={{ fontSize: 26 }}>
+      <b style={{ color: 'var(--osd-accent)' }}>IR 從哪來：</b>在 182 個音源位置各跑一次 FDTD，每次得到整張地圖的 IR，萃取成參數當答案；訓練完 IR 就丟掉
+      <Cite n="[1]" />
+    </div>
+    <Callout>白話：舊方法存「每兩個城市之間的距離」，RLF 只存「每個城市的座標」，要用時再算</Callout>
+  </Frame>
+);
+
 const Latent: Page = () => (
   <Frame ch={4} title="潛在向量與距離">
     <TwoCol cols="1fr 1fr">
@@ -1131,6 +1174,7 @@ export default [
   ConvCalc,
   DspSummary,
   S4,
+  Storage,
   Latent,
   Reciprocity,
   Arch,
@@ -1161,6 +1205,7 @@ export const notes: (string | undefined)[] = [
   '前面三頁是開發時把 IR 變成數字，這一頁是遊戲時把數字變回聲音。論文的式 (3) 準備了小、中、大三種房間的 IR，依衰減時間 τ 決定三者的比例，再和音效做卷積。直達聲不做卷積，只乘上一頁算出的倍數 A，再由 VBAP 依方向 δ 分給喇叭。表裡的數字是我舉的小例子，用程式驗算過。',
   '被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊在開發時：模擬出 IR，用前面三頁的公式算出四個參數。中間是問題所在：每一對位置都要存一組，WAL 地圖要 182 GB，RLF 把它學成每格 16 個數字，只要 14 MB。右邊在遊戲時：查出參數後，音量拿去乘倍數，衰減時間拿去決定回音、做卷積，方向交給 VBAP。論文自己的新東西只有中間那一欄，左右兩欄都是既有的 DSP 方法。',
   undefined,
+  '這頁回答「壓縮之後到底存了什麼」。距離、音量、衰減時間都是一對位置的參數，單一個點本身沒有答案。舊方法用 1.2 m 的網格，213,136 格每格對每格，每對 4 bytes，約 182 GB，這是我用論文數字驗算的。RLF 每格只存 16 個數字，約 13.6 MB，就是論文的 14 MB。這 16 個數字是訓練出來的，不是看得懂的物理量。訓練資料是在 182 個音源位置跑 FDTD，一次模擬就得到這個音源到整張地圖的 IR；另外 97 個驗證、102 個測試，都沒參與訓練。',
   '舊方法存「a 到 b 的答案」，RLF 只存「a 的座標」和「b 的座標」，要用時再算距離。右圖是論文用 2 維示範：牆兩側的 A、B，在學出來的空間裡被放到洞的兩側，直線距離剛好等於繞路的距離。實際用的是 16 維。',
   'a 喊 b 聽，和 b 喊 a 聽，路徑距離、音量、衰減都一樣。作者選了一定對稱的距離函數，把這條物理規則直接寫進公式，模型就不可能違反。方向是例外：a 往 b 的方向和 b 往 a 的方向不一定剛好相反，所以方向是從距離的梯度推出來的。',
   '左邊灰色是要學的網格，紅色是音源、藍色是聽者。位置通常落在格點之間，所以用周圍 8 個格點加權平均，這叫三線性內插，是 DSP 常用的技巧。右邊 6 張彩色地圖是同一個音源對整張地圖算出的結果：路徑距離、方向、直達聲音量、早期反射音量、早期和晚期衰減。',
