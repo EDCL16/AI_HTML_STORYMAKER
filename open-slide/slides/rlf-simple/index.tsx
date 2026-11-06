@@ -702,7 +702,7 @@ const DistDir: Page = () => (
       </li>
     </ExSteps>
     </FigSteps>
-    <Callout>白話：看直達聲晚多久到，就知道走了多遠；比一比旁邊幾格哪邊比較近，就知道聲音從哪來</Callout>
+    <Callout>看直達聲晚多久到，就知道走了多遠；比一比旁邊幾格哪邊比較近，就知道聲音從哪來</Callout>
   </Frame>
 );
 
@@ -748,7 +748,7 @@ const LevelCalc: Page = () => (
       </li>
     </ExSteps>
     </FigSteps>
-    <Callout>白話：把直達聲那一小段的能量加總，就知道多大聲；遊戲再把 dB 換回倍數，調整音效音量</Callout>
+    <Callout>把直達聲那一小段的能量加總，就知道多大聲；遊戲再把 dB 換回倍數，調整音效音量</Callout>
   </Frame>
 );
 
@@ -798,7 +798,7 @@ const DecayCalc: Page = () => (
         </li>
       </ExSteps>
     </FigSteps>
-    <Callout>白話：從 IR 尾巴往前累加能量，量曲線掉多快，就知道回音多久消失</Callout>
+    <Callout>從 IR 尾巴往前累加能量，量曲線掉多快，就知道回音多久消失</Callout>
   </Frame>
 );
 
@@ -840,7 +840,7 @@ const ConvCalc: Page = () => (
         </li>
       </ExSteps>
     </FigSteps>
-    <Callout>白話：卷積就是把每個聲音都複製成一串回音，再全部加起來</Callout>
+    <Callout>卷積就是把每個聲音都複製成一串回音，再全部加起來</Callout>
   </Frame>
 );
 
@@ -898,7 +898,7 @@ const VbapCalc: Page = () => (
         </li>
       </ExSteps>
     </FigSteps>
-    <Callout>白話：VBAP 不移動喇叭，只調每顆喇叭的音量；在 DSP 裡就是每個聲道各乘一個增益，比卷積便宜得多</Callout>
+    <Callout>VBAP 不移動喇叭，只調每顆喇叭的音量；在 DSP 裡就是每個聲道各乘一個增益，比卷積便宜得多</Callout>
   </Frame>
 );
 
@@ -988,7 +988,7 @@ const Storage: Page = () => (
       <b style={{ color: 'var(--osd-accent)' }}>IR 從哪來：</b>在 182 個音源位置各跑一次 FDTD，每次得到整張地圖的 IR，萃取成參數當答案；訓練完 IR 就丟掉
       <Cite n="[1]" />
     </div>
-    <Callout>白話：舊方法存「每兩個城市之間的距離」，RLF 只存「每個城市的座標」，要用時再算</Callout>
+    <Callout>舊方法存「每兩個城市之間的距離」，RLF 只存「每個城市的座標」，要用時再算</Callout>
   </Frame>
 );
 
