@@ -2,7 +2,7 @@ import { type DesignSystem, type Page, type SlideMeta, Step, Steps } from '@open
 import type { CSSProperties, ReactNode } from 'react';
 import fig1 from './assets/ref1-fig1.png';
 import fig2 from './assets/ref1-fig2.png';
-import { convFig, decayFig, distFig, levelFig, storageNewFig, storageOldFig } from './dsp-figs';
+import { convFig, decayFig, distFig, levelFig, storageNewFig, storageOldFig, vbapFig } from './dsp-figs';
 
 // 配色與 HTML 精簡版相同：灰綠底、青綠主色；DSP 用琥珀色，音源紅、聽者藍（與原論文圖一致）
 export const design: DesignSystem = {
@@ -844,6 +844,64 @@ const ConvCalc: Page = () => (
   </Frame>
 );
 
+const VbapCalc: Page = () => (
+  <Frame ch={3} title="VBAP 的計算" tight>
+    <IoRow>
+      <IoBox label="輸入">
+        方向 δ，加上兩顆喇叭的方向 <M>l</M>
+        <sub>1</sub>、<M>l</M>
+        <sub>2</sub>
+      </IoBox>
+      <IoArrow />
+      <IoBox label="公式" kind="formula" wide>
+        <M>δ</M> = <M>g</M>
+        <sub>1</sub>
+        <M>l</M>
+        <sub>1</sub> + <M>g</M>
+        <sub>2</sub>
+        <M>l</M>
+        <sub>2</sub>
+        <br />
+        <M>y</M>
+        <sub>i</sub>[<M>n</M>] = <M>A</M> ĝ<sub>i</sub> <M>x</M>[<M>n</M>]
+      </IoBox>
+      <IoArrow />
+      <IoBox label="得到">
+        每顆喇叭的增益 ĝ<sub>i</sub>
+      </IoBox>
+      <IoArrow />
+      <IoBox label="遊戲中" kind="use">
+        每個聲道各乘一個數，玩家聽出聲音從哪來
+      </IoBox>
+    </IoRow>
+    <Syms
+      cols={3}
+      items={[
+        [<>δ</>, '聲音從哪來，先轉成以玩家面向為準'],
+        [<>l<sub>1</sub>, l<sub>2</sub></>, '夾住 δ 的兩顆喇叭的方向'],
+        [<>g<sub>1</sub>, g<sub>2</sub></>, 'δ 拆成兩個喇叭方向時各要幾份'],
+        [<>ĝ<sub>i</sub></>, '正規化後的增益：平方和 = 1，總能量不變'],
+        [<>A</>, '音量頁算出的倍數（0.5）'],
+        [<>y<sub>i</sub>[n]</>, '第 i 顆喇叭輸出的第 n 個取樣'],
+      ]}
+    />
+    <FigSteps svg={vbapFig} h={300}>
+      <ExSteps>
+        <li>
+          δ 轉成玩家看出去是左前 20°，喇叭在左右各 30°
+          <Cite n="[4]" />
+        </li>
+        <li>解 g₁l₁ + g₂l₂ = δ：g₁ = 0.885、g₂ = 0.201；正規化後 0.975、0.221</li>
+        <li>
+          再乘音量的 A = 0.5：左聲道每個取樣 ×0.49，右聲道 ×0.11
+          <Cite n="[1][4]" />
+        </li>
+      </ExSteps>
+    </FigSteps>
+    <Callout>白話：VBAP 不移動喇叭，只調每顆喇叭的音量；在 DSP 裡就是每個聲道各乘一個增益，比卷積便宜得多</Callout>
+  </Frame>
+);
+
 const DspSummary: Page = () => (
   <Frame ch={3} title="DSP 在論文中的工作">
     <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', gap: 24, alignItems: 'stretch' }}>
@@ -1176,6 +1234,7 @@ export default [
   LevelCalc,
   DecayCalc,
   ConvCalc,
+  VbapCalc,
   DspSummary,
   S4,
   Latent,
@@ -1203,10 +1262,11 @@ export const notes: (string | undefined)[] = [
   undefined,
   '這頁回答「DSP 用在哪裡」。左邊開發時，用 DSP 把物理模擬的結果變成參數；右邊遊戲執行時，用 DSP 把參數變回聲音。中間怎麼存，是 RLF 的貢獻。接下來先講左邊開發時怎麼算，再講右邊怎麼播，最後回到一張完整的流程圖。',
   '前面講過，IR 就是在 a 拍一下手、在 b 錄到的整段聲音。開發時用 FDTD 波動模擬，在電腦裡把每一對位置的 IR 都算出來：空間切成 0.137 m 的格子、時間每步約 0.23 ms，算 2 秒。接下來三頁照這張表的順序，一個問題一頁，每頁都講四件事：輸入是什麼、套什麼公式、得到什麼、遊戲裡拿來做什麼。例子全部用同一個場景，數字會一路接下去。',
-  'c 是聲速 343 m/s，t0 是發聲時間。距離乘出來是 10 m，比直線的 8 m 多，因為聲音要繞過牆。方向的公式看起來複雜，意思很簡單：∇π 是距離增加最快的方向，前面加負號就是距離減少最快的方向，也就是聲音來的方向；除以長度只是把它變成單位向量。電腦裡用左右兩格的差去算，跟山上找最陡的坡一樣。這一頁的數字是我編的示意。',
+  'c 是聲速 343 m/s，t0 是發聲時間。距離乘出來是 10 m，比直線的 8 m 多，因為聲音要繞過牆。方向的公式看起來複雜，意思很簡單：∇π 是距離增加最快的方向，前面加負號就是距離減少最快的方向，也就是聲音來的方向；除以長度只是把它變成單位向量。電腦裡用左右兩格的差去算，跟山上找最陡的坡一樣。這一頁的數字是我編的示意。δ 在遊戲裡怎麼分給喇叭，卷積之後有一頁專門講 VBAP。',
   'dB 是用 log 表示大小，因為耳朵對音量的感覺本來就接近 log。能量用 10 log，振幅用 20 log，所以換回振幅時是除以 20。早期反射的音量算法一樣，只是時間窗換成直達聲之後的 100 ms。0.25 這個數字是示意。',
   '直接看 IR 的話，聲音忽大忽小，很難量斜率。Schroeder 1965 年的做法是從尾巴往前加，曲線就變得平滑、只會往下。斜率 s 的單位是每秒掉幾 dB，τ 就是掉 60 dB 要花幾秒。論文分早期、晚期兩段各量一次。得到的 τ 在遊戲裡決定三種房間回音怎麼混，下一頁看混好的回音怎麼套到音效上。表裡的數字是示意。',
-  '前面三頁是開發時把 IR 變成數字，這一頁是遊戲時把數字變回聲音。論文的式 (3) 準備了小、中、大三種房間的 IR，依衰減時間 τ 決定三者的比例，再和音效做卷積。直達聲不做卷積，只乘上一頁算出的倍數 A，再由 VBAP 依方向 δ 分給喇叭。表裡的數字是我舉的小例子，用程式驗算過。',
+  '前面三頁是開發時把 IR 變成數字，這一頁是遊戲時把數字變回聲音。論文的式 (3) 準備了小、中、大三種房間的 IR，依衰減時間 τ 決定三者的比例，再和音效做卷積。直達聲不做卷積，只乘上一頁算出的倍數 A，再由 VBAP 依方向 δ 分給喇叭，下一頁細講。表裡的數字是我舉的小例子，用程式驗算過。',
+  'VBAP 是 Pulkki 1997 年提出的方法，全名是向量基底振幅平移。喇叭的位置固定，要讓聲音聽起來從兩顆喇叭中間來，就把方向 δ 拆成兩個喇叭方向的組合，拆出來的份量就是各喇叭的音量。3D 的情況一樣，只是改用三顆喇叭圍成的三角形。正規化成平方和等於 1，是讓聲音左右移動時總能量不變，不會忽大忽小。從 DSP 來看，VBAP 和音量那一頁的增益是同一種運算：每個取樣乘一個數，所以 A 和 g 可以先相乘，變成每個聲道一個數字。卷積每個取樣要乘加整條 IR，VBAP 每個取樣只乘一次，所以每一幀都能重算。實作上增益變化時會在幾毫秒內慢慢滑過去，避免喀喀聲，這是一般 DSP 的做法，不是論文寫的。論文裡直達聲用 VBAP 擺到 δ 的方向，殘響 1/3 跟直達聲同方向、2/3 從四面八方來。20° 和喇叭角度是我舉的示意，計算用程式驗算過。',
   '被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊在開發時：模擬出 IR，用前面三頁的公式算出四個參數。中間是問題所在：每一對位置都要存一組，WAL 地圖要 182 GB，RLF 把它學成每格 16 個數字，只要 14 MB。右邊在遊戲時：查出參數後，音量拿去乘倍數，衰減時間拿去決定回音、做卷積，方向交給 VBAP。論文自己的新東西只有中間那一欄，左右兩欄都是既有的 DSP 方法。',
   undefined,
   '舊方法存「a 到 b 的答案」，RLF 只存「a 的座標」和「b 的座標」，要用時再算距離。右圖是論文用 2 維示範：牆兩側的 A、B，在學出來的空間裡被放到洞的兩側，直線距離剛好等於繞路的距離。實際用的是 16 維。',

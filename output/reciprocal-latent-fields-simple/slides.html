@@ -1264,7 +1264,7 @@
         </div>
         <p class="callout">白話：看直達聲晚多久到，就知道走了多遠；比一比旁邊幾格哪邊比較近，就知道聲音從哪來</p>
         <aside class="notes">
-          c 是聲速 343 m/s，t0 是發聲時間。距離乘出來是 10 m，比直線的 8 m 多，因為聲音要繞過牆。方向的公式看起來複雜，意思很簡單：∇π 是距離增加最快的方向，前面加負號就是距離減少最快的方向，也就是聲音來的方向；除以長度只是把它變成單位向量。電腦裡用左右兩格的差去算，跟山上找最陡的坡一樣。這一頁的數字是我編的示意。
+          c 是聲速 343 m/s，t0 是發聲時間。距離乘出來是 10 m，比直線的 8 m 多，因為聲音要繞過牆。方向的公式看起來複雜，意思很簡單：∇π 是距離增加最快的方向，前面加負號就是距離減少最快的方向，也就是聲音來的方向；除以長度只是把它變成單位向量。電腦裡用左右兩格的差去算，跟山上找最陡的坡一樣。這一頁的數字是我編的示意。δ 在遊戲裡怎麼分給喇叭，卷積之後有一頁專門講 VBAP。
         </aside>
       </section>
 
@@ -1363,7 +1363,40 @@
         </div>
         <p class="callout">白話：卷積就是把每個聲音都複製成一串回音，再全部加起來</p>
         <aside class="notes">
-          前面三頁是開發時把 IR 變成數字，這一頁是遊戲時把數字變回聲音。論文的式 (3) 準備了小、中、大三種房間的 IR，依衰減時間 τ 決定三者的比例，再和音效做卷積。直達聲不做卷積，只乘上一頁算出的倍數 A，再由 VBAP 依方向 δ 分給喇叭。表裡的數字是我舉的小例子，用程式驗算過。
+          前面三頁是開發時把 IR 變成數字，這一頁是遊戲時把數字變回聲音。論文的式 (3) 準備了小、中、大三種房間的 IR，依衰減時間 τ 決定三者的比例，再和音效做卷積。直達聲不做卷積，只乘上一頁算出的倍數 A，再由 VBAP 依方向 δ 分給喇叭，下一頁細講。表裡的數字是我舉的小例子，用程式驗算過。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <h2>VBAP 的計算</h2>
+        <div class="io">
+          <div class="card"><span class="io-k">輸入</span><p>方向 δ，加上兩顆喇叭的方向 \(l_1, l_2\)</p></div>
+          <div class="arrow">→</div>
+          <div class="card io-f"><span class="io-k">公式</span>\[ \delta=g_1 l_1+g_2 l_2,\quad y_i[n]=A\,\hat g_i\,x[n] \]</div>
+          <div class="arrow">→</div>
+          <div class="card"><span class="io-k">得到</span><p>每顆喇叭的增益 \(\hat g_i\)</p></div>
+          <div class="arrow">→</div>
+          <div class="card use"><span class="io-k">遊戲中</span><p>每個聲道各乘一個數，玩家聽出聲音從哪來</p></div>
+        </div>
+        <div class="syms" style="--cols: 3" aria-label="符號說明">
+          <span><b>\(\delta\)</b>聲音從哪來，先轉成以玩家面向為準</span>
+          <span><b>\(l_1, l_2\)</b>夾住 δ 的兩顆喇叭的方向</span>
+          <span><b>\(g_1, g_2\)</b>δ 拆成兩個喇叭方向時各要幾份</span>
+          <span><b>\(\hat g_i\)</b>正規化後的增益：\(\hat g_1^2+\hat g_2^2=1\)，總能量不變</span>
+          <span><b>\(A\)</b>音量頁算出的倍數（0.5）</span>
+          <span><b>\(y_i[n]\)</b>第 i 顆喇叭輸出的第 n 個取樣</span>
+        </div>
+        <div class="fig-steps">
+          <figure class="dsp-fig"><svg viewBox="0 0 600 270" role="img" aria-label="VBAP：方向 δ 在左前 20 度，拆成左右喇叭方向的組合，左喇叭乘 0.49、右喇叭乘 0.11" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="h-vbap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--dsp)"/></marker></defs><line x1="160" y1="205" x2="160" y2="30" style="stroke:var(--line);stroke-width:2;stroke-dasharray:6 6"/><text x="160" y="26" style="fill:var(--muted);font-size:13px;font-weight:500" text-anchor="middle">正前方</text><line x1="160" y1="205" x2="77.5" y2="62.1" style="stroke:var(--line);stroke-width:2"/><rect x="63.5" y="48.1" width="28" height="28" rx="5" style="fill:var(--card);stroke:var(--src);stroke-width:3"/><text x="77.5" y="38.1" style="fill:var(--src);font-size:14px;font-weight:700" text-anchor="middle">左喇叭 l₁</text><line x1="160" y1="205" x2="242.5" y2="62.1" style="stroke:var(--line);stroke-width:2"/><rect x="228.5" y="48.1" width="28" height="28" rx="5" style="fill:var(--card);stroke:var(--rcv);stroke-width:3"/><text x="242.5" y="38.1" style="fill:var(--rcv);font-size:14px;font-weight:700" text-anchor="middle">右喇叭 l₂</text><line x1="160" y1="205" x2="104.7" y2="109.2" style="stroke:var(--src);stroke-width:3;stroke-dasharray:5 4"/><line x1="104.7" y1="109.2" x2="117.2" y2="87.5" style="stroke:var(--rcv);stroke-width:3;stroke-dasharray:5 4"/><line x1="160" y1="205" x2="117.2" y2="87.5" style="stroke:var(--dsp);stroke-width:4" marker-end="url(#h-vbap)"/><text x="125.2" y="91.5" style="fill:var(--dsp);font-size:16px;font-weight:700" text-anchor="start">δ 左前 20°</text><text x="124.4" y="161.1" style="fill:var(--src);font-size:13px;font-weight:500" text-anchor="end">0.885 l₁</text><circle cx="160" cy="205" r="16" style="fill:var(--card);stroke:var(--fg);stroke-width:3"/><text x="160" y="245" style="fill:var(--fg);font-size:14px;font-weight:500" text-anchor="middle">玩家（俯視）</text><text x="330" y="24" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="start">每個聲道各乘一個數</text><text x="410" y="66" style="fill:var(--fg);font-size:15px;font-weight:700" text-anchor="end">音效 x</text><line x1="420" y1="60" x2="588" y2="60" style="stroke:var(--line);stroke-width:1"/><path d="M420,60L422.1,50.7L424.2,42.4L426.3,35.7L428.4,31.5L430.5,30L432.6,31.5L434.7,35.7L436.8,42.4L438.9,50.7L441,60L443.1,69.3L445.2,77.6L447.3,84.3L449.4,88.5L451.5,90L453.6,88.5L455.7,84.3L457.8,77.6L459.9,69.3L462,60L464.1,50.7L466.2,42.4L468.3,35.7L470.4,31.5L472.5,30L474.6,31.5L476.7,35.7L478.8,42.4L480.9,50.7L483,60L485.1,69.3L487.2,77.6L489.3,84.3L491.4,88.5L493.5,90L495.6,88.5L497.7,84.3L499.8,77.6L501.9,69.3L504,60L506.1,50.7L508.2,42.4L510.3,35.7L512.4,31.5L514.5,30L516.6,31.5L518.7,35.7L520.8,42.4L522.9,50.7L525,60L527.1,69.3L529.2,77.6L531.3,84.3L533.4,88.5L535.5,90L537.6,88.5L539.7,84.3L541.8,77.6L543.9,69.3L546,60L548.1,50.7L550.2,42.4L552.3,35.7L554.4,31.5L556.5,30L558.6,31.5L560.7,35.7L562.8,42.4L564.9,50.7L567,60L569.1,69.3L571.2,77.6L573.3,84.3L575.4,88.5L577.5,90L579.6,88.5L581.7,84.3L583.8,77.6L585.9,69.3L588,60" style="fill:none;stroke:var(--fg);stroke-width:3"/><text x="410" y="136" style="fill:var(--src);font-size:15px;font-weight:700" text-anchor="end">左 ×0.49</text><line x1="420" y1="130" x2="588" y2="130" style="stroke:var(--line);stroke-width:1"/><path d="M420,130L422.1,125.5L424.2,121.4L426.3,118.2L428.4,116.1L430.5,115.4L432.6,116.1L434.7,118.2L436.8,121.4L438.9,125.5L441,130L443.1,134.5L445.2,138.6L447.3,141.8L449.4,143.9L451.5,144.6L453.6,143.9L455.7,141.8L457.8,138.6L459.9,134.5L462,130L464.1,125.5L466.2,121.4L468.3,118.2L470.4,116.1L472.5,115.4L474.6,116.1L476.7,118.2L478.8,121.4L480.9,125.5L483,130L485.1,134.5L487.2,138.6L489.3,141.8L491.4,143.9L493.5,144.6L495.6,143.9L497.7,141.8L499.8,138.6L501.9,134.5L504,130L506.1,125.5L508.2,121.4L510.3,118.2L512.4,116.1L514.5,115.4L516.6,116.1L518.7,118.2L520.8,121.4L522.9,125.5L525,130L527.1,134.5L529.2,138.6L531.3,141.8L533.4,143.9L535.5,144.6L537.6,143.9L539.7,141.8L541.8,138.6L543.9,134.5L546,130L548.1,125.5L550.2,121.4L552.3,118.2L554.4,116.1L556.5,115.4L558.6,116.1L560.7,118.2L562.8,121.4L564.9,125.5L567,130L569.1,134.5L571.2,138.6L573.3,141.8L575.4,143.9L577.5,144.6L579.6,143.9L581.7,141.8L583.8,138.6L585.9,134.5L588,130" style="fill:none;stroke:var(--src);stroke-width:3"/><text x="410" y="206" style="fill:var(--rcv);font-size:15px;font-weight:700" text-anchor="end">右 ×0.11</text><line x1="420" y1="200" x2="588" y2="200" style="stroke:var(--line);stroke-width:1"/><path d="M420,200L422.1,199L424.2,198.1L426.3,197.3L428.4,196.8L430.5,196.7L432.6,196.8L434.7,197.3L436.8,198.1L438.9,199L441,200L443.1,201L445.2,201.9L447.3,202.7L449.4,203.2L451.5,203.3L453.6,203.2L455.7,202.7L457.8,201.9L459.9,201L462,200L464.1,199L466.2,198.1L468.3,197.3L470.4,196.8L472.5,196.7L474.6,196.8L476.7,197.3L478.8,198.1L480.9,199L483,200L485.1,201L487.2,201.9L489.3,202.7L491.4,203.2L493.5,203.3L495.6,203.2L497.7,202.7L499.8,201.9L501.9,201L504,200L506.1,199L508.2,198.1L510.3,197.3L512.4,196.8L514.5,196.7L516.6,196.8L518.7,197.3L520.8,198.1L522.9,199L525,200L527.1,201L529.2,201.9L531.3,202.7L533.4,203.2L535.5,203.3L537.6,203.2L539.7,202.7L541.8,201.9L543.9,201L546,200L548.1,199L550.2,198.1L552.3,197.3L554.4,196.8L556.5,196.7L558.6,196.8L560.7,197.3L562.8,198.1L564.9,199L567,200L569.1,201L571.2,201.9L573.3,202.7L575.4,203.2L577.5,203.3L579.6,203.2L581.7,202.7L583.8,201.9L585.9,201L588,200" style="fill:none;stroke:var(--rcv);stroke-width:3"/><text x="330" y="252" style="fill:var(--dsp);font-size:16px;font-weight:700" text-anchor="start">左比右大聲 4.4 倍（約 13 dB）</text></svg></figure>
+          <ol class="ex-steps">
+            <li>δ 轉成玩家看出去是左前 20°，喇叭在左右各 30° <sup class="cite">[4]</sup></li>
+            <li>解 \(g_1 l_1+g_2 l_2=\delta\)：\(g_1=0.885,\ g_2=0.201\)；正規化後 0.975、0.221</li>
+            <li>再乘音量的 A = 0.5：左聲道每個取樣 ×0.49，右聲道 ×0.11 <sup class="cite">[1][4]</sup></li>
+          </ol>
+        </div>
+        <p class="callout">白話：VBAP 不移動喇叭，只調每顆喇叭的音量；在 DSP 裡就是每個聲道各乘一個增益，比卷積便宜得多</p>
+        <aside class="notes">
+          VBAP 是 Pulkki 1997 年提出的方法，全名是向量基底振幅平移。喇叭的位置固定，要讓聲音聽起來從兩顆喇叭中間來，就把方向 δ 拆成兩個喇叭方向的組合，拆出來的份量就是各喇叭的音量。3D 的情況一樣，只是改用三顆喇叭圍成的三角形。正規化成平方和等於 1，是讓聲音左右移動時總能量不變，不會忽大忽小。從 DSP 來看，VBAP 和音量那一頁的增益是同一種運算：每個取樣乘一個數，所以 A 和 g 可以先相乘，變成每個聲道一個數字。卷積每個取樣要乘加整條 IR，VBAP 每個取樣只乘一次，所以每一幀都能重算。實作上增益變化時會在幾毫秒內慢慢滑過去，避免喀喀聲，這是一般 DSP 的做法，不是論文寫的。論文裡直達聲用 VBAP 擺到 δ 的方向，殘響 1/3 跟直達聲同方向、2/3 從四面八方來。20° 和喇叭角度是我舉的示意，計算用程式驗算過。
         </aside>
       </section>
 
