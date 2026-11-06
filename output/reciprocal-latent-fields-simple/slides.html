@@ -955,6 +955,32 @@
         color: var(--muted);
         font-size: calc(var(--u) * 1.3);
       }
+      .lane .chip small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.72em;
+        line-height: 1.35;
+      }
+      .lane .down.sim {
+        font-style: italic;
+      }
+      .lane .down.dsp {
+        color: var(--dsp);
+        font-weight: 700;
+      }
+      .lane .down.ml {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .flow-fig {
+        margin: 0.4em 0 0;
+      }
+      .flow-fig svg {
+        max-height: calc(var(--u) * 26);
+      }
+      .flow-fig.tall svg {
+        max-height: calc(var(--u) * 30);
+      }
       .lane-arrow {
         align-self: center;
         color: var(--muted);
@@ -1183,30 +1209,12 @@
 
       <section class="slide" data-ch="3">
         <h2>系統架構與 DSP 位置</h2>
-        <div class="flow">
-          <div class="card dsp">
-            <span class="tag">DSP</span>
-            <h3>開發時：聲音變數字</h3>
-            <p>波動模擬得到每一點的 IR，再算出聲學參數</p>
-          </div>
-          <div class="arrow">→</div>
-          <div class="card ml">
-            <span class="tag ml">機器學習</span>
-            <h3>儲存：RLF</h3>
-            <p>把參數壓進 14 MB 的網格，這是論文的新方法</p>
-          </div>
-          <div class="arrow">→</div>
-          <div class="card dsp">
-            <span class="tag">DSP</span>
-            <h3>遊戲時：數字變聲音</h3>
-            <p>查出參數，調音量、套回音、擺方向，播給玩家聽</p>
-          </div>
-        </div>
+        <figure class="flow-fig"><svg viewBox="-4 0 1208 430" role="img" aria-label="整體處理流程：開發時地圖經 FDTD 模擬得到 IR，DSP 擷取參數，RLF 壓成 14 MB；遊戲時查詢參數，DSP 做增益、卷積、VBAP，玩家聽到聲音" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="h-flow1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs><text x="0" y="26" style="fill:var(--fg);font-size:18px;font-weight:700" text-anchor="start">開發時：出貨前在電腦上算一次</text><text x="141.5" y="272" style="fill:var(--fg);font-size:18px;font-weight:700" text-anchor="start">遊戲時：每一幀即時處理</text><rect x="0" y="46" width="255" height="130" rx="12" style="fill:var(--card);stroke:var(--line);stroke-width:2"/><text x="16" y="74" style="fill:var(--fg);font-size:15px;font-weight:700">輸入</text><text x="16" y="106" style="fill:var(--fg);font-size:25px;font-weight:700">地圖幾何</text><text x="16" y="136" style="fill:var(--fg);font-size:19px;font-weight:500">牆、地板、房間的形狀</text><polyline points="259,111 309,111" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow1)"/><rect x="315" y="46" width="255" height="130" rx="12" style="fill:var(--card);stroke:var(--muted);stroke-width:3;stroke-dasharray:8 6"/><text x="331" y="74" style="fill:var(--muted);font-size:15px;font-weight:700">物理模擬（不是 DSP）</text><text x="331" y="106" style="fill:var(--fg);font-size:25px;font-weight:700">FDTD 模擬</text><text x="331" y="136" style="fill:var(--fg);font-size:19px;font-weight:500">解波動方程式，得到</text><text x="331" y="160" style="fill:var(--fg);font-size:19px;font-weight:500">每對位置的 IR</text><text x="556" y="74" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="end">p.12</text><polyline points="574,111 624,111" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow1)"/><rect x="630" y="46" width="255" height="130" rx="12" style="fill:var(--card);stroke:var(--dsp);stroke-width:3"/><text x="646" y="74" style="fill:var(--dsp);font-size:15px;font-weight:700">DSP</text><text x="646" y="106" style="fill:var(--fg);font-size:25px;font-weight:700">擷取參數</text><text x="646" y="136" style="fill:var(--fg);font-size:19px;font-weight:500">IR → π、δ、L、τ</text><text x="646" y="160" style="fill:var(--fg);font-size:19px;font-weight:500">四個數字描述一條 IR</text><text x="871" y="74" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="end">p.13–15</text><polyline points="889,111 939,111" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow1)"/><rect x="945" y="46" width="255" height="130" rx="12" style="fill:var(--card);stroke:var(--accent);stroke-width:3"/><text x="961" y="74" style="fill:var(--accent);font-size:15px;font-weight:700">機器學習</text><text x="961" y="106" style="fill:var(--fg);font-size:25px;font-weight:700">RLF 訓練</text><text x="961" y="136" style="fill:var(--fg);font-size:19px;font-weight:500">182 GB 學成 14 MB</text><text x="961" y="160" style="fill:var(--fg);font-size:19px;font-weight:500">每格只存 16 個數字</text><text x="1186" y="74" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="end">p.21–24</text><rect x="0" y="286" width="255" height="130" rx="12" style="fill:var(--card);stroke:var(--accent);stroke-width:3"/><text x="16" y="314" style="fill:var(--accent);font-size:15px;font-weight:700">RLF</text><text x="16" y="346" style="fill:var(--fg);font-size:25px;font-weight:700">查詢參數</text><text x="16" y="376" style="fill:var(--fg);font-size:19px;font-weight:500">給音源 a、玩家 b</text><text x="16" y="400" style="fill:var(--fg);font-size:19px;font-weight:500">約 46 μs 查出四個數字</text><text x="241" y="314" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="end">p.21</text><polyline points="259,351 309,351" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow1)"/><rect x="315" y="286" width="255" height="130" rx="12" style="fill:var(--card);stroke:var(--dsp);stroke-width:3"/><text x="331" y="314" style="fill:var(--dsp);font-size:15px;font-weight:700">DSP</text><text x="331" y="346" style="fill:var(--fg);font-size:25px;font-weight:700">增益＋卷積</text><text x="331" y="376" style="fill:var(--fg);font-size:19px;font-weight:500">L 調音量（被牆擋）</text><text x="331" y="400" style="fill:var(--fg);font-size:19px;font-weight:500">τ 套回音（房間大小）</text><text x="556" y="314" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="end">p.14、16</text><polyline points="574,351 624,351" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow1)"/><rect x="630" y="286" width="255" height="130" rx="12" style="fill:var(--card);stroke:var(--dsp);stroke-width:3"/><text x="646" y="314" style="fill:var(--dsp);font-size:15px;font-weight:700">DSP</text><text x="646" y="346" style="fill:var(--fg);font-size:25px;font-weight:700">VBAP</text><text x="646" y="376" style="fill:var(--fg);font-size:19px;font-weight:500">δ 決定各喇叭音量</text><text x="646" y="400" style="fill:var(--fg);font-size:19px;font-weight:500">聽出聲音從哪來</text><text x="871" y="314" style="fill:var(--muted);font-size:14px;font-weight:500" text-anchor="end">p.17</text><polyline points="889,351 939,351" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow1)"/><rect x="945" y="286" width="255" height="130" rx="12" style="fill:var(--card);stroke:var(--line);stroke-width:2"/><text x="961" y="314" style="fill:var(--fg);font-size:15px;font-weight:700">輸出</text><text x="961" y="346" style="fill:var(--fg);font-size:25px;font-weight:700">玩家聽到</text><text x="961" y="376" style="fill:var(--fg);font-size:19px;font-weight:500">有遮擋、有回音、</text><text x="961" y="400" style="fill:var(--fg);font-size:19px;font-weight:500">有方向的聲音</text><polyline points="1072.5,180 1072.5,220 307.5,220" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow1)"/><polyline points="307.5,220 127.5,220 127.5,280" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow1)"/><rect x="450" y="204" width="300" height="30" rx="15" style="fill:var(--bg,var(--card));stroke:var(--accent);stroke-width:2"/><text x="600" y="225" style="fill:var(--accent);font-size:16px;font-weight:700" text-anchor="middle">14 MB 的網格隨遊戲一起出貨</text></svg></figure>
         <p class="callout">
-          DSP 用在頭尾兩端，中間的儲存方式是機器學習。RLF 改的只有中間那一格 <sup class="cite">[1]</sup>
+          開發時把聲音變成數字，遊戲時再把數字變回聲音，這兩段用 DSP；中間的儲存靠機器學習，RLF 改的只有這一段 <sup class="cite">[1]</sup>
         </p>
         <aside class="notes">
-          這頁回答「DSP 用在哪裡」。左邊開發時，用 DSP 把物理模擬的結果變成參數；右邊遊戲執行時，用 DSP 把參數變回聲音。中間怎麼存，是 RLF 的貢獻。接下來先講左邊開發時怎麼算，再講右邊怎麼播，最後回到一張完整的流程圖。
+          這頁是整份報告的地圖，回答「DSP 用在哪裡」。上排是開發時，遊戲出貨前在電腦上算一次：先有地圖，用 FDTD 模擬聲波得到每對位置的 IR。FDTD 是解物理方程式，不算 DSP。IR 出來後，用 DSP 擷取成距離、方向、音量、回音長度四個數字，再交給 RLF 訓練，從 182 GB 壓成 14 MB。下排是遊戲時，每一幀都要做：給音源和玩家的位置，向 RLF 查出四個數字，再用 DSP 調音量、套回音、用 VBAP 擺方向，玩家就聽到有遮擋、有回音、有方向的聲音。每個方塊右上角是對應的頁碼。接下來照順序講：先講上排 DSP 怎麼算，再講下排怎麼播，再用一個實際例子走一遍玩家聽到音效的流程。
         </aside>
       </section>
 
@@ -1404,35 +1412,44 @@
         <h2>DSP 在論文中的工作</h2>
         <div class="lanes">
           <div class="lane dsp">
-            <h3>開發時（DSP）</h3>
-            <div class="chip">地圖幾何</div>
-            <div class="down">↓ FDTD 波動模擬</div>
-            <div class="chip">每對位置的 IR</div>
-            <div class="down">↓ 前三頁的公式</div>
-            <div class="chip">π、δ、L、τ</div>
+            <h3>開發時：算出參數</h3>
+            <div class="chip">地圖幾何<small>牆、地板、房間的形狀</small></div>
+            <div class="down sim">↓ FDTD 物理模擬（不是 DSP）</div>
+            <div class="chip">每對位置的 IR<small>在 a 拍手、在 b 錄到的整段聲音</small></div>
+            <div class="down dsp">↓ DSP：第 13～15 頁的公式</div>
+            <div class="chip">π、δ、L、τ<small>距離、方向、音量、回音長度</small></div>
           </div>
           <div class="lane-arrow">→</div>
           <div class="lane ml">
-            <h3>儲存（RLF）</h3>
-            <div class="chip">每對位置一組參數<br />182 GB</div>
-            <div class="down">↓ 學成每格 16 個數字</div>
-            <div class="chip">潛在向量網格<br />14 MB</div>
-            <div class="down">↓ 三線性內插、算距離</div>
-            <div class="chip">查出 π、δ、L、τ</div>
+            <h3>儲存：RLF</h3>
+            <div class="chip">每對位置一組參數<small>182 GB，遊戲裝不下</small></div>
+            <div class="down ml">↓ 機器學習：每格學 16 個數字</div>
+            <div class="chip">潛在向量網格<small>14 MB，只存每個位置</small></div>
+            <div class="down ml">↓ 內插出 a、b，再算兩者距離</div>
+            <div class="chip">π、δ、L、τ<small>任何一對位置都能即時查</small></div>
           </div>
           <div class="lane-arrow">→</div>
           <div class="lane dsp">
-            <h3>遊戲時（DSP）</h3>
-            <div class="chip">L → 乘倍數（增益）</div>
-            <div class="chip">τ → 卷積套回音</div>
-            <div class="chip">δ → VBAP 分配喇叭</div>
-            <div class="down">↓</div>
-            <div class="chip">玩家聽到的聲音</div>
+            <h3>遊戲時：變回聲音</h3>
+            <div class="chip">L → 增益<small>乘一個倍數，被牆擋住就變小聲</small></div>
+            <div class="chip">τ → 卷積<small>套上回音，房間越大回音越長</small></div>
+            <div class="chip">δ → VBAP<small>調各喇叭音量，聽出聲音從哪來</small></div>
+            <div class="down dsp">↓ 三者合在一起</div>
+            <div class="chip">玩家聽到的聲音<small>有遮擋、有回音、有方向</small></div>
           </div>
         </div>
-        <p class="callout">DSP 負責把聲音變成數字、再把數字變回聲音；RLF 負責把中間的數字存小 <sup class="cite">[1]</sup></p>
+        <p class="callout">FDTD 負責產生 IR，DSP 把 IR 變成參數、再把參數變回聲音，RLF 只負責把參數存小 <sup class="cite">[1]</sup></p>
         <aside class="notes">
-          被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊在開發時：模擬出 IR，用前面三頁的公式算出四個參數。中間是問題所在：每一對位置都要存一組，WAL 地圖要 182 GB，RLF 把它學成每格 16 個數字，只要 14 MB。右邊在遊戲時：查出參數後，音量拿去乘倍數，衰減時間拿去決定回音、做卷積，方向交給 VBAP。論文自己的新東西只有中間那一欄，左右兩欄都是既有的 DSP 方法。
+          被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊是開發時：先用 FDTD 在電腦裡模擬聲波，得到每一對位置的 IR。FDTD 是解波動方程式的物理模擬，不算 DSP；IR 出來之後，用第 13 到 15 頁的公式算出距離、方向、音量、回音長度，這一步才是 DSP。中間是問題所在：每一對位置都要存一組參數，WAL 地圖要 182 GB，RLF 改成每個格點學 16 個數字，只要 14 MB，用的時候內插出 a、b 兩點再算距離。右邊是遊戲時，也是 DSP：音量變成增益、衰減時間決定回音再做卷積、方向交給 VBAP 分配喇叭，三者合起來就是玩家聽到的聲音。論文的新東西只有中間那一欄，左右兩欄都是既有的方法。
+        </aside>
+      </section>
+
+      <section class="slide" data-ch="3">
+        <h2>玩家聽到音效的流程</h2>
+        <figure class="flow-fig tall"><svg viewBox="-4 0 1196 420" role="img" aria-label="玩家聽到音效的流程：觸發音效、查 RLF、直達聲做增益和 VBAP、殘響選房間回音再卷積，最後混合從喇叭播出，下一幀有人移動就重查" style="width:100%;height:auto;display:block;overflow:visible"><defs><marker id="h-flow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs><rect x="0" y="128" width="208" height="150" rx="12" style="fill:var(--card);stroke:var(--line);stroke-width:2"/><text x="16" y="156" style="fill:var(--fg);font-size:15px;font-weight:700">① 遊戲事件</text><text x="16" y="188" style="fill:var(--fg);font-size:25px;font-weight:700">觸發音效</text><text x="16" y="218" style="fill:var(--fg);font-size:19px;font-weight:500">敵人在牆後開槍</text><text x="16" y="242" style="fill:var(--fg);font-size:19px;font-weight:500">音源 a、玩家 b</text><rect x="238" y="128" width="208" height="150" rx="12" style="fill:var(--card);stroke:var(--accent);stroke-width:3"/><text x="254" y="156" style="fill:var(--accent);font-size:15px;font-weight:700">② RLF</text><text x="254" y="188" style="fill:var(--fg);font-size:25px;font-weight:700">查參數</text><text x="254" y="218" style="fill:var(--fg);font-size:19px;font-weight:500">π = 10 m、δ 左前</text><text x="254" y="242" style="fill:var(--fg);font-size:19px;font-weight:500">L = −6 dB、τ = 1.5 s</text><text x="476" y="22" style="fill:var(--dsp);font-size:16px;font-weight:700" text-anchor="start">直達聲：穿過、繞過牆的那一下</text><rect x="476" y="34" width="208" height="150" rx="12" style="fill:var(--card);stroke:var(--dsp);stroke-width:3"/><text x="492" y="62" style="fill:var(--dsp);font-size:15px;font-weight:700">③ DSP 增益</text><text x="492" y="94" style="fill:var(--fg);font-size:25px;font-weight:700">調音量</text><text x="492" y="124" style="fill:var(--fg);font-size:19px;font-weight:500">L = −6 dB</text><text x="492" y="148" style="fill:var(--fg);font-size:19px;font-weight:500">→ 振幅 ×0.5</text><rect x="714" y="34" width="208" height="150" rx="12" style="fill:var(--card);stroke:var(--dsp);stroke-width:3"/><text x="730" y="62" style="fill:var(--dsp);font-size:15px;font-weight:700">④ DSP VBAP</text><text x="730" y="94" style="fill:var(--fg);font-size:25px;font-weight:700">擺方向</text><text x="730" y="124" style="fill:var(--fg);font-size:19px;font-weight:500">δ 左前 20°</text><text x="730" y="148" style="fill:var(--fg);font-size:19px;font-weight:500">→ 左 0.975、右 0.221</text><text x="476" y="398" style="fill:var(--dsp);font-size:16px;font-weight:700" text-anchor="start">殘響：在房間裡來回反射的回音</text><rect x="476" y="222" width="208" height="150" rx="12" style="fill:var(--card);stroke:var(--dsp);stroke-width:3"/><text x="492" y="250" style="fill:var(--dsp);font-size:15px;font-weight:700">③ DSP 選回音</text><text x="492" y="282" style="fill:var(--fg);font-size:25px;font-weight:700">混房間 IR</text><text x="492" y="312" style="fill:var(--fg);font-size:19px;font-weight:500">τ = 1.5 s</text><text x="492" y="336" style="fill:var(--fg);font-size:19px;font-weight:500">→ 混小、中、大房間</text><rect x="714" y="222" width="208" height="150" rx="12" style="fill:var(--card);stroke:var(--dsp);stroke-width:3"/><text x="730" y="250" style="fill:var(--dsp);font-size:15px;font-weight:700">④ DSP 卷積</text><text x="730" y="282" style="fill:var(--fg);font-size:25px;font-weight:700">套回音</text><text x="730" y="312" style="fill:var(--fg);font-size:19px;font-weight:500">1/3 跟直達聲同方向</text><text x="730" y="336" style="fill:var(--fg);font-size:19px;font-weight:500">2/3 從四面八方來</text><rect x="952" y="128" width="208" height="150" rx="12" style="fill:var(--card);stroke:var(--line);stroke-width:2"/><text x="968" y="156" style="fill:var(--fg);font-size:15px;font-weight:700">⑤ 輸出</text><text x="968" y="188" style="fill:var(--fg);font-size:25px;font-weight:700">混合播放</text><text x="968" y="218" style="fill:var(--fg);font-size:19px;font-weight:500">直達聲＋殘響</text><text x="968" y="242" style="fill:var(--fg);font-size:19px;font-weight:500">送到喇叭或耳機</text><polyline points="212,203 232,203" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow2)"/><polyline points="450,183 461,183 461,109 470,109" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow2)"/><polyline points="450,223 461,223 461,297 470,297" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow2)"/><polyline points="688,109 708,109" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow2)"/><polyline points="688,297 708,297" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow2)"/><polyline points="926,109 937,109 937,183 946,183" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow2)"/><polyline points="926,297 937,297 937,223 946,223" style="fill:none;stroke:var(--muted);stroke-width:2.5" marker-end="url(#h-flow2)"/><polyline points="1056,282 1056,412 342,412 342,286" style="fill:none;stroke:var(--muted);stroke-width:2.5;stroke-dasharray:7 6" marker-end="url(#h-flow2)"/><text x="1044" y="402" style="fill:var(--muted);font-size:16px;font-weight:700" text-anchor="end">下一幀：有人移動就回到 ② 重查</text></svg></figure>
+        <p class="callout">遊戲每一幀只做「查四個數字＋乘、卷積、分喇叭」，重的物理計算在開發時就做完了 <sup class="cite">[1]</sup></p>
+        <aside class="notes">
+          用前面一路用的例子走一遍。① 敵人在牆後開槍，遊戲知道音源 a 和玩家 b 的位置。② 向 RLF 查出四個數字：聲音繞牆走了 10 m、從左前方來、音量 −6 dB、回音 1.5 秒消失。接著分兩條路處理。上面是直達聲，也就是第一個傳到的聲音：③ 先依 L 把振幅乘 0.5，④ 再用 VBAP 依方向分給左右喇叭。下面是殘響，也就是在房間裡反射的回音：③ 依 τ 決定小、中、大三種房間 IR 怎麼混，④ 和音效做卷積；論文的做法是殘響三分之一跟直達聲同方向、三分之二從四面八方來。⑤ 兩條路加起來送到喇叭。下一幀如果玩家或敵人移動了，就回到第二步重查。查一次約 46 μs，遠小於一幀的時間。這頁的數字都是前面幾頁的示意值。
         </aside>
       </section>
 

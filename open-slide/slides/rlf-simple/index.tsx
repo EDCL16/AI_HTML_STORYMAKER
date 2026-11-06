@@ -2,7 +2,7 @@ import { type DesignSystem, type Page, type SlideMeta, Step, Steps } from '@open
 import type { CSSProperties, ReactNode } from 'react';
 import fig1 from './assets/ref1-fig1.png';
 import fig2 from './assets/ref1-fig2.png';
-import { convFig, decayFig, distFig, levelFig, storageNewFig, storageOldFig, vbapFig } from './dsp-figs';
+import { convFig, decayFig, distFig, levelFig, storageNewFig, storageOldFig, vbapFig, flowAllFig, flowPlayFig } from './dsp-figs';
 
 // 配色與 HTML 精簡版相同：灰綠底、青綠主色；DSP 用琥珀色，音源紅、聽者藍（與原論文圖一致）
 export const design: DesignSystem = {
@@ -497,29 +497,17 @@ const Memory: Page = () => (
 
 const S3: Page = () => <SectionPage ch={3} title="DSP 的應用" />;
 
+const FlowFig = ({ svg, maxH }: { svg: string; maxH: number }) => (
+  <div style={{ display: 'flex', justifyContent: 'center', fontFamily: 'var(--osd-font-body)', marginTop: 4 }}>
+    <div style={{ width: '100%', maxWidth: maxH * 2.85 }} dangerouslySetInnerHTML={{ __html: svg }} />
+  </div>
+);
+
 const Pipeline: Page = () => (
   <Frame ch={3} title="系統架構與 DSP 位置">
-    <Row3 gap={72}>
-      <Steps>
-        <Step>
-          <Card title="開發時：聲音變數字" kind="dsp" tag>
-            模擬每一點的 IR，算出聲學參數
-          </Card>
-        </Step>
-        <Step>
-          <Card title="儲存：RLF" kind="ml" tag arrow>
-            參數壓進 14 MB 的網格，這是論文的新方法
-          </Card>
-        </Step>
-        <Step>
-          <Card title="遊戲時：數字變聲音" kind="dsp" tag arrow>
-            查出參數，調音量、套回音、擺方向
-          </Card>
-        </Step>
-      </Steps>
-    </Row3>
+    <FlowFig svg={flowAllFig} maxH={540} />
     <Callout>
-      DSP 用在頭尾兩端，RLF 改的只有中間的儲存方式
+      開發時把聲音變成數字，遊戲時再把數字變回聲音，這兩段用 DSP；中間的儲存靠機器學習，RLF 改的只有這一段
       <Cite n="[1]" />
     </Callout>
   </Frame>
@@ -611,13 +599,25 @@ const Lane = ({ title, kind, children }: { title: string; kind: 'dsp' | 'ml'; ch
   </div>
 );
 
-const Chip = ({ children }: { children: ReactNode }) => (
+const Chip = ({ children, sub }: { children: ReactNode; sub?: ReactNode }) => (
   <div style={{ width: '100%', boxSizing: 'border-box', textAlign: 'center', background: c.card, border: `2px solid ${c.line}`, borderRadius: 10, padding: '8px 12px', fontSize: 28, lineHeight: 1.4 }}>
     {children}
+    {sub && <div style={{ fontSize: 20, color: c.muted, lineHeight: 1.35 }}>{sub}</div>}
   </div>
 );
 
-const Down = ({ children }: { children?: ReactNode }) => <div style={{ fontSize: 24, color: c.muted }}>↓ {children}</div>;
+const Down = ({ children, kind }: { children?: ReactNode; kind?: 'sim' | 'dsp' | 'ml' }) => (
+  <div
+    style={{
+      fontSize: 24,
+      color: kind === 'dsp' ? c.dsp : kind === 'ml' ? 'var(--osd-accent)' : c.muted,
+      fontWeight: kind === 'dsp' || kind === 'ml' ? 700 : 400,
+      fontStyle: kind === 'sim' ? 'italic' : 'normal',
+    }}
+  >
+    ↓ {children}
+  </div>
+);
 
 const QRow = ({ q, where, out }: { q: string; where: string; out: string }) => (
   <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 190px', fontSize: 28, lineHeight: 1.45, padding: '13px 12px', borderBottom: `2px solid ${c.line}` }}>
@@ -905,32 +905,42 @@ const VbapCalc: Page = () => (
 const DspSummary: Page = () => (
   <Frame ch={3} title="DSP 在論文中的工作">
     <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', gap: 24, alignItems: 'stretch' }}>
-      <Lane title="開發時（DSP）" kind="dsp">
-        <Chip>地圖幾何</Chip>
-        <Down>FDTD 波動模擬</Down>
-        <Chip>每對位置的 IR</Chip>
-        <Down>前三頁的公式</Down>
-        <Chip>π、δ、L、τ</Chip>
+      <Lane title="開發時：算出參數" kind="dsp">
+        <Chip sub="牆、地板、房間的形狀">地圖幾何</Chip>
+        <Down kind="sim">FDTD 物理模擬（不是 DSP）</Down>
+        <Chip sub="在 a 拍手、在 b 錄到的整段聲音">每對位置的 IR</Chip>
+        <Down kind="dsp">DSP：第 13～15 頁的公式</Down>
+        <Chip sub="距離、方向、音量、回音長度">π、δ、L、τ</Chip>
       </Lane>
       <IoArrow />
-      <Lane title="儲存（RLF）" kind="ml">
-        <Chip>每對位置一組參數 182 GB</Chip>
-        <Down>學成每格 16 個數字</Down>
-        <Chip>潛在向量網格 14 MB</Chip>
-        <Down>三線性內插、算距離</Down>
-        <Chip>查出 π、δ、L、τ</Chip>
+      <Lane title="儲存：RLF" kind="ml">
+        <Chip sub="182 GB，遊戲裝不下">每對位置一組參數</Chip>
+        <Down kind="ml">機器學習：每格學 16 個數字</Down>
+        <Chip sub="14 MB，只存每個位置">潛在向量網格</Chip>
+        <Down kind="ml">內插出 a、b，再算兩者距離</Down>
+        <Chip sub="任何一對位置都能即時查">π、δ、L、τ</Chip>
       </Lane>
       <IoArrow />
-      <Lane title="遊戲時（DSP）" kind="dsp">
-        <Chip>L → 乘倍數（增益）</Chip>
-        <Chip>τ → 卷積套回音</Chip>
-        <Chip>δ → VBAP 分配喇叭</Chip>
-        <Down />
-        <Chip>玩家聽到的聲音</Chip>
+      <Lane title="遊戲時：變回聲音" kind="dsp">
+        <Chip sub="乘一個倍數，被牆擋住就變小聲">L → 增益</Chip>
+        <Chip sub="套上回音，房間越大回音越長">τ → 卷積</Chip>
+        <Chip sub="調各喇叭音量，聽出聲音從哪來">δ → VBAP</Chip>
+        <Down kind="dsp">三者合在一起</Down>
+        <Chip sub="有遮擋、有回音、有方向">玩家聽到的聲音</Chip>
       </Lane>
     </div>
     <Callout>
-      DSP 負責把聲音變成數字、再把數字變回聲音；RLF 負責把中間的數字存小
+      FDTD 負責產生 IR，DSP 把 IR 變成參數、再把參數變回聲音，RLF 只負責把參數存小
+      <Cite n="[1]" />
+    </Callout>
+  </Frame>
+);
+
+const PlayFlow: Page = () => (
+  <Frame ch={3} title="玩家聽到音效的流程">
+    <FlowFig svg={flowPlayFig} maxH={560} />
+    <Callout>
+      遊戲每一幀只做「查四個數字＋乘、卷積、分喇叭」，重的物理計算在開發時就做完了
       <Cite n="[1]" />
     </Callout>
   </Frame>
@@ -1236,6 +1246,7 @@ export default [
   ConvCalc,
   VbapCalc,
   DspSummary,
+  PlayFlow,
   S4,
   Latent,
   Reciprocity,
@@ -1260,14 +1271,15 @@ export const notes: (string | undefined)[] = [
   undefined,
   'wave coding 的資料量跟「音源位置數 × 聽者位置數」成正比。比較小的測試地圖 Audio Gym 也要 3.1 GB。方法夠準，只是存不下，RLF 改的就是儲存這一段。',
   undefined,
-  '這頁回答「DSP 用在哪裡」。左邊開發時，用 DSP 把物理模擬的結果變成參數；右邊遊戲執行時，用 DSP 把參數變回聲音。中間怎麼存，是 RLF 的貢獻。接下來先講左邊開發時怎麼算，再講右邊怎麼播，最後回到一張完整的流程圖。',
+  '這頁是整份報告的地圖，回答「DSP 用在哪裡」。上排是開發時，遊戲出貨前在電腦上算一次：先有地圖，用 FDTD 模擬聲波得到每對位置的 IR。FDTD 是解物理方程式，不算 DSP。IR 出來後，用 DSP 擷取成距離、方向、音量、回音長度四個數字，再交給 RLF 訓練，從 182 GB 壓成 14 MB。下排是遊戲時，每一幀都要做：給音源和玩家的位置，向 RLF 查出四個數字，再用 DSP 調音量、套回音、用 VBAP 擺方向，玩家就聽到有遮擋、有回音、有方向的聲音。每個方塊右上角是對應的頁碼。接下來照順序講：先講上排 DSP 怎麼算，再講下排怎麼播，再用一個實際例子走一遍玩家聽到音效的流程。',
   '前面講過，IR 就是在 a 拍一下手、在 b 錄到的整段聲音。開發時用 FDTD 波動模擬，在電腦裡把每一對位置的 IR 都算出來：空間切成 0.137 m 的格子、時間每步約 0.23 ms，算 2 秒。接下來三頁照這張表的順序，一個問題一頁，每頁都講四件事：輸入是什麼、套什麼公式、得到什麼、遊戲裡拿來做什麼。例子全部用同一個場景，數字會一路接下去。',
   'c 是聲速 343 m/s，t0 是發聲時間。距離乘出來是 10 m，比直線的 8 m 多，因為聲音要繞過牆。方向的公式看起來複雜，意思很簡單：∇π 是距離增加最快的方向，前面加負號就是距離減少最快的方向，也就是聲音來的方向；除以長度只是把它變成單位向量。電腦裡用左右兩格的差去算，跟山上找最陡的坡一樣。這一頁的數字是我編的示意。δ 在遊戲裡怎麼分給喇叭，卷積之後有一頁專門講 VBAP。',
   'dB 是用 log 表示大小，因為耳朵對音量的感覺本來就接近 log。能量用 10 log，振幅用 20 log，所以換回振幅時是除以 20。早期反射的音量算法一樣，只是時間窗換成直達聲之後的 100 ms。0.25 這個數字是示意。',
   '直接看 IR 的話，聲音忽大忽小，很難量斜率。Schroeder 1965 年的做法是從尾巴往前加，曲線就變得平滑、只會往下。斜率 s 的單位是每秒掉幾 dB，τ 就是掉 60 dB 要花幾秒。論文分早期、晚期兩段各量一次。得到的 τ 在遊戲裡決定三種房間回音怎麼混，下一頁看混好的回音怎麼套到音效上。表裡的數字是示意。',
   '前面三頁是開發時把 IR 變成數字，這一頁是遊戲時把數字變回聲音。論文的式 (3) 準備了小、中、大三種房間的 IR，依衰減時間 τ 決定三者的比例，再和音效做卷積。直達聲不做卷積，只乘上一頁算出的倍數 A，再由 VBAP 依方向 δ 分給喇叭，下一頁細講。表裡的數字是我舉的小例子，用程式驗算過。',
   'VBAP 是 Pulkki 1997 年提出的方法，全名是向量基底振幅平移。喇叭的位置固定，要讓聲音聽起來從兩顆喇叭中間來，就把方向 δ 拆成兩個喇叭方向的組合，拆出來的份量就是各喇叭的音量。3D 的情況一樣，只是改用三顆喇叭圍成的三角形。正規化成平方和等於 1，是讓聲音左右移動時總能量不變，不會忽大忽小。從 DSP 來看，VBAP 和音量那一頁的增益是同一種運算：每個取樣乘一個數，所以 A 和 g 可以先相乘，變成每個聲道一個數字。卷積每個取樣要乘加整條 IR，VBAP 每個取樣只乘一次，所以每一幀都能重算。實作上增益變化時會在幾毫秒內慢慢滑過去，避免喀喀聲，這是一般 DSP 的做法，不是論文寫的。論文裡直達聲用 VBAP 擺到 δ 的方向，殘響 1/3 跟直達聲同方向、2/3 從四面八方來。20° 和喇叭角度是我舉的示意，計算用程式驗算過。',
-  '被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊在開發時：模擬出 IR，用前面三頁的公式算出四個參數。中間是問題所在：每一對位置都要存一組，WAL 地圖要 182 GB，RLF 把它學成每格 16 個數字，只要 14 MB。右邊在遊戲時：查出參數後，音量拿去乘倍數，衰減時間拿去決定回音、做卷積，方向交給 VBAP。論文自己的新東西只有中間那一欄，左右兩欄都是既有的 DSP 方法。',
+  '被問到「DSP 在這篇論文做什麼」，就用這一頁回答。左邊是開發時：先用 FDTD 在電腦裡模擬聲波，得到每一對位置的 IR。FDTD 是解波動方程式的物理模擬，不算 DSP；IR 出來之後，用第 13 到 15 頁的公式算出距離、方向、音量、回音長度，這一步才是 DSP。中間是問題所在：每一對位置都要存一組參數，WAL 地圖要 182 GB，RLF 改成每個格點學 16 個數字，只要 14 MB，用的時候內插出 a、b 兩點再算距離。右邊是遊戲時，也是 DSP：音量變成增益、衰減時間決定回音再做卷積、方向交給 VBAP 分配喇叭，三者合起來就是玩家聽到的聲音。論文的新東西只有中間那一欄，左右兩欄都是既有的方法。',
+  '用前面一路用的例子走一遍。① 敵人在牆後開槍，遊戲知道音源 a 和玩家 b 的位置。② 向 RLF 查出四個數字：聲音繞牆走了 10 m、從左前方來、音量 −6 dB、回音 1.5 秒消失。接著分兩條路處理。上面是直達聲，也就是第一個傳到的聲音：③ 先依 L 把振幅乘 0.5，④ 再用 VBAP 依方向分給左右喇叭。下面是殘響，也就是在房間裡反射的回音：③ 依 τ 決定小、中、大三種房間 IR 怎麼混，④ 和音效做卷積；論文的做法是殘響三分之一跟直達聲同方向、三分之二從四面八方來。⑤ 兩條路加起來送到喇叭。下一幀如果玩家或敵人移動了，就回到第二步重查。查一次約 46 μs，遠小於一幀的時間。這頁的數字都是前面幾頁的示意值。',
   undefined,
   '舊方法存「a 到 b 的答案」，RLF 只存「a 的座標」和「b 的座標」，要用時再算距離。右圖是論文用 2 維示範：牆兩側的 A、B，在學出來的空間裡被放到洞的兩側，直線距離剛好等於繞路的距離。實際用的是 16 維。',
   'a 喊 b 聽，和 b 喊 a 聽，路徑距離、音量、衰減都一樣。作者選了一定對稱的距離函數，把這條物理規則直接寫進公式，模型就不可能違反。方向是例外：a 往 b 的方向和 b 往 a 的方向不一定剛好相反，所以方向是從距離的梯度推出來的。',
