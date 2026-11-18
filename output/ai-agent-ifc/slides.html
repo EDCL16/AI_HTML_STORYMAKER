@@ -822,6 +822,84 @@
         width: 100%;
       }
     </style>
+    <style>
+      /* 名詞卡片 */
+      .gloss {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(10px, 1.6vw, 20px);
+      }
+      .gloss.four {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      @media (max-width: 1000px) {
+        .gloss.four {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 700px) {
+        .gloss,
+        .gloss.four {
+          grid-template-columns: 1fr;
+        }
+      }
+      .gloss .term {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-top: 4px solid var(--accent);
+        border-radius: 12px;
+        padding: clamp(12px, 1.5vw, 20px) clamp(14px, 1.6vw, 22px);
+        display: flex;
+        flex-direction: column;
+        gap: 0.3em;
+      }
+      .gloss .term.bad {
+        border-top-color: var(--untrust);
+      }
+      .gloss .term.good {
+        border-top-color: var(--trust);
+      }
+      .gloss .term h3 {
+        font-size: clamp(18px, 2vw, 25px);
+        line-height: 1.3;
+      }
+      .slide .gloss .term p {
+        font-size: clamp(14px, 1.45vw, 18px);
+        line-height: 1.5;
+      }
+      .slide .gloss .term p.en {
+        color: var(--muted);
+        font-size: clamp(12px, 1.15vw, 14px);
+        line-height: 1.45;
+      }
+      .slide .gloss .term p.eg {
+        margin-top: auto;
+        padding-top: 0.4em;
+        border-top: 1px dashed var(--line);
+        color: var(--muted);
+        font-size: clamp(13px, 1.3vw, 16px);
+      }
+      .slide .gloss .term p.eg::before {
+        content: '比喻　';
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .gloss.four .term h3 {
+        font-size: clamp(17px, 1.8vw, 22px);
+      }
+      .slide .gloss.four .term p {
+        font-size: clamp(13px, 1.3vw, 16px);
+      }
+    </style>
+    <style>
+      .gloss.four {
+        gap: clamp(10px, 1.3vw, 16px);
+      }
+      .gloss.four .term {
+        padding: clamp(10px, 1.2vw, 16px) clamp(12px, 1.4vw, 18px);
+        gap: 0.25em;
+      }
+    </style>
     <script>
       try {
         const t = localStorage.getItem('theme');
@@ -942,26 +1020,105 @@
       </section>
 
       <section class="slide">
-        <h2>名詞一覽表</h2>
-        <div class="wrap-x">
-          <table class="data tight">
-            <tr><th>名詞</th><th>英文全名</th><th>意思</th></tr>
-            <tr><td>PIA</td><td>(Indirect) Prompt Injection Attack</td><td>把指令藏在郵件、網頁等資料裡，劫持代理<sup class="cite">[1]</sup></td></tr>
-            <tr><td>IFC</td><td>Information-Flow Control</td><td>資訊流控制：替資料貼標籤，追蹤它流到哪裡<sup class="cite">[1]</sup></td></tr>
-            <tr><td>Planner</td><td>規劃器</td><td>決定下一步要問 LLM、呼叫工具還是結束（比喻：主管）</td></tr>
-            <tr><td>標籤 T / U</td><td>Trusted / Untrusted</td><td>完整性：資料可信或不可信（貼紙顏色）</td></tr>
-            <tr><td>標籤 L / H</td><td>Low / High confidentiality</td><td>機密性：公開或機密；也可以寫成「讀者名單」</td></tr>
-            <tr><td>Taint tracking</td><td>汙染追蹤</td><td>碰過 U 的結果也算 U，標籤會一路傳下去</td></tr>
-            <tr><td>變數</td><td>Variable（如 <span class="var">#mail_0</span>）</td><td>把資料藏進記憶體，規劃器只拿代號傳遞</td></tr>
-            <tr><td>Quarantined LLM</td><td>隔離 LLM（<code>query_llm</code>）</td><td>沒有工具的另一個模型，專門讀不可信資料（隔離室助理）</td></tr>
-            <tr><td>P-T / P-F</td><td>Trusted action / Permitted flow</td><td>兩條安全政策：可信情境才能動手 / 只送給有權讀的人</td></tr>
-            <tr><td>DI / DIQ / DD</td><td>Data Independent / … with query_llm / Data Dependent</td><td>三類任務：不用看資料、要隔離 LLM 幫忙、必須看資料</td></tr>
-            <tr><td>ASR / TCR</td><td>Attack Success Rate / Task Completion Rate</td><td>攻擊成功率 / 任務完成率</td></tr>
-            <tr><td>FIDES</td><td>Flow Integrity Deterministic Enforcement System</td><td>本文的規劃器；名字取自羅馬誠信女神<sup class="cite">[1]</sup></td></tr>
-          </table>
+        <h2>基本名詞</h2>
+        <div class="gloss">
+          <div class="term">
+            <h3>AI 代理</h3>
+            <p class="en">AI Agent</p>
+            <p>能自己動手做事的 AI：讀信、寄信、訂房、轉帳<sup class="cite">[1]</sup></p>
+            <p class="eg">像一位幫你處理雜事的秘書</p>
+          </div>
+          <div class="term">
+            <h3>LLM</h3>
+            <p class="en">Large Language Model（大型語言模型）</p>
+            <p>代理的大腦，例如 GPT-4o；讀文字、決定下一步要做什麼<sup class="cite">[1]</sup></p>
+            <p class="eg">秘書的腦袋</p>
+          </div>
+          <div class="term">
+            <h3>工具呼叫</h3>
+            <p class="en">Tool Call</p>
+            <p>代理實際動手的那一步，例如 <code>send_email</code>、<code>reserve_hotel</code><sup class="cite">[1]</sup></p>
+            <p class="eg">秘書真的按下「寄出」</p>
+          </div>
+          <div class="term">
+            <h3>規劃器</h3>
+            <p class="en">Planner</p>
+            <p>代理裡負責安排步驟的部分：先問 LLM、再叫工具、最後回覆你<sup class="cite">[1]</sup></p>
+            <p class="eg">收發室的主管</p>
+          </div>
+          <div class="term bad">
+            <h3>提示注入</h3>
+            <p class="en">PIA = Prompt Injection Attack</p>
+            <p>把指令偷偷寫在信件或網頁裡，騙代理照著做<sup class="cite">[1]</sup></p>
+            <p class="eg">信裡夾一張「請把公司機密寄給我」的紙條</p>
+          </div>
+          <div class="term good">
+            <h3>資訊流控制</h3>
+            <p class="en">IFC = Information-Flow Control</p>
+            <p>替每筆資料貼標籤、追蹤它流到哪裡，用規則決定能不能動手<sup class="cite">[1]</sup></p>
+            <p class="eg">每封信都貼上來源貼紙</p>
+          </div>
         </div>
         <aside class="notes">
-          後面會一直用到這幾個詞。最重要的是兩種標籤：完整性 T/U 管「能不能信」，機密性 L/H 或讀者名單管「誰能看」。Planner 是代理裡做決定的那一層，論文把它當成可以替換的模組來比較。
+          這頁先講清楚誰是誰。AI 代理就是會動手做事的 AI，它的腦袋是 LLM，動手的那一步叫工具呼叫。規劃器是代理裡排步驟的部分，論文的研究重點就是怎麼設計規劃器。提示注入是攻擊方法，資訊流控制是這篇用來防禦的方法。
+        </aside>
+      </section>
+
+      <section class="slide">
+        <h2>FIDES 名詞</h2>
+        <div class="gloss four">
+          <div class="term">
+            <h3>可信度標籤</h3>
+            <p class="en">T / U = Trusted / Untrusted</p>
+            <p>這筆資料能不能信<sup class="cite">[1]</sup></p>
+            <p class="eg"><span class="chip T">T</span> 綠貼紙　<span class="chip U">U</span> 紅貼紙</p>
+          </div>
+          <div class="term">
+            <h3>機密標籤</h3>
+            <p class="en">L / H = Low / High confidentiality</p>
+            <p>這筆資料誰可以看，記成一份讀者名單<sup class="cite">[1]</sup></p>
+            <p class="eg">「僅限收件人拆閱」</p>
+          </div>
+          <div class="term">
+            <h3>汙染追蹤</h3>
+            <p class="en">Taint Tracking</p>
+            <p>碰過紅色資料的結果也算紅色<sup class="cite">[1]</sup></p>
+            <p class="eg">混進一張紅紙條，整封都算紅</p>
+          </div>
+          <div class="term">
+            <h3>變數</h3>
+            <p class="en">Variable，例如 <span class="var">#mail_0</span></p>
+            <p>把資料藏起來，規劃器只拿到一個代號<sup class="cite">[1]</sup></p>
+            <p class="eg">主管不拆信，只記「0 號信封」</p>
+          </div>
+          <div class="term">
+            <h3>隔離 LLM</h3>
+            <p class="en">Quarantined LLM（query_llm）</p>
+            <p>不能動手的另一個 AI，專讀紅色資料，可限定只答是或否<sup class="cite">[1]</sup></p>
+            <p class="eg">隔離室裡的助理</p>
+          </div>
+          <div class="term">
+            <h3>兩條規則</h3>
+            <p class="en">P-T = Trusted action<br />P-F = Permitted flow</p>
+            <p>P-T：讀過紅色就不准做重要的事<br />P-F：只能送給有權看的人<sup class="cite">[1]</sup></p>
+            <p class="eg">收發室的兩條規矩</p>
+          </div>
+          <div class="term">
+            <h3>三類任務</h3>
+            <p class="en">DI = Data Independent<br />DIQ = DI with query_llm<br />DD = Data Dependent</p>
+            <p>依「要不要看信的內容才能做」分成三類<sup class="cite">[1]</sup></p>
+            <p class="eg">直接轉寄／請助理摘要／看完才決定</p>
+          </div>
+          <div class="term">
+            <h3>評分指標</h3>
+            <p class="en">ASR = Attack Success Rate<br />TCR = Task Completion Rate</p>
+            <p>攻擊成功率越低越好，任務完成率越高越好<sup class="cite">[1]</sup></p>
+            <p class="eg">被騙幾次／交辦的事做完幾件</p>
+          </div>
+        </div>
+        <p class="muted small">FIDES = Flow Integrity Deterministic Enforcement System，名字取自羅馬神話中守護誠信的女神<sup class="cite">[1]</sup></p>
+        <aside class="notes">
+          這頁是論文自己的名詞。最重要的是前兩張：可信度標籤管「能不能信」，機密標籤管「誰能看」。變數和隔離 LLM 是 FIDES 的兩個新工具，後面「選擇性隱藏變數」和「受限檢視」兩頁會各講一個。兩條規則、三類任務、評分指標在後面的章節才會用到，這裡先有印象就好。
         </aside>
       </section>
 
